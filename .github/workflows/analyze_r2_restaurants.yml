@@ -28,3 +28,10 @@ jobs:
           CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
         run: |
           python analyze_r2_restaurants.py
+
+      - name: Upload analysis JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: restaurant-analysis-2025-09-17
+          path: restaurant_analysis_2025-09-17.json
+          retention-days: 30
