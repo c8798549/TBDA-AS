@@ -17,7 +17,11 @@ SECRET_ACCESS_KEY = os.environ["CF_R2_SECRET_ACCESS_KEY"]
 
 PREFIX = "merged-restaurant-info/year=2025/month=09/day=17/"
 
+
+# ============================================================
 # Columns expected in the files
+# ============================================================
+
 COLUMN_ORDER = [
     "id",
     "name",
@@ -88,24 +92,22 @@ COLUMN_ORDER = [
 
 
 # ============================================================
-# Columns where we need duplication analysis
+# Columns to check for duplication
 # ============================================================
 
 DUPLICATION_COLUMNS = [
     "id",
     "name",
-    "restaurantId",
     "restaurantSlug",
     "branchId",
     "branchName",
     "branchSlug",
-    "branchUrl",
 ]
 
 
 # ============================================================
-# Columns where we need unique values
-# Per file + global across all files
+# Columns whose unique values will be collected
+# and printed ONLY ONCE at the end
 # ============================================================
 
 UNIQUE_COLUMNS = [
@@ -151,7 +153,7 @@ UNIQUE_COLUMNS = [
 
 
 # ============================================================
-# Numeric columns for min / max
+# Columns for min / max
 # ============================================================
 
 MIN_MAX_COLUMNS = [
@@ -174,13 +176,13 @@ s3 = boto3.client(
 
 
 # ============================================================
-# Helper functions
+# Helper Functions
 # ============================================================
 
 def normalize_value(value):
     """
-    Convert values to something that can safely be used
-    for unique-value calculations.
+    Convert lists/dictionaries into strings so they can
+    safely be compared and stored in sets.
     """
 
     if value is None:
@@ -198,21 +200,18 @@ def normalize_value(value):
 
 def format_value(value):
     """
-    Pretty representation for printing values.
+    Format a value for printing.
     """
 
     if value is None:
         return "NULL"
-
-    if isinstance(value, str):
-        return value
 
     return str(value)
 
 
 def load_json_file(key):
     """
-    Download and load one JSON file from R2.
+    Load a JSON file from R2.
 
     Supports:
     - JSON array
@@ -225,15 +224,17 @@ def load_json_file(key):
         Key=key
     )
 
-    content = response["Body"].read().decode("utf-8")
-
-    content = content.strip()
+    content = response["Body"].read().decode("utf-8").strip()
 
     if not content:
         return []
 
-    # Try normal JSON first
+    # --------------------------------------------------------
+    # Try normal JSON
+    # --------------------------------------------------------
+
     try:
+
         data = json.loads(content)
 
         if isinstance(data, list):
@@ -245,10 +246,17 @@ def load_json_file(key):
     except json.JSONDecodeError:
         pass
 
-    # If normal JSON failed, try JSONL
+
+    # --------------------------------------------------------
+    # Try JSONL
+    # --------------------------------------------------------
+
     records = []
 
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(
+        content.splitlines(),
+        start=1
+    ):
 
         line = line.strip()
 
@@ -256,12 +264,16 @@ def load_json_file(key):
             continue
 
         try:
-            records.append(json.loads(line))
+
+            records.append(
+                json.loads(line)
+            )
 
         except json.JSONDecodeError as e:
+
             print(
-                f"WARNING: Could not parse line {line_number} "
-                f"in {key}: {e}"
+                f"WARNING: Could not parse "
+                f"line {line_number} in {key}: {e}"
             )
 
     return records
@@ -269,7 +281,8 @@ def load_json_file(key):
 
 def get_unique_values(series):
     """
-    Return unique values safely, including lists/dicts.
+    Get unique non-null values safely.
+    Handles lists and dictionaries.
     """
 
     values = set()
@@ -279,45 +292,302 @@ def get_unique_values(series):
         value = normalize_value(value)
 
         if value is not None:
-            values.add(str(value))
 
-    return sorted(values)
+            values.add(
+                str(value)
+            )
+
+    return values
 
 
 # ============================================================
-# Get files from R2
+# Rating / Review / Ratings Analysis
+# ============================================================
+
+def analyze_rating_relationship(df, file_name):
+
+    print("\n" + "-" * 100)
+    print("RATING / REVIEW RELATIONSHIP")
+    print("-" * 100)
+
+    required_columns = [
+        "rate",
+        "totalReviews",
+        "totalRatings",
+    ]
+
+    missing = [
+        column
+        for column in required_columns
+        if column not in df.columns
+    ]
+
+    if missing:
+
+        print(
+            f"Missing columns: {missing}"
+        )
+
+        return
+
+
+    rating_df = df[
+        required_columns
+    ].copy()
+
+
+    # --------------------------------------------------------
+    # Convert to numeric
+    # --------------------------------------------------------
+
+    for column in required_columns:
+
+        rating_df[column] = pd.to_numeric(
+            rating_df[column],
+            errors="coerce"
+        )
+
+
+    # Keep only rows where all three values exist
+    rating_df = rating_df.dropna(
+        subset=required_columns
+    )
+
+
+    if rating_df.empty:
+
+        print(
+            "No valid numeric records found."
+        )
+
+        return
+
+
+    # --------------------------------------------------------
+    # Basic statistics
+    # --------------------------------------------------------
+
+    print("\nBasic statistics:")
+
+    for column in required_columns:
+
+        print(
+            f"\n{column}:"
+        )
+
+        print(
+            f"  Min    : "
+            f"{rating_df[column].min()}"
+        )
+
+        print(
+            f"  Max    : "
+            f"{rating_df[column].max()}"
+        )
+
+        print(
+            f"  Unique : "
+            f"{rating_df[column].nunique()}"
+        )
+
+
+    # --------------------------------------------------------
+    # Compare totalReviews vs totalRatings
+    # --------------------------------------------------------
+
+    equal_count = (
+        rating_df["totalReviews"]
+        == rating_df["totalRatings"]
+    ).sum()
+
+    reviews_greater = (
+        rating_df["totalReviews"]
+        > rating_df["totalRatings"]
+    ).sum()
+
+    ratings_greater = (
+        rating_df["totalRatings"]
+        > rating_df["totalReviews"]
+    ).sum()
+
+
+    print("\nComparison:")
+
+    print(
+        f"  totalReviews == totalRatings : "
+        f"{equal_count}"
+    )
+
+    print(
+        f"  totalReviews > totalRatings  : "
+        f"{reviews_greater}"
+    )
+
+    print(
+        f"  totalRatings > totalReviews  : "
+        f"{ratings_greater}"
+    )
+
+
+    # --------------------------------------------------------
+    # Correlation
+    # --------------------------------------------------------
+
+    print("\nCorrelation:")
+
+    correlation = rating_df[
+        [
+            "rate",
+            "totalReviews",
+            "totalRatings",
+        ]
+    ].corr()
+
+    print(
+        correlation.to_string()
+    )
+
+
+    # --------------------------------------------------------
+    # Records where Reviews != Ratings
+    # --------------------------------------------------------
+
+    different = rating_df[
+        rating_df["totalReviews"]
+        != rating_df["totalRatings"]
+    ]
+
+    print(
+        f"\nRecords where "
+        f"totalReviews != totalRatings: "
+        f"{len(different)}"
+    )
+
+
+    if not different.empty:
+
+        print(
+            "\nSample of records where "
+            "they are different:"
+        )
+
+        print(
+            different[
+                [
+                    "rate",
+                    "totalReviews",
+                    "totalRatings",
+                ]
+            ]
+            .head(20)
+            .to_string(index=False)
+        )
+
+
+    # --------------------------------------------------------
+    # Highest totalRatings values
+    # --------------------------------------------------------
+
+    print(
+        "\nTop totalRatings values:"
+    )
+
+    print(
+        rating_df[
+            [
+                "rate",
+                "totalReviews",
+                "totalRatings",
+            ]
+        ]
+        .sort_values(
+            "totalRatings",
+            ascending=False
+        )
+        .head(20)
+        .to_string(index=False)
+    )
+
+
+    # --------------------------------------------------------
+    # Highest totalReviews values
+    # --------------------------------------------------------
+
+    print(
+        "\nTop totalReviews values:"
+    )
+
+    print(
+        rating_df[
+            [
+                "rate",
+                "totalReviews",
+                "totalRatings",
+            ]
+        ]
+        .sort_values(
+            "totalReviews",
+            ascending=False
+        )
+        .head(20)
+        .to_string(index=False)
+    )
+
+
+# ============================================================
+# Get JSON files from R2
 # ============================================================
 
 print("\n" + "=" * 100)
-print("R2 FILE ANALYSIS")
+print("R2 RESTAURANT DATA ANALYSIS")
 print("=" * 100)
 
-print(f"Bucket : {BUCKET_NAME}")
-print(f"Prefix : {PREFIX}")
+print(
+    f"Bucket : {BUCKET_NAME}"
+)
+
+print(
+    f"Prefix : {PREFIX}"
+)
 
 print("\nFetching files...")
 
+
 files = []
 
-paginator = s3.get_paginator("list_objects_v2")
+paginator = s3.get_paginator(
+    "list_objects_v2"
+)
+
 
 for page in paginator.paginate(
     Bucket=BUCKET_NAME,
     Prefix=PREFIX
 ):
-    for obj in page.get("Contents", []):
+
+    for obj in page.get(
+        "Contents",
+        []
+    ):
 
         key = obj["Key"]
 
         if key.lower().endswith(".json"):
+
             files.append(key)
 
 
 files = sorted(files)
 
-print(f"\nJSON files found: {len(files)}")
+
+print(
+    f"\nJSON files found: "
+    f"{len(files)}"
+)
+
 
 if not files:
+
     raise RuntimeError(
         f"No JSON files found under {PREFIX}"
     )
@@ -331,133 +601,173 @@ global_unique_values = defaultdict(set)
 
 
 # ============================================================
+# Column completeness tracking
+# ============================================================
+
+column_stats = defaultdict(
+    lambda: {
+        "files_present": 0,
+        "files_missing": 0,
+        "total_records": 0,
+        "null_records": 0,
+        "non_null_records": 0,
+    }
+)
+
+
+# ============================================================
 # Process each file
 # ============================================================
 
-for file_number, key in enumerate(files, start=1):
+for file_number, key in enumerate(
+    files,
+    start=1
+):
 
     file_name = key.split("/")[-1]
 
+
     print("\n\n")
     print("=" * 100)
-    print(f"FILE {file_number}/{len(files)}")
+
+    print(
+        f"FILE {file_number}/{len(files)}"
+    )
+
     print(file_name)
+
     print("=" * 100)
 
+
+    # --------------------------------------------------------
+    # Load file
+    # --------------------------------------------------------
+
     try:
+
         records = load_json_file(key)
 
     except ClientError as e:
 
-        print(f"ERROR reading {key}")
+        print(
+            f"ERROR reading {key}"
+        )
+
         print(e)
 
         continue
 
     except Exception as e:
 
-        print(f"ERROR processing {key}")
+        print(
+            f"ERROR processing {key}"
+        )
+
         print(e)
 
         continue
 
 
     # --------------------------------------------------------
-    # Create DataFrame
+    # DataFrame
     # --------------------------------------------------------
 
     df = pd.DataFrame(records)
 
-    print(f"\nNumber of records: {len(df)}")
-
 
     # --------------------------------------------------------
-    # Check columns
+    # Number of records
     # --------------------------------------------------------
 
-    missing_columns = [
-        column
-        for column in COLUMN_ORDER
-        if column not in df.columns
-    ]
-
-    extra_columns = [
-        column
-        for column in df.columns
-        if column not in COLUMN_ORDER
-    ]
-
-    if missing_columns:
-
-        print("\nMissing columns:")
-
-        for column in missing_columns:
-            print(f"  - {column}")
-
-    if extra_columns:
-
-        print("\nExtra columns:")
-
-        for column in extra_columns:
-            print(f"  - {column}")
+    print(
+        f"\nNumber of records: "
+        f"{len(df)}"
+    )
 
 
     # ========================================================
-    # 1. UNIQUE COUNT FOR EVERY COLUMN
+    # Column Completeness Tracking
     # ========================================================
-
-    print("\n" + "-" * 100)
-    print("UNIQUE COUNT PER COLUMN")
-    print("-" * 100)
 
     for column in COLUMN_ORDER:
 
+        stats = column_stats[column]
+
+
         if column not in df.columns:
 
-            print(f"{column}: COLUMN NOT FOUND")
+            stats["files_missing"] += 1
+
             continue
 
-        unique_count = df[column].apply(
-            normalize_value
-        ).nunique(dropna=True)
 
-        print(
-            f"{column}: "
-            f"{unique_count} unique values"
+        stats["files_present"] += 1
+
+        stats["total_records"] += len(df)
+
+
+        null_mask = df[column].isna()
+
+        null_count = null_mask.sum()
+
+        non_null_count = (
+            len(df) - null_count
+        )
+
+
+        stats["null_records"] += (
+            null_count
+        )
+
+        stats["non_null_records"] += (
+            non_null_count
         )
 
 
     # ========================================================
-    # 2. DUPLICATION ANALYSIS
+    # Duplication Analysis
     # ========================================================
 
     print("\n" + "-" * 100)
     print("DUPLICATION ANALYSIS")
     print("-" * 100)
 
+
     found_duplicates = False
+
 
     for column in DUPLICATION_COLUMNS:
 
         if column not in df.columns:
 
-            print(f"\n{column}: COLUMN NOT FOUND")
+            print(
+                f"\n{column}: "
+                f"COLUMN NOT FOUND"
+            )
+
             continue
+
 
         normalized = df[column].apply(
             normalize_value
         )
 
+
         counts = normalized.value_counts(
             dropna=True
         )
 
-        duplicates = counts[counts > 1]
+
+        duplicates = counts[
+            counts > 1
+        ]
+
 
         if duplicates.empty:
 
             print(
-                f"\n{column}: No duplicates"
+                f"\n{column}: "
+                f"No duplicates"
             )
 
         else:
@@ -466,62 +776,78 @@ for file_number, key in enumerate(files, start=1):
 
             print(
                 f"\n{column}: "
-                f"{len(duplicates)} duplicated values"
+                f"{len(duplicates)} "
+                f"duplicated values"
             )
 
-            for value, count in duplicates.items():
+
+            for value, count in (
+                duplicates.items()
+            ):
 
                 print(
                     f"  {format_value(value)} "
                     f"-> {count} times"
                 )
 
+
     if not found_duplicates:
 
-        print("\nNo duplicates found in the checked columns.")
+        print(
+            "\nNo duplicates found "
+            "in the checked columns."
+        )
 
 
     # ========================================================
-    # 3. COLLECT UNIQUE VALUES PER FILE
-    #    Do NOT print them here
+    # Collect Global Unique Values
+    #
+    # They are NOT printed here.
     # ========================================================
 
     for column in UNIQUE_COLUMNS:
 
         if column not in df.columns:
+
             continue
+
 
         values = get_unique_values(
             df[column]
         )
 
-        # Add this file's unique values
-        # to the global collection
-        global_unique_values[column].update(values)
+
+        global_unique_values[
+            column
+        ].update(values)
 
 
     # ========================================================
-    # 4. MIN / MAX
+    # Min / Max
     # ========================================================
 
     print("\n" + "-" * 100)
     print("MIN / MAX")
     print("-" * 100)
 
+
     for column in MIN_MAX_COLUMNS:
 
         if column not in df.columns:
 
             print(
-                f"\n{column}: COLUMN NOT FOUND"
+                f"\n{column}: "
+                f"COLUMN NOT FOUND"
             )
 
             continue
+
 
         numeric_values = pd.to_numeric(
             df[column],
             errors="coerce"
         ).dropna()
+
 
         if numeric_values.empty:
 
@@ -532,15 +858,30 @@ for file_number, key in enumerate(files, start=1):
 
             continue
 
-        print(f"\n{column}")
 
         print(
-            f"  Min: {numeric_values.min()}"
+            f"\n{column}"
         )
 
         print(
-            f"  Max: {numeric_values.max()}"
+            f"  Min: "
+            f"{numeric_values.min()}"
         )
+
+        print(
+            f"  Max: "
+            f"{numeric_values.max()}"
+        )
+
+
+    # ========================================================
+    # Rating / Review Relationship
+    # ========================================================
+
+    analyze_rating_relationship(
+        df,
+        file_name
+    )
 
 
 # ============================================================
@@ -548,13 +889,16 @@ for file_number, key in enumerate(files, start=1):
 # ============================================================
 
 print("\n\n")
+
 print("#" * 100)
 print("GLOBAL UNIQUE VALUES — ALL FILES")
 print("#" * 100)
 
 print(
-    f"\nTotal files analyzed: {len(files)}"
+    f"\nTotal files analyzed: "
+    f"{len(files)}"
 )
+
 
 for column in UNIQUE_COLUMNS:
 
@@ -562,25 +906,166 @@ for column in UNIQUE_COLUMNS:
         global_unique_values[column]
     )
 
-    print("\n" + "-" * 100)
+
+    print(
+        "\n" + "-" * 100
+    )
+
 
     print(
         f"{column} "
-        f"({len(values)} unique values across ALL files):"
+        f"({len(values)} unique values "
+        f"across ALL files):"
     )
+
 
     if not values:
 
-        print("  [No non-null values]")
+        print(
+            "  [No non-null values]"
+        )
 
     else:
 
         for value in values:
 
-            print(f"  - {value}")
+            print(
+                f"  - {value}"
+            )
 
+
+# ============================================================
+# COLUMN COMPLETENESS SUMMARY
+# ============================================================
+
+print("\n\n")
+
+print("#" * 100)
+print("COLUMN COMPLETENESS SUMMARY — ALL FILES")
+print("#" * 100)
+
+
+total_files = len(files)
+
+
+for column in COLUMN_ORDER:
+
+    stats = column_stats[column]
+
+
+    files_present = stats["files_present"]
+
+    files_missing = stats["files_missing"]
+
+    total_records = stats["total_records"]
+
+    null_records = stats["null_records"]
+
+    non_null_records = stats["non_null_records"]
+
+
+    # --------------------------------------------------------
+    # Determine status
+    # --------------------------------------------------------
+
+    if files_present == 0:
+
+        status = "MISSING FROM ALL FILES"
+
+    elif files_missing > 0:
+
+        if null_records == 0:
+
+            status = "MISSING FROM SOME FILES"
+
+        else:
+
+            status = (
+                "MISSING FROM SOME FILES + HAS NULLS"
+            )
+
+    elif null_records == 0:
+
+        status = "NEVER NULL"
+
+    elif non_null_records == 0:
+
+        status = "ALWAYS NULL"
+
+    else:
+
+        status = "SOMETIMES NULL"
+
+
+    # --------------------------------------------------------
+    # Null percentage
+    # --------------------------------------------------------
+
+    if total_records > 0:
+
+        null_percentage = (
+            null_records
+            / total_records
+        ) * 100
+
+    else:
+
+        null_percentage = 0
+
+
+    # --------------------------------------------------------
+    # Print
+    # --------------------------------------------------------
+
+    print(
+        "\n" + "-" * 100
+    )
+
+    print(
+        f"Column: {column}"
+    )
+
+    print(
+        f"Status: {status}"
+    )
+
+    print(
+        f"Files present: "
+        f"{files_present}/{total_files}"
+    )
+
+    print(
+        f"Files missing: "
+        f"{files_missing}/{total_files}"
+    )
+
+    print(
+        f"Total records: "
+        f"{total_records}"
+    )
+
+    print(
+        f"Non-null records: "
+        f"{non_null_records}"
+    )
+
+    print(
+        f"Null records: "
+        f"{null_records}"
+    )
+
+    print(
+        f"Null percentage: "
+        f"{null_percentage:.2f}%"
+    )
+
+
+# ============================================================
+# Complete
+# ============================================================
 
 print("\n")
+
 print("#" * 100)
 print("ANALYSIS COMPLETE")
 print("#" * 100)
