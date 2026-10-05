@@ -727,76 +727,157 @@ for file_number, key in enumerate(
     # ========================================================
     # Duplication Analysis
     # ========================================================
+    def analyze_duplication_relationships(df):
+        print("\n" + "-" * 100)
+        print("DUPLICATION RELATIONSHIP ANALYSIS")
+        print("-" * 100)
+
+        available_columns = [
+            column for column in DUPLICATION_COLUMNS
+            if column in df.columns
+        ]
+
+        if len(available_columns) < 2:
+            print("\nNot enough columns available for relationship analysis.")
+            return
+
+        found_relationships = False
+
+        # Analyze every pair in both directions
+        for i, column_a in enumerate(available_columns):
+            for column_b in available_columns[i + 1:]:
+                
+                temp = df[[column_a, column_b]].copy()
+
+                # Ignore rows where either side is NULL
+                temp = temp.dropna(subset=[column_a, column_b])
+
+                if temp.empty:
+                    continue
+
+                # Normalize values so lists/dicts can be compared safely
+                temp[column_a] = temp[column_a].apply(normalize_value)
+                temp[column_b] = temp[column_b].apply(normalize_value)
+
+                print(f"\n{column_a} <-> {column_b}")
+
+                # ---------------------------------------------------------
+                # column_a -> column_b
+                # ---------------------------------------------------------
+                mapping_a_to_b = (
+                    temp.groupby(column_a, dropna=True)[column_b]
+                    .nunique()
+                )
+
+                multiple_a_to_b = mapping_a_to_b[
+                    mapping_a_to_b > 1
+                ]
+
+                if not multiple_a_to_b.empty:
+                    found_relationships = True
+
+                    print(
+                        f"\n  {column_a} -> {column_b}: "
+                        f"{len(multiple_a_to_b)} values have multiple "
+                        f"{column_b} values"
+                    )
+
+                    for value_a in multiple_a_to_b.index[:10]:
+                        related_values = (
+                            temp.loc[
+                                temp[column_a] == value_a,
+                                column_b
+                            ]
+                            .drop_duplicates()
+                            .tolist()
+                        )
+
+                        print(f"    {column_a} = {value_a}")
+                        print(f"      {column_b} values: {related_values}")
+
+                else:
+                    print(
+                        f"\n  {column_a} -> {column_b}: "
+                        f"No one-to-many relationship found"
+                    )
+
+                # ---------------------------------------------------------
+                # column_b -> column_a
+                # ---------------------------------------------------------
+                mapping_b_to_a = (
+                    temp.groupby(column_b, dropna=True)[column_a]
+                    .nunique()
+                )
+
+                multiple_b_to_a = mapping_b_to_a[
+                    mapping_b_to_a > 1
+                ]
+
+                if not multiple_b_to_a.empty:
+                    found_relationships = True
+
+                    print(
+                        f"\n  {column_b} -> {column_a}: "
+                        f"{len(multiple_b_to_a)} values have multiple "
+                        f"{column_a} values"
+                    )
+
+                    for value_b in multiple_b_to_a.index[:10]:
+                        related_values = (
+                            temp.loc[
+                                temp[column_b] == value_b,
+                                column_a
+                            ]
+                            .drop_duplicates()
+                            .tolist()
+                        )
+
+                        print(f"    {column_b} = {value_b}")
+                        print(f"      {column_a} values: {related_values}")
+
+                else:
+                    print(
+                        f"\n  {column_b} -> {column_a}: "
+                        f"No one-to-many relationship found"
+                    )
+
+        if not found_relationships:
+            print(
+                "\nNo one-to-many relationships found between "
+                "the duplication columns."
+            )
+
 
     print("\n" + "-" * 100)
     print("DUPLICATION ANALYSIS")
     print("-" * 100)
 
-
     found_duplicates = False
 
-
     for column in DUPLICATION_COLUMNS:
-
         if column not in df.columns:
-
-            print(
-                f"\n{column}: "
-                f"COLUMN NOT FOUND"
-            )
-
+            print(f"\n{column}: COLUMN NOT FOUND")
             continue
 
-
-        normalized = df[column].apply(
-            normalize_value
-        )
-
-
-        counts = normalized.value_counts(
-            dropna=True
-        )
-
-
-        duplicates = counts[
-            counts > 1
-        ]
-
+        normalized = df[column].apply(normalize_value)
+        counts = normalized.value_counts(dropna=True)
+        duplicates = counts[counts > 1]
 
         if duplicates.empty:
-
-            print(
-                f"\n{column}: "
-                f"No duplicates"
-            )
-
+            print(f"\n{column}: No duplicates")
         else:
-
             found_duplicates = True
 
-            print(
-                f"\n{column}: "
-                f"{len(duplicates)} "
-                f"duplicated values"
-            )
+            print(f"\n{column}: {len(duplicates)} duplicated values")
 
-
-            for value, count in (
-                duplicates.items()
-            ):
-
-                print(
-                    f"  {format_value(value)} "
-                    f"-> {count} times"
-                )
-
+            for value, count in duplicates.items():
+                print(f"  {format_value(value)} -> {count} times")
 
     if not found_duplicates:
+        print("\nNo duplicates found in the checked columns.")
 
-        print(
-            "\nNo duplicates found "
-            "in the checked columns."
-        )
+    # Analyze relationships between the duplication columns
+    analyze_duplication_relationships(df)
 
 
     # ========================================================
