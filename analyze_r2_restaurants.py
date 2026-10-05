@@ -12,6 +12,7 @@ import pandas as pd
 
 R2_PREFIX = "merged-restaurant-info/year=2025/month=09/day=17/"
 
+
 COLUMN_ORDER = [
     "id",
     "name",
@@ -81,7 +82,10 @@ COLUMN_ORDER = [
 ]
 
 
-# Columns used for duplicate-value analysis
+# ============================================================
+# DUPLICATION ANALYSIS
+# ============================================================
+
 DUPLICATION_COLUMNS = [
     "id",
     "name",
@@ -92,7 +96,10 @@ DUPLICATION_COLUMNS = [
 ]
 
 
-# Specific groups for relationship analysis
+# ============================================================
+# RELATIONSHIP ANALYSIS
+# ============================================================
+
 RELATIONSHIP_GROUPS = [
     ["id", "name", "restaurantSlug"],
     ["branchId", "branchName", "branchSlug"],
@@ -100,7 +107,10 @@ RELATIONSHIP_GROUPS = [
 ]
 
 
-# Columns for global unique-value analysis
+# ============================================================
+# GLOBAL UNIQUE VALUES
+# ============================================================
+
 UNIQUE_COLUMNS = [
     "areaName",
     "areaId",
@@ -143,19 +153,36 @@ UNIQUE_COLUMNS = [
 ]
 
 
-# Columns for per-file min/max analysis
+# ============================================================
+# MIN / MAX
+# ============================================================
+
 MIN_MAX_COLUMNS = [
     "deliveryTime",
     "deliveryFee",
 ]
 
 
-# Columns for global rating analysis
+# ============================================================
+# RATING ANALYSIS
+# ============================================================
+
 RATING_COLUMNS = [
     "rate",
     "totalReviews",
     "totalRatings",
 ]
+
+
+# ============================================================
+# INTERNAL SPECIAL VALUES
+# ============================================================
+
+# These are only used internally so NULL and EMPTY remain
+# different values during duplicate / relationship analysis.
+
+NULL_MARKER = "__R2_ANALYSIS_NULL__"
+EMPTY_MARKER = "__R2_ANALYSIS_EMPTY__"
 
 
 # ============================================================
@@ -173,19 +200,79 @@ BUCKET_NAME = os.environ["CF_R2_BUCKET_NAME"]
 
 
 # ============================================================
-# HELPERS
+# VALUE TYPE HELPERS
+# ============================================================
+
+def is_null_value(value):
+    """
+    Detect actual NULL / NaN / NaT values.
+
+    Empty strings are NOT considered NULL.
+    """
+
+    if value is None:
+        return True
+
+    if isinstance(value, (list, dict)):
+        return False
+
+    try:
+        result = pd.isna(value)
+
+        if isinstance(result, bool):
+            return result
+
+        return False
+
+    except (TypeError, ValueError):
+        return False
+
+
+def is_empty_value(value):
+    """
+    Detect empty strings and strings containing only spaces.
+
+    Examples:
+        ""       -> EMPTY
+        "   "    -> EMPTY
+        "abc"    -> ACTUAL VALUE
+    """
+
+    if not isinstance(value, str):
+        return False
+
+    return value.strip() == ""
+
+
+def is_actual_value(value):
+    """
+    Detect actual non-null, non-empty values.
+    """
+
+    return (
+        not is_null_value(value)
+        and not is_empty_value(value)
+    )
+
+
+# ============================================================
+# NORMALIZATION
 # ============================================================
 
 def normalize_value(value):
     """
-    Normalize values before duplicate / relationship analysis.
+    Normalize values while keeping NULL and EMPTY separate.
 
-    Lists and dictionaries are converted to JSON strings
-    so they can be compared safely.
+    NULL  -> NULL_MARKER
+    EMPTY -> EMPTY_MARKER
+    Actual values remain comparable.
     """
 
-    if pd.isna(value) if not isinstance(value, (list, dict)) else False:
-        return None
+    if is_null_value(value):
+        return NULL_MARKER
+
+    if is_empty_value(value):
+        return EMPTY_MARKER
 
     if isinstance(value, (dict, list)):
         return json.dumps(
@@ -195,6 +282,7 @@ def normalize_value(value):
         )
 
     if isinstance(value, float):
+
         if value.is_integer():
             return int(value)
 
@@ -203,18 +291,29 @@ def normalize_value(value):
 
 def format_value(value):
     """
-    Format values for readable console output.
+    Convert internal markers into readable output.
     """
+
+    if value == NULL_MARKER:
+        return "NULL"
+
+    if value == EMPTY_MARKER:
+        return "EMPTY"
 
     if value is None:
         return "NULL"
 
     if isinstance(value, float):
+
         if value.is_integer():
             return str(int(value))
 
     return str(value)
 
+
+# ============================================================
+# LOAD JSON FILE
+# ============================================================
 
 def load_json_file(bucket_name, key):
     """
@@ -230,52 +329,136 @@ def load_json_file(bucket_name, key):
 
     data = json.loads(content)
 
-    # Handle different possible JSON structures
     if isinstance(data, list):
         return data
 
     if isinstance(data, dict):
-        # If the actual records are inside a common key
-        for key_name in ["data", "records", "items", "results"]:
-            if key_name in data and isinstance(data[key_name], list):
+
+        for key_name in [
+            "data",
+            "records",
+            "items",
+            "results"
+        ]:
+
+            if (
+                key_name in data
+                and isinstance(data[key_name], list)
+            ):
                 return data[key_name]
 
-        # Otherwise treat the dict itself as one record
         return [data]
 
     return []
 
 
+# ============================================================
+# UNIQUE VALUES
+# ============================================================
+
 def get_unique_values(series):
     """
-    Return normalized unique non-null values from a column.
+    Return unique ACTUAL values.
+
+    NULL and EMPTY are not included here because this section
+    is intended to show actual unique values.
     """
 
     values = set()
 
     for value in series:
+
+        if not is_actual_value(value):
+            continue
+
         normalized = normalize_value(value)
 
-        if normalized is not None:
-            values.add(str(normalized))
+        values.add(str(normalized))
 
     return values
 
 
 # ============================================================
-# DUPLICATION ANALYSIS
+# DUPLICATE ANALYSIS
+# ============================================================
+
+def analyze_duplicates(df):
+
+    print("\n" + "-" * 100)
+    print("DUPLICATE VALUES")
+    print("-" * 100)
+
+    for column in DUPLICATION_COLUMNS:
+
+        if column not in df.columns:
+
+            print(
+                f"\n{column}: COLUMN NOT FOUND"
+            )
+
+            continue
+
+        # Normalize values.
+        #
+        # IMPORTANT:
+        # NULL and EMPTY are kept as different values.
+        #
+        # NULL  -> NULL_MARKER
+        # EMPTY -> EMPTY_MARKER
+
+        normalized = df[column].apply(
+            normalize_value
+        )
+
+        counts = normalized.value_counts(
+            dropna=False
+        )
+
+        duplicates = counts[
+            counts > 1
+        ]
+
+        if duplicates.empty:
+
+            print(
+                f"\n{column}: No duplicates"
+            )
+
+        else:
+
+            print(
+                f"\n{column}: "
+                f"{len(duplicates)} duplicated values"
+            )
+
+            for value, count in duplicates.items():
+
+                print(
+                    f"  {format_value(value)} "
+                    f"-> {count} times"
+                )
+
+    # Relationship analysis
+    analyze_duplication_relationships(df)
+
+
+# ============================================================
+# RELATIONSHIP ANALYSIS
 # ============================================================
 
 def analyze_group_relationships(df, columns):
     """
-    Analyze pairwise relationships inside one relationship group.
+    Analyze pairwise relationships inside a specific group.
 
     For every pair:
+
         A -> B
         B -> A
 
-    Only one-to-many relationships are reported.
-    Maximum 10 example values are shown for each direction.
+    NULL and EMPTY are INCLUDED.
+
+    Maximum 10 one-to-many examples are shown
+    for each direction.
     """
 
     available_columns = [
@@ -287,37 +470,50 @@ def analyze_group_relationships(df, columns):
     if len(available_columns) < 2:
         return
 
-    for i, column_a in enumerate(available_columns):
+    for i, column_a in enumerate(
+        available_columns
+    ):
 
-        for column_b in available_columns[i + 1:]:
+        for column_b in available_columns[
+            i + 1:
+        ]:
 
-            temp = df[[column_a, column_b]].copy()
+            temp = df[
+                [column_a, column_b]
+            ].copy()
 
-            temp = temp.dropna(
-                subset=[column_a, column_b]
-            )
+            # Normalize BOTH columns.
+            #
+            # This converts:
+            # NULL  -> NULL_MARKER
+            # EMPTY -> EMPTY_MARKER
+            #
+            # So they can participate in the analysis.
+
+            temp[column_a] = temp[
+                column_a
+            ].apply(normalize_value)
+
+            temp[column_b] = temp[
+                column_b
+            ].apply(normalize_value)
 
             if temp.empty:
                 continue
-
-            temp[column_a] = temp[column_a].apply(
-                normalize_value
-            )
-
-            temp[column_b] = temp[column_b].apply(
-                normalize_value
-            )
 
             print(
                 f"\n{column_a} <-> {column_b}"
             )
 
-            # ------------------------------------------------
+            # =================================================
             # A -> B
-            # ------------------------------------------------
+            # =================================================
 
             mapping_a_to_b = (
-                temp.groupby(column_a)[column_b]
+                temp.groupby(
+                    column_a,
+                    dropna=False
+                )[column_b]
                 .nunique()
             )
 
@@ -338,11 +534,13 @@ def analyze_group_relationships(df, columns):
 
                 print(
                     f"  {column_a} -> {column_b}: "
-                    f"{len(multiple_a_to_b)} values have "
-                    f"multiple {column_b} values"
+                    f"{len(multiple_a_to_b)} values "
+                    f"have multiple {column_b} values"
                 )
 
-                for value_a in multiple_a_to_b.index[:10]:
+                for value_a in (
+                    multiple_a_to_b.index[:10]
+                ):
 
                     related_values = (
                         temp.loc[
@@ -353,6 +551,11 @@ def analyze_group_relationships(df, columns):
                         .tolist()
                     )
 
+                    formatted_related_values = [
+                        format_value(value)
+                        for value in related_values
+                    ]
+
                     print(
                         f"    {column_a} = "
                         f"{format_value(value_a)}"
@@ -360,15 +563,18 @@ def analyze_group_relationships(df, columns):
 
                     print(
                         f"      {column_b}: "
-                        f"{related_values}"
+                        f"{formatted_related_values}"
                     )
 
-            # ------------------------------------------------
+            # =================================================
             # B -> A
-            # ------------------------------------------------
+            # =================================================
 
             mapping_b_to_a = (
-                temp.groupby(column_b)[column_a]
+                temp.groupby(
+                    column_b,
+                    dropna=False
+                )[column_a]
                 .nunique()
             )
 
@@ -389,11 +595,13 @@ def analyze_group_relationships(df, columns):
 
                 print(
                     f"  {column_b} -> {column_a}: "
-                    f"{len(multiple_b_to_a)} values have "
-                    f"multiple {column_a} values"
+                    f"{len(multiple_b_to_a)} values "
+                    f"have multiple {column_a} values"
                 )
 
-                for value_b in multiple_b_to_a.index[:10]:
+                for value_b in (
+                    multiple_b_to_a.index[:10]
+                ):
 
                     related_values = (
                         temp.loc[
@@ -404,6 +612,11 @@ def analyze_group_relationships(df, columns):
                         .tolist()
                     )
 
+                    formatted_related_values = [
+                        format_value(value)
+                        for value in related_values
+                    ]
+
                     print(
                         f"    {column_b} = "
                         f"{format_value(value_b)}"
@@ -411,14 +624,11 @@ def analyze_group_relationships(df, columns):
 
                     print(
                         f"      {column_a}: "
-                        f"{related_values}"
+                        f"{formatted_related_values}"
                     )
 
 
 def analyze_duplication_relationships(df):
-    """
-    Analyze only the requested relationship groups.
-    """
 
     print("\n" + "-" * 100)
     print("DUPLICATION RELATIONSHIP ANALYSIS")
@@ -442,65 +652,68 @@ def analyze_duplication_relationships(df):
         )
 
 
-def analyze_duplicates(df):
+# ============================================================
+# COLUMN STATUS
+# ============================================================
+
+def get_column_status(
+    files_present,
+    files_missing,
+    null_values,
+    empty_values
+):
     """
-    Analyze duplicate values for the six duplication columns.
+    Determine the overall status of a column.
     """
 
-    print("\n" + "-" * 100)
-    print("DUPLICATE VALUES")
-    print("-" * 100)
+    if files_present == 0:
 
-    found_duplicates = False
+        return "MISSING FROM ALL FILES"
 
-    for column in DUPLICATION_COLUMNS:
+    has_nulls = null_values > 0
+    has_empty = empty_values > 0
+    missing_some_files = files_missing > 0
 
-        if column not in df.columns:
+    if missing_some_files:
 
-            print(
-                f"\n{column}: COLUMN NOT FOUND"
+        if has_nulls and has_empty:
+
+            return (
+                "MISSING FROM SOME FILES "
+                "+ HAS NULLS + EMPTY VALUES"
             )
 
-            continue
+        if has_nulls:
 
-        normalized = df[column].apply(
-            normalize_value
-        )
-
-        counts = normalized.value_counts(
-            dropna=True
-        )
-
-        duplicates = counts[
-            counts > 1
-        ]
-
-        if duplicates.empty:
-
-            print(
-                f"\n{column}: No duplicates"
+            return (
+                "MISSING FROM SOME FILES "
+                "+ HAS NULLS"
             )
 
-        else:
+        if has_empty:
 
-            found_duplicates = True
-
-            print(
-                f"\n{column}: "
-                f"{len(duplicates)} duplicated values"
+            return (
+                "MISSING FROM SOME FILES "
+                "+ HAS EMPTY VALUES"
             )
 
-            for value, count in duplicates.items():
+        return "MISSING FROM SOME FILES"
 
-                print(
-                    f"  {format_value(value)} "
-                    f"-> {count} times"
-                )
+    # Column exists in every file
 
-    # Relationship analysis
-    analyze_duplication_relationships(df)
+    if has_nulls and has_empty:
 
-    return found_duplicates
+        return "HAS NULLS + EMPTY VALUES"
+
+    if has_nulls:
+
+        return "HAS NULLS"
+
+    if has_empty:
+
+        return "HAS EMPTY VALUES"
+
+    return "NEVER NULL / NEVER EMPTY"
 
 
 # ============================================================
@@ -513,12 +726,17 @@ def main():
     print("R2 RESTAURANT DATA ANALYSIS")
     print("=" * 100)
 
-    print(f"\nBucket : {BUCKET_NAME}")
-    print(f"Prefix : {R2_PREFIX}")
+    print(
+        f"\nBucket : {BUCKET_NAME}"
+    )
 
-    # --------------------------------------------------------
-    # List files
-    # --------------------------------------------------------
+    print(
+        f"Prefix : {R2_PREFIX}"
+    )
+
+    # ========================================================
+    # LIST FILES
+    # ========================================================
 
     files = []
 
@@ -531,13 +749,17 @@ def main():
         Prefix=R2_PREFIX
     ):
 
-        for obj in page.get("Contents", []):
+        for obj in page.get(
+            "Contents",
+            []
+        ):
 
             key = obj["Key"]
 
             if key.lower().endswith(
                 ".json"
             ):
+
                 files.append(key)
 
     files.sort()
@@ -548,14 +770,16 @@ def main():
     )
 
     if not files:
+
         print(
             "\nNo JSON files found."
         )
+
         return
 
-    # --------------------------------------------------------
-    # Global containers
-    # --------------------------------------------------------
+    # ========================================================
+    # GLOBAL DATA CONTAINERS
+    # ========================================================
 
     global_unique_values = defaultdict(set)
 
@@ -563,21 +787,25 @@ def main():
 
     processed_files = []
 
-    # Column completeness tracking
+    # ========================================================
+    # COLUMN COMPLETENESS
+    # ========================================================
+
     column_stats = {
         column: {
             "files_present": 0,
             "files_missing": 0,
             "total_records": 0,
-            "non_null_records": 0,
-            "null_records": 0,
+            "actual_values": 0,
+            "null_values": 0,
+            "empty_values": 0,
         }
         for column in COLUMN_ORDER
     }
 
-    # --------------------------------------------------------
-    # Process every file
-    # --------------------------------------------------------
+    # ========================================================
+    # PROCESS EACH FILE
+    # ========================================================
 
     for file_number, file_key in enumerate(
         files,
@@ -586,9 +814,11 @@ def main():
 
         print("\n\n")
         print("=" * 100)
+
         print(
             f"FILE {file_number}/{len(files)}"
         )
+
         print("=" * 100)
 
         print(
@@ -621,52 +851,61 @@ def main():
             )
 
             print(
-                f"Columns found: {len(df.columns)}"
+                f"Columns found: "
+                f"{len(df.columns)}"
             )
 
             processed_files.append(
                 file_key
             )
 
-            # ------------------------------------------------
-            # Column completeness
-            # ------------------------------------------------
+            # =================================================
+            # COLUMN COMPLETENESS
+            # =================================================
 
             for column in COLUMN_ORDER:
 
                 stats = column_stats[column]
 
-                stats["total_records"] += len(df)
+                stats[
+                    "total_records"
+                ] += len(df)
 
                 if column not in df.columns:
 
-                    stats["files_missing"] += 1
+                    stats[
+                        "files_missing"
+                    ] += 1
 
                     continue
 
-                stats["files_present"] += 1
+                stats[
+                    "files_present"
+                ] += 1
 
-                null_mask = df[column].isna()
+                for value in df[column]:
 
-                null_count = int(
-                    null_mask.sum()
-                )
+                    if is_null_value(value):
 
-                non_null_count = (
-                    len(df) - null_count
-                )
+                        stats[
+                            "null_values"
+                        ] += 1
 
-                stats["null_records"] += (
-                    null_count
-                )
+                    elif is_empty_value(value):
 
-                stats["non_null_records"] += (
-                    non_null_count
-                )
+                        stats[
+                            "empty_values"
+                        ] += 1
 
-            # ------------------------------------------------
-            # Global unique values
-            # ------------------------------------------------
+                    else:
+
+                        stats[
+                            "actual_values"
+                        ] += 1
+
+            # =================================================
+            # GLOBAL UNIQUE VALUES
+            # =================================================
 
             for column in UNIQUE_COLUMNS:
 
@@ -681,9 +920,9 @@ def main():
                     column
                 ].update(values)
 
-            # ------------------------------------------------
-            # Per-file min / max
-            # ------------------------------------------------
+            # =================================================
+            # PER-FILE MIN / MAX
+            # =================================================
 
             print("\n")
             print("-" * 100)
@@ -729,15 +968,15 @@ def main():
                     f"{numeric_values.max()}"
                 )
 
-            # ------------------------------------------------
-            # Duplicate analysis
-            # ------------------------------------------------
+            # =================================================
+            # DUPLICATE ANALYSIS
+            # =================================================
 
             analyze_duplicates(df)
 
-            # ------------------------------------------------
-            # Rating data
-            # ------------------------------------------------
+            # =================================================
+            # RATING DATA
+            # =================================================
 
             if all(
                 column in df.columns
@@ -764,7 +1003,7 @@ def main():
         except Exception as e:
 
             print(
-                f"\nERROR processing file:"
+                "\nERROR processing file:"
             )
 
             print(
@@ -807,7 +1046,7 @@ def main():
         if not values:
 
             print(
-                "  [No non-null values]"
+                "  [No actual values]"
             )
 
         else:
@@ -835,10 +1074,12 @@ def main():
         )
 
         # ----------------------------------------------------
-        # Basic statistics
+        # BASIC STATISTICS
         # ----------------------------------------------------
 
-        print("\nBasic statistics:")
+        print(
+            "\nBasic statistics:"
+        )
 
         for column in RATING_COLUMNS:
 
@@ -882,7 +1123,7 @@ def main():
             )
 
         # ----------------------------------------------------
-        # Comparison
+        # COMPARISON
         # ----------------------------------------------------
 
         comparison_df = all_ratings.dropna(
@@ -890,21 +1131,38 @@ def main():
         )
 
         equal_count = (
-            comparison_df["totalReviews"]
-            == comparison_df["totalRatings"]
+            comparison_df[
+                "totalReviews"
+            ]
+            ==
+            comparison_df[
+                "totalRatings"
+            ]
         ).sum()
 
         reviews_greater = (
-            comparison_df["totalReviews"]
-            > comparison_df["totalRatings"]
+            comparison_df[
+                "totalReviews"
+            ]
+            >
+            comparison_df[
+                "totalRatings"
+            ]
         ).sum()
 
         ratings_greater = (
-            comparison_df["totalRatings"]
-            > comparison_df["totalReviews"]
+            comparison_df[
+                "totalRatings"
+            ]
+            >
+            comparison_df[
+                "totalReviews"
+            ]
         ).sum()
 
-        print("\nComparison:")
+        print(
+            "\nComparison:"
+        )
 
         print(
             f"  totalReviews == totalRatings : "
@@ -954,64 +1212,66 @@ def main():
             "total_records"
         ]
 
-        non_null_records = stats[
-            "non_null_records"
+        actual_values = stats[
+            "actual_values"
         ]
 
-        null_records = stats[
-            "null_records"
+        null_values = stats[
+            "null_values"
+        ]
+
+        empty_values = stats[
+            "empty_values"
         ]
 
         # ----------------------------------------------------
-        # Determine status
+        # STATUS
         # ----------------------------------------------------
 
-        if files_present == 0:
-
-            status = "MISSING FROM ALL FILES"
-
-        elif files_missing > 0:
-
-            if null_records > 0:
-
-                status = (
-                    "MISSING FROM SOME FILES "
-                    "+ HAS NULLS"
-                )
-
-            else:
-
-                status = (
-                    "MISSING FROM SOME FILES"
-                )
-
-        else:
-
-            if null_records == 0:
-
-                status = "NEVER NULL"
-
-            else:
-
-                status = "SOMETIMES NULL"
+        status = get_column_status(
+            files_present=files_present,
+            files_missing=files_missing,
+            null_values=null_values,
+            empty_values=empty_values,
+        )
 
         # ----------------------------------------------------
-        # Null percentage
+        # PERCENTAGES
         # ----------------------------------------------------
 
         if total_records > 0:
 
+            actual_percentage = (
+                actual_values
+                / total_records
+                * 100
+            )
+
             null_percentage = (
-                null_records
+                null_values
+                / total_records
+                * 100
+            )
+
+            empty_percentage = (
+                empty_values
                 / total_records
                 * 100
             )
 
         else:
 
+            actual_percentage = 0
             null_percentage = 0
+            empty_percentage = 0
 
-        print("\n" + "-" * 100)
+        # ----------------------------------------------------
+        # OUTPUT
+        # ----------------------------------------------------
+
+        print(
+            "\n" + "-" * 100
+        )
 
         print(
             f"{column}"
@@ -1038,22 +1298,37 @@ def main():
         )
 
         print(
-            f"  Non-null        : "
-            f"{non_null_records}"
+            f"  Actual Values   : "
+            f"{actual_values}"
         )
 
         print(
-            f"  Null            : "
-            f"{null_records}"
+            f"  NULL            : "
+            f"{null_values}"
         )
 
         print(
-            f"  Null %          : "
+            f"  EMPTY           : "
+            f"{empty_values}"
+        )
+
+        print(
+            f"  Actual %        : "
+            f"{actual_percentage:.2f}%"
+        )
+
+        print(
+            f"  NULL %          : "
             f"{null_percentage:.2f}%"
         )
 
+        print(
+            f"  EMPTY %         : "
+            f"{empty_percentage:.2f}%"
+        )
+
     # ========================================================
-    # FINISHED
+    # COMPLETED
     # ========================================================
 
     print("\n\n")
@@ -1062,12 +1337,12 @@ def main():
     print("=" * 100)
 
     print(
-        f"\nTotal files found     : "
+        f"\nTotal files found      : "
         f"{len(files)}"
     )
 
     print(
-        f"Successfully processed: "
+        f"Successfully processed : "
         f"{len(processed_files)}"
     )
 
