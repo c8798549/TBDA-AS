@@ -12,6 +12,8 @@ import pandas as pd
 
 R2_PREFIX = "merged-restaurant-info/year=2025/month=09/day=17/"
 
+OUTPUT_FILE = "restaurant_analysis_2025-09-17.json"
+
 
 COLUMN_ORDER = [
     "id",
@@ -175,11 +177,8 @@ RATING_COLUMNS = [
 
 
 # ============================================================
-# INTERNAL SPECIAL VALUES
+# SPECIAL VALUES
 # ============================================================
-
-# These are only used internally so NULL and EMPTY remain
-# different values during duplicate / relationship analysis.
 
 NULL_MARKER = "__R2_ANALYSIS_NULL__"
 EMPTY_MARKER = "__R2_ANALYSIS_EMPTY__"
@@ -200,16 +199,10 @@ BUCKET_NAME = os.environ["CF_R2_BUCKET_NAME"]
 
 
 # ============================================================
-# VALUE TYPE HELPERS
+# VALUE HELPERS
 # ============================================================
 
 def is_null_value(value):
-    """
-    Detect actual NULL / NaN / NaT values.
-
-    Empty strings are NOT considered NULL.
-    """
-
     if value is None:
         return True
 
@@ -229,15 +222,6 @@ def is_null_value(value):
 
 
 def is_empty_value(value):
-    """
-    Detect empty strings and strings containing only spaces.
-
-    Examples:
-        ""       -> EMPTY
-        "   "    -> EMPTY
-        "abc"    -> ACTUAL VALUE
-    """
-
     if not isinstance(value, str):
         return False
 
@@ -245,27 +229,15 @@ def is_empty_value(value):
 
 
 def is_actual_value(value):
-    """
-    Detect actual non-null, non-empty values.
-    """
-
     return (
         not is_null_value(value)
         and not is_empty_value(value)
     )
 
 
-# ============================================================
-# NORMALIZATION
-# ============================================================
-
 def normalize_value(value):
     """
-    Normalize values while keeping NULL and EMPTY separate.
-
-    NULL  -> NULL_MARKER
-    EMPTY -> EMPTY_MARKER
-    Actual values remain comparable.
+    Keep NULL and EMPTY as different values.
     """
 
     if is_null_value(value):
@@ -291,7 +263,7 @@ def normalize_value(value):
 
 def format_value(value):
     """
-    Convert internal markers into readable output.
+    Convert internal markers to readable JSON/output values.
     """
 
     if value == NULL_MARKER:
@@ -311,14 +283,38 @@ def format_value(value):
     return str(value)
 
 
+def json_safe_value(value):
+    """
+    Convert values to JSON-safe readable values.
+    """
+
+    if value == NULL_MARKER:
+        return "NULL"
+
+    if value == EMPTY_MARKER:
+        return "EMPTY"
+
+    if value is None:
+        return "NULL"
+
+    if isinstance(value, (dict, list)):
+        return value
+
+    if hasattr(value, "item"):
+
+        try:
+            return value.item()
+        except Exception:
+            pass
+
+    return value
+
+
 # ============================================================
-# LOAD JSON FILE
+# LOAD JSON
 # ============================================================
 
 def load_json_file(bucket_name, key):
-    """
-    Download and load one JSON file from R2.
-    """
 
     response = s3.get_object(
         Bucket=bucket_name,
@@ -357,12 +353,6 @@ def load_json_file(bucket_name, key):
 # ============================================================
 
 def get_unique_values(series):
-    """
-    Return unique ACTUAL values.
-
-    NULL and EMPTY are not included here because this section
-    is intended to show actual unique values.
-    """
 
     values = set()
 
@@ -379,10 +369,12 @@ def get_unique_values(series):
 
 
 # ============================================================
-# DUPLICATE ANALYSIS
+# DUPLICATES
 # ============================================================
 
 def analyze_duplicates(df):
+
+    results = {}
 
     print("\n" + "-" * 100)
     print("DUPLICATE VALUES")
@@ -392,19 +384,16 @@ def analyze_duplicates(df):
 
         if column not in df.columns:
 
+            results[column] = {
+                "status": "COLUMN NOT FOUND",
+                "duplicated_values": {}
+            }
+
             print(
                 f"\n{column}: COLUMN NOT FOUND"
             )
 
             continue
-
-        # Normalize values.
-        #
-        # IMPORTANT:
-        # NULL and EMPTY are kept as different values.
-        #
-        # NULL  -> NULL_MARKER
-        # EMPTY -> EMPTY_MARKER
 
         normalized = df[column].apply(
             normalize_value
@@ -418,13 +407,33 @@ def analyze_duplicates(df):
             counts > 1
         ]
 
+        duplicated_values = {}
+
+        for value, count in duplicates.items():
+
+            formatted_value = format_value(value)
+
+            duplicated_values[
+                formatted_value
+            ] = int(count)
+
         if duplicates.empty:
+
+            results[column] = {
+                "status": "NO DUPLICATES",
+                "duplicated_values": {}
+            }
 
             print(
                 f"\n{column}: No duplicates"
             )
 
         else:
+
+            results[column] = {
+                "status": "HAS DUPLICATES",
+                "duplicated_values": duplicated_values
+            }
 
             print(
                 f"\n{column}: "
@@ -438,28 +447,16 @@ def analyze_duplicates(df):
                     f"-> {count} times"
                 )
 
-    # Relationship analysis
-    analyze_duplication_relationships(df)
+    return results
 
 
 # ============================================================
-# RELATIONSHIP ANALYSIS
+# RELATIONSHIPS
 # ============================================================
 
 def analyze_group_relationships(df, columns):
-    """
-    Analyze pairwise relationships inside a specific group.
 
-    For every pair:
-
-        A -> B
-        B -> A
-
-    NULL and EMPTY are INCLUDED.
-
-    Maximum 10 one-to-many examples are shown
-    for each direction.
-    """
+    group_results = {}
 
     available_columns = [
         column
@@ -468,7 +465,7 @@ def analyze_group_relationships(df, columns):
     ]
 
     if len(available_columns) < 2:
-        return
+        return group_results
 
     for i, column_a in enumerate(
         available_columns
@@ -482,14 +479,6 @@ def analyze_group_relationships(df, columns):
                 [column_a, column_b]
             ].copy()
 
-            # Normalize BOTH columns.
-            #
-            # This converts:
-            # NULL  -> NULL_MARKER
-            # EMPTY -> EMPTY_MARKER
-            #
-            # So they can participate in the analysis.
-
             temp[column_a] = temp[
                 column_a
             ].apply(normalize_value)
@@ -498,8 +487,23 @@ def analyze_group_relationships(df, columns):
                 column_b
             ].apply(normalize_value)
 
-            if temp.empty:
-                continue
+            pair_key = (
+                f"{column_a} -> {column_b}"
+            )
+
+            reverse_pair_key = (
+                f"{column_b} -> {column_a}"
+            )
+
+            group_results[pair_key] = {
+                "one_to_many_count": 0,
+                "examples": []
+            }
+
+            group_results[reverse_pair_key] = {
+                "one_to_many_count": 0,
+                "examples": []
+            }
 
             print(
                 f"\n{column_a} <-> {column_b}"
@@ -521,6 +525,12 @@ def analyze_group_relationships(df, columns):
                 mapping_a_to_b[
                     mapping_a_to_b > 1
                 ]
+            )
+
+            group_results[pair_key][
+                "one_to_many_count"
+            ] = int(
+                len(multiple_a_to_b)
             )
 
             if multiple_a_to_b.empty:
@@ -551,10 +561,19 @@ def analyze_group_relationships(df, columns):
                         .tolist()
                     )
 
-                    formatted_related_values = [
+                    formatted_related = [
                         format_value(value)
                         for value in related_values
                     ]
+
+                    example = {
+                        column_a: format_value(value_a),
+                        column_b: formatted_related
+                    }
+
+                    group_results[pair_key][
+                        "examples"
+                    ].append(example)
 
                     print(
                         f"    {column_a} = "
@@ -563,7 +582,7 @@ def analyze_group_relationships(df, columns):
 
                     print(
                         f"      {column_b}: "
-                        f"{formatted_related_values}"
+                        f"{formatted_related}"
                     )
 
             # =================================================
@@ -582,6 +601,12 @@ def analyze_group_relationships(df, columns):
                 mapping_b_to_a[
                     mapping_b_to_a > 1
                 ]
+            )
+
+            group_results[reverse_pair_key][
+                "one_to_many_count"
+            ] = int(
+                len(multiple_b_to_a)
             )
 
             if multiple_b_to_a.empty:
@@ -612,10 +637,21 @@ def analyze_group_relationships(df, columns):
                         .tolist()
                     )
 
-                    formatted_related_values = [
+                    formatted_related = [
                         format_value(value)
                         for value in related_values
                     ]
+
+                    example = {
+                        column_b: format_value(value_b),
+                        column_a: formatted_related
+                    }
+
+                    group_results[
+                        reverse_pair_key
+                    ][
+                        "examples"
+                    ].append(example)
 
                     print(
                         f"    {column_b} = "
@@ -624,11 +660,15 @@ def analyze_group_relationships(df, columns):
 
                     print(
                         f"      {column_a}: "
-                        f"{formatted_related_values}"
+                        f"{formatted_related}"
                     )
+
+    return group_results
 
 
 def analyze_duplication_relationships(df):
+
+    results = {}
 
     print("\n" + "-" * 100)
     print("DUPLICATION RELATIONSHIP ANALYSIS")
@@ -639,17 +679,43 @@ def analyze_duplication_relationships(df):
         start=1
     ):
 
-        print(
-            f"\nGROUP {group_number}: "
+        group_name = (
+            f"GROUP {group_number}: "
             f"{' <-> '.join(columns)}"
+        )
+
+        print(
+            f"\n{group_name}"
         )
 
         print("-" * 80)
 
-        analyze_group_relationships(
-            df,
-            columns
+        results[group_name] = (
+            analyze_group_relationships(
+                df,
+                columns
+            )
         )
+
+    return results
+
+
+# ============================================================
+# COMPLETE DUPLICATE ANALYSIS
+# ============================================================
+
+def analyze_duplication(df):
+
+    duplicate_results = analyze_duplicates(df)
+
+    relationship_results = (
+        analyze_duplication_relationships(df)
+    )
+
+    return {
+        "duplicates": duplicate_results,
+        "relationships": relationship_results
+    }
 
 
 # ============================================================
@@ -662,12 +728,8 @@ def get_column_status(
     null_values,
     empty_values
 ):
-    """
-    Determine the overall status of a column.
-    """
 
     if files_present == 0:
-
         return "MISSING FROM ALL FILES"
 
     has_nulls = null_values > 0
@@ -677,21 +739,18 @@ def get_column_status(
     if missing_some_files:
 
         if has_nulls and has_empty:
-
             return (
                 "MISSING FROM SOME FILES "
                 "+ HAS NULLS + EMPTY VALUES"
             )
 
         if has_nulls:
-
             return (
                 "MISSING FROM SOME FILES "
                 "+ HAS NULLS"
             )
 
         if has_empty:
-
             return (
                 "MISSING FROM SOME FILES "
                 "+ HAS EMPTY VALUES"
@@ -699,18 +758,13 @@ def get_column_status(
 
         return "MISSING FROM SOME FILES"
 
-    # Column exists in every file
-
     if has_nulls and has_empty:
-
         return "HAS NULLS + EMPTY VALUES"
 
     if has_nulls:
-
         return "HAS NULLS"
 
     if has_empty:
-
         return "HAS EMPTY VALUES"
 
     return "NEVER NULL / NEVER EMPTY"
@@ -756,10 +810,7 @@ def main():
 
             key = obj["Key"]
 
-            if key.lower().endswith(
-                ".json"
-            ):
-
+            if key.lower().endswith(".json"):
                 files.append(key)
 
     files.sort()
@@ -778,7 +829,7 @@ def main():
         return
 
     # ========================================================
-    # GLOBAL DATA CONTAINERS
+    # GLOBAL CONTAINERS
     # ========================================================
 
     global_unique_values = defaultdict(set)
@@ -786,6 +837,8 @@ def main():
     global_rating_data = []
 
     processed_files = []
+
+    file_results = []
 
     # ========================================================
     # COLUMN COMPLETENESS
@@ -804,7 +857,7 @@ def main():
     }
 
     # ========================================================
-    # PROCESS EACH FILE
+    # PROCESS FILES
     # ========================================================
 
     for file_number, file_key in enumerate(
@@ -832,14 +885,32 @@ def main():
                 file_key
             )
 
+            file_result = {
+                "file_number": file_number,
+                "file_path": file_key,
+                "status": "SUCCESS",
+                "record_count": len(records),
+                "min_max": {},
+                "duplicates": {},
+                "relationships": {}
+            }
+
             if not records:
 
                 print(
                     "\nNo records found."
                 )
 
+                file_result[
+                    "status"
+                ] = "NO RECORDS"
+
                 processed_files.append(
                     file_key
+                )
+
+                file_results.append(
+                    file_result
                 )
 
                 continue
@@ -921,7 +992,7 @@ def main():
                 ].update(values)
 
             # =================================================
-            # PER-FILE MIN / MAX
+            # MIN / MAX
             # =================================================
 
             print("\n")
@@ -938,6 +1009,12 @@ def main():
                         "COLUMN NOT FOUND"
                     )
 
+                    file_result[
+                        "min_max"
+                    ][column] = {
+                        "status": "COLUMN NOT FOUND"
+                    }
+
                     continue
 
                 numeric_values = pd.to_numeric(
@@ -952,27 +1029,55 @@ def main():
                         "No numeric values"
                     )
 
+                    file_result[
+                        "min_max"
+                    ][column] = {
+                        "status": "NO NUMERIC VALUES"
+                    }
+
                     continue
+
+                minimum = numeric_values.min()
+                maximum = numeric_values.max()
 
                 print(
                     f"\n{column}:"
                 )
 
                 print(
-                    f"  Min: "
-                    f"{numeric_values.min()}"
+                    f"  Min: {minimum}"
                 )
 
                 print(
-                    f"  Max: "
-                    f"{numeric_values.max()}"
+                    f"  Max: {maximum}"
                 )
 
+                file_result[
+                    "min_max"
+                ][column] = {
+                    "min": json_safe_value(minimum),
+                    "max": json_safe_value(maximum)
+                }
+
             # =================================================
-            # DUPLICATE ANALYSIS
+            # DUPLICATES + RELATIONSHIPS
             # =================================================
 
-            analyze_duplicates(df)
+            duplication_result = (
+                analyze_duplication(df)
+            )
+
+            file_result[
+                "duplicates"
+            ] = duplication_result[
+                "duplicates"
+            ]
+
+            file_result[
+                "relationships"
+            ] = duplication_result[
+                "relationships"
+            ]
 
             # =================================================
             # RATING DATA
@@ -1000,6 +1105,10 @@ def main():
                     rating_df
                 )
 
+            file_results.append(
+                file_result
+            )
+
         except Exception as e:
 
             print(
@@ -1010,6 +1119,13 @@ def main():
                 f"  {e}"
             )
 
+            file_results.append({
+                "file_number": file_number,
+                "file_path": file_key,
+                "status": "ERROR",
+                "error": str(e)
+            })
+
     # ========================================================
     # GLOBAL UNIQUE VALUES
     # ========================================================
@@ -1019,21 +1135,15 @@ def main():
     print("GLOBAL UNIQUE VALUES — ALL FILES")
     print("#" * 100)
 
-    print(
-        f"\nTotal files found: "
-        f"{len(files)}"
-    )
-
-    print(
-        f"Successfully processed: "
-        f"{len(processed_files)}"
-    )
+    global_unique_output = {}
 
     for column in UNIQUE_COLUMNS:
 
         values = sorted(
             global_unique_values[column]
         )
+
+        global_unique_output[column] = values
 
         print("\n" + "-" * 100)
 
@@ -1066,16 +1176,17 @@ def main():
     print("GLOBAL RATING ANALYSIS — ALL FILES")
     print("#" * 100)
 
+    rating_result = {
+        "basic_statistics": {},
+        "comparison": {}
+    }
+
     if global_rating_data:
 
         all_ratings = pd.concat(
             global_rating_data,
             ignore_index=True
         )
-
-        # ----------------------------------------------------
-        # BASIC STATISTICS
-        # ----------------------------------------------------
 
         print(
             "\nBasic statistics:"
@@ -1087,11 +1198,19 @@ def main():
                 column
             ].dropna()
 
-            print(
-                f"\n{column}:"
-            )
-
             if values.empty:
+
+                rating_result[
+                    "basic_statistics"
+                ][column] = {
+                    "min": None,
+                    "max": None,
+                    "unique": 0
+                }
+
+                print(
+                    f"\n{column}:"
+                )
 
                 print(
                     "  Min    : No values"
@@ -1107,19 +1226,32 @@ def main():
 
                 continue
 
+            minimum = values.min()
+            maximum = values.max()
+            unique = values.nunique()
+
+            rating_result[
+                "basic_statistics"
+            ][column] = {
+                "min": json_safe_value(minimum),
+                "max": json_safe_value(maximum),
+                "unique": int(unique)
+            }
+
             print(
-                f"  Min    : "
-                f"{values.min()}"
+                f"\n{column}:"
             )
 
             print(
-                f"  Max    : "
-                f"{values.max()}"
+                f"  Min    : {minimum}"
             )
 
             print(
-                f"  Unique : "
-                f"{values.nunique()}"
+                f"  Max    : {maximum}"
+            )
+
+            print(
+                f"  Unique : {unique}"
             )
 
         # ----------------------------------------------------
@@ -1160,6 +1292,19 @@ def main():
             ]
         ).sum()
 
+        rating_result[
+            "comparison"
+        ] = {
+            "totalReviews == totalRatings":
+                int(equal_count),
+
+            "totalReviews > totalRatings":
+                int(reviews_greater),
+
+            "totalRatings > totalReviews":
+                int(ratings_greater),
+        }
+
         print(
             "\nComparison:"
         )
@@ -1185,6 +1330,10 @@ def main():
             "\nNo valid rating data found."
         )
 
+        rating_result[
+            "status"
+        ] = "NO VALID RATING DATA"
+
     # ========================================================
     # COLUMN COMPLETENESS
     # ========================================================
@@ -1195,6 +1344,8 @@ def main():
     print("#" * 100)
 
     total_files = len(files)
+
+    column_completeness = {}
 
     for column in COLUMN_ORDER:
 
@@ -1224,20 +1375,12 @@ def main():
             "empty_values"
         ]
 
-        # ----------------------------------------------------
-        # STATUS
-        # ----------------------------------------------------
-
         status = get_column_status(
             files_present=files_present,
             files_missing=files_missing,
             null_values=null_values,
             empty_values=empty_values,
         )
-
-        # ----------------------------------------------------
-        # PERCENTAGES
-        # ----------------------------------------------------
 
         if total_records > 0:
 
@@ -1265,9 +1408,27 @@ def main():
             null_percentage = 0
             empty_percentage = 0
 
-        # ----------------------------------------------------
-        # OUTPUT
-        # ----------------------------------------------------
+        column_completeness[column] = {
+            "status": status,
+            "files_present": files_present,
+            "files_missing": files_missing,
+            "total_records": total_records,
+            "actual_values": actual_values,
+            "null_values": null_values,
+            "empty_values": empty_values,
+            "actual_percentage": round(
+                actual_percentage,
+                2
+            ),
+            "null_percentage": round(
+                null_percentage,
+                2
+            ),
+            "empty_percentage": round(
+                empty_percentage,
+                2
+            )
+        }
 
         print(
             "\n" + "-" * 100
@@ -1328,8 +1489,51 @@ def main():
         )
 
     # ========================================================
-    # COMPLETED
+    # BUILD FINAL JSON
     # ========================================================
+
+    final_result = {
+        "analysis_info": {
+            "bucket": BUCKET_NAME,
+            "prefix": R2_PREFIX,
+            "total_files_found": len(files),
+            "successfully_processed": len(
+                processed_files
+            ),
+            "output_file": OUTPUT_FILE
+        },
+
+        "files": file_results,
+
+        "global_unique_values": (
+            global_unique_output
+        ),
+
+        "global_rating_analysis": (
+            rating_result
+        ),
+
+        "column_completeness": (
+            column_completeness
+        )
+    }
+
+    # ========================================================
+    # SAVE JSON
+    # ========================================================
+
+    with open(
+        OUTPUT_FILE,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        json.dump(
+            final_result,
+            f,
+            ensure_ascii=False,
+            indent=2
+        )
 
     print("\n\n")
     print("=" * 100)
@@ -1344,6 +1548,11 @@ def main():
     print(
         f"Successfully processed : "
         f"{len(processed_files)}"
+    )
+
+    print(
+        f"JSON result saved to   : "
+        f"{OUTPUT_FILE}"
     )
 
 
