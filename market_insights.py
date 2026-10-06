@@ -95,6 +95,15 @@ def print_examples(title, mapping, label_from, label_to):
         print(f"    {label_to}: {v}")
 
 
+def split_counts(counts):
+    """يقسم المطاعم حسب عدد الفروع."""
+    return {
+        "multiple_branches": sum(1 for c in counts if c > 1),
+        "single_branch": sum(1 for c in counts if c == 1),
+        "no_branch_id": sum(1 for c in counts if c == 0),
+    }
+
+
 # ============================================================
 # MAIN
 # ============================================================
@@ -125,6 +134,9 @@ def main():
     branch_ids, branch_names, branch_names_lower = set(), set(), set()
     branch_id_to_names = defaultdict(Counter)
     branch_name_to_ids = defaultdict(set)
+
+    # restaurant -> its branches
+    id_to_branch_ids = defaultdict(set)
 
     total_records = 0
 
@@ -161,6 +173,10 @@ def main():
                 branch_id_to_names[b_id][b_name] += 1
                 branch_name_to_ids[b_name].add(b_id)
 
+            # restaurant -> branches
+            if _id and b_id:
+                id_to_branch_ids[_id].add(b_id)
+
         print(f"[{i}/{len(files)}] {key} -> {len(records)} records")
 
     # ----------------------------------------------------
@@ -191,18 +207,18 @@ def main():
     }
 
     # ----------------------------------------------------
-    # unique restaurants list: [(id, name), ...]  (واحد لكل id)
+    # unique restaurants: [{id, name}, ...]  (واحد لكل id)
     # ----------------------------------------------------
     unique_restaurants = [
-        [rid, top_name(id_to_names[rid])]
+        {"id": rid, "name": top_name(id_to_names[rid])}
         for rid in sorted(id_to_names.keys(), key=sort_key)
     ]
 
     # ----------------------------------------------------
-    # unique branches list: [(branchId, branchName), ...]  (واحد لكل branchId)
+    # unique branches: [{branchId, branchName}, ...]  (واحد لكل branchId)
     # ----------------------------------------------------
     unique_branches = [
-        [bid, top_name(branch_id_to_names[bid])]
+        {"branchId": bid, "branchName": top_name(branch_id_to_names[bid])}
         for bid in sorted(branch_id_to_names.keys(), key=sort_key)
     ]
 
@@ -228,15 +244,38 @@ def main():
         if display in grouped:
             display = f"{display} ({k})"
 
+        # كل الـ branchIds الفريدة لكل ids المطعم
+        brand_branch_ids = set()
+        for rid in brand_to_ids[k]:
+            brand_branch_ids.update(id_to_branch_ids.get(rid, ()))
+
         grouped[display] = {
             "unique_names": len(brand_names),
             "unique_ids": len(brand_to_ids[k]),
+            "unique_branch_ids": len(brand_branch_ids),
             "name_variants": sorted(brand_variants[k].keys()),
             "ids": sorted(brand_to_ids[k], key=sort_key),
             "names": sorted(brand_names),
         }
 
     merged = {b: g for b, g in grouped.items() if g["unique_names"] > 1}
+
+    # ----------------------------------------------------
+    # restaurants with multiple branches vs single branch
+    # ----------------------------------------------------
+    by_id_counts = [len(id_to_branch_ids.get(rid, ())) for rid in ids]
+    by_group_counts = [g["unique_branch_ids"] for g in grouped.values()]
+
+    by_id_split = split_counts(by_id_counts)
+    by_group_split = split_counts(by_group_counts)
+
+    branches_distribution = {
+        str(k): v for k, v in sorted(Counter(by_group_counts).items())
+    }
+
+    top_by_branches = sorted(
+        grouped.items(), key=lambda x: -x[1]["unique_branch_ids"]
+    )[:EXAMPLES_TO_PRINT]
 
     # ----------------------------------------------------
     # summary
@@ -248,7 +287,7 @@ def main():
         "unique_name": len(names),
         "unique_name_case_insensitive": len(names_lower),
         "unique_restaurants_after_grouping": len(grouped),
-        "restaurants_with_multiple_branches": len(merged),
+        "restaurants_with_multiple_names": len(merged),
         "unique_branch_id": len(branch_ids),
         "unique_branch_name": len(branch_names),
         "unique_branch_name_case_insensitive": len(branch_names_lower),
@@ -256,13 +295,41 @@ def main():
         "names_with_multiple_ids": len(multi_id_names),
         "branch_ids_with_multiple_names": len(multi_name_branch_ids),
         "branch_names_with_multiple_ids": len(multi_id_branch_names),
+        "by_id_multiple_branches": by_id_split["multiple_branches"],
+        "by_id_single_branch": by_id_split["single_branch"],
+        "by_id_no_branch_id": by_id_split["no_branch_id"],
+        "grouped_multiple_branches": by_group_split["multiple_branches"],
+        "grouped_single_branch": by_group_split["single_branch"],
+        "grouped_no_branch_id": by_group_split["no_branch_id"],
+        "branches_per_restaurant_distribution": branches_distribution,
     }
 
     print("\n" + "=" * 70)
     print("SUMMARY")
     print("=" * 70)
     for k, v in summary.items():
+        if k == "branches_per_restaurant_distribution":
+            continue
         print(f"{k:<38}: {v}")
+
+    # ----------------------------------------------------
+    # MULTIPLE BRANCHES vs SINGLE BRANCH
+    # ----------------------------------------------------
+    print("\n" + "#" * 70)
+    print("RESTAURANTS: MULTIPLE BRANCHES vs SINGLE BRANCH")
+    print("#" * 70)
+
+    print("\nBy id:")
+    print(f"  multiple branches : {by_id_split['multiple_branches']}")
+    print(f"  single branch     : {by_id_split['single_branch']}")
+
+    print("\nAfter grouping:")
+    print(f"  multiple branches : {by_group_split['multiple_branches']}")
+    print(f"  single branch     : {by_group_split['single_branch']}")
+
+    print("\nTop restaurants by number of branches:")
+    for brand, info in top_by_branches:
+        print(f"  {brand}: {info['unique_branch_ids']} branches")
 
     # ----------------------------------------------------
     # RESTAURANTS: examples
@@ -308,7 +375,9 @@ def main():
     ):
         print(
             f"\n{brand}  "
-            f"[{info['unique_names']} names | {info['unique_ids']} ids]"
+            f"[{info['unique_names']} names | "
+            f"{info['unique_ids']} ids | "
+            f"{info['unique_branch_ids']} branches]"
         )
 
         if len(info["name_variants"]) > 1:
@@ -349,8 +418,8 @@ def main():
     print("SAVED FILES")
     print("=" * 70)
     print(f"{SUMMARY_FILE:<28}: summary + multiple-mapping details")
-    print(f"{RESTAURANTS_FILE:<28}: {len(unique_restaurants)} [id, name]")
-    print(f"{BRANCHES_FILE:<28}: {len(unique_branches)} [branchId, branchName]")
+    print(f"{RESTAURANTS_FILE:<28}: {len(unique_restaurants)} {{id, name}}")
+    print(f"{BRANCHES_FILE:<28}: {len(unique_branches)} {{branchId, branchName}}")
     print(f"{GROUPED_FILE:<28}: {len(grouped)} restaurants after grouping")
 
 
