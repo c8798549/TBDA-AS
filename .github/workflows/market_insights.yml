@@ -1,0 +1,36 @@
+name: Unique Counts
+
+on:
+  workflow_dispatch:
+    inputs:
+      r2_prefix:
+        description: "R2 prefix"
+        required: true
+        default: "merged-restaurant-info/year=2025/month=09/day=17/"
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install boto3
+
+      - name: Run
+        env:
+          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+          R2_PREFIX: ${{ github.event.inputs.r2_prefix }}
+        run: python market_insights.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unique-counts
+          path: market_insights.json
