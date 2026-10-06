@@ -33,4 +33,8 @@ jobs:
         if: always()
         with:
           name: unique-counts
-          path: market_insights.json
+          path: |
+            market_insights.json
+            unique_restaurants.json
+            unique_branches.json
+            restaurants_grouped.json
