@@ -1,12 +1,14 @@
 import os
 import json
+from collections import defaultdict
+
 import boto3
 
 R2_PREFIX = os.environ.get(
     "R2_PREFIX",
     "merged-restaurant-info/year=2025/month=09/day=17/"
 )
-OUTPUT_FILE = "market_insights.json"
+OUTPUT_FILE = "unique_counts.json"
 
 s3 = boto3.client(
     "s3",
@@ -51,6 +53,8 @@ def main():
     print(f"Files found: {len(files)}")
 
     ids, names, names_lower = set(), set(), set()
+    id_to_names = defaultdict(set)
+    name_to_ids = defaultdict(set)
     total_records = 0
 
     for i, key in enumerate(files, start=1):
@@ -67,7 +71,18 @@ def main():
                 names.add(name)
                 names_lower.add(name.lower())
 
+            if _id and name:
+                id_to_names[_id].add(name)
+                name_to_ids[name].add(_id)
+
         print(f"[{i}/{len(files)}] {key} -> {len(records)} records")
+
+    multi_name_ids = {
+        k: sorted(v) for k, v in id_to_names.items() if len(v) > 1
+    }
+    multi_id_names = {
+        k: sorted(v) for k, v in name_to_ids.items() if len(v) > 1
+    }
 
     result = {
         "files": len(files),
@@ -82,8 +97,27 @@ def main():
         print(f"{k:<30}: {v}")
     print("=" * 60)
 
+    print(f"\nids with multiple names : {len(multi_name_ids)}")
+    print(f"names with multiple ids : {len(multi_id_names)}")
+
+    # preview of the first 10 examples
+    if multi_name_ids:
+        print("\nExamples: id -> multiple names")
+        for k, v in list(multi_name_ids.items())[:10]:
+            print(f"  {k}: {v}")
+
+    if multi_id_names:
+        print("\nExamples: name -> multiple ids")
+        for k, v in list(multi_id_names.items())[:10]:
+            print(f"  {k}: {v}")
+
+    result["ids_with_multiple_names"] = multi_name_ids
+    result["names_with_multiple_ids"] = multi_id_names
+
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=2)
+        json.dump(result, f, indent=2, ensure_ascii=False)
+
+    print(f"\nSaved to {OUTPUT_FILE}")
 
 
 if __name__ == "__main__":
