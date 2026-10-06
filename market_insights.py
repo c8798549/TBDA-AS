@@ -1,6 +1,8 @@
 import os
+import re
 import json
-from collections import defaultdict
+import unicodedata
+from collections import defaultdict, Counter
 
 import boto3
 
@@ -17,6 +19,8 @@ s3 = boto3.client(
     aws_secret_access_key=os.environ["CF_R2_SECRET_ACCESS_KEY"],
 )
 BUCKET = os.environ["CF_R2_BUCKET_NAME"]
+
+APOSTROPHES = re.compile(r"[\'`´‘’ʼ′ʻ]")
 
 
 def load_records(key):
@@ -38,6 +42,25 @@ def clean(value):
         return None
     value = str(value).strip()
     return value or None
+
+
+def first_segment(name):
+    """الجزء الأول من الاسم قبل أول فاصلة (دا هو اسم المطعم)."""
+    return name.split(",")[0].strip()
+
+
+def brand_key(name):
+    """
+    مفتاح المقارنة:
+    - الجزء الأول قبل أول فاصلة
+    - توحيد unicode
+    - حذف كل أنواع الـ apostrophe
+    - lowercase + توحيد المسافات
+    """
+    seg = unicodedata.normalize("NFKC", first_segment(name))
+    seg = APOSTROPHES.sub("", seg)
+    seg = re.sub(r"\s+", " ", seg).strip().lower()
+    return seg
 
 
 def main():
@@ -84,35 +107,82 @@ def main():
         k: sorted(v) for k, v in name_to_ids.items() if len(v) > 1
     }
 
+    # ========================================================
+    # GROUP BY RESTAURANT (الجزء الأول من الاسم)
+    # ========================================================
+
+    brand_to_names = defaultdict(set)      # key -> unique full names
+    brand_to_ids = defaultdict(set)        # key -> ids (الفروع)
+    brand_variants = defaultdict(Counter)  # key -> أشكال كتابة الاسم
+
+    for name in names:
+        k = brand_key(name)
+        if not k:
+            continue
+        brand_to_names[k].add(name)
+        brand_variants[k][first_segment(name)] += 1
+        brand_to_ids[k].update(name_to_ids[name])
+
+    grouped = {}
+    for k, brand_names in brand_to_names.items():
+        display = brand_variants[k].most_common(1)[0][0]
+
+        # لو اتكرر الـ display لمطعمين بمفاتيح مختلفة، نخليه فريد
+        if display in grouped:
+            display = f"{display} ({k})"
+
+        grouped[display] = {
+            "unique_names": len(brand_names),
+            "unique_ids": len(brand_to_ids[k]),
+            "name_variants": sorted(brand_variants[k].keys()),
+            "names": sorted(brand_names),
+        }
+
+    merged = {b: g for b, g in grouped.items() if g["unique_names"] > 1}
+
     result = {
         "files": len(files),
         "total_records": total_records,
         "unique_id": len(ids),
         "unique_name": len(names),
         "unique_name_case_insensitive": len(names_lower),
+        "unique_restaurants_after_grouping": len(grouped),
+        "restaurants_with_multiple_branches": len(merged),
     }
 
     print("\n" + "=" * 60)
     for k, v in result.items():
-        print(f"{k:<30}: {v}")
+        print(f"{k:<38}: {v}")
     print("=" * 60)
 
     print(f"\nids with multiple names : {len(multi_name_ids)}")
     print(f"names with multiple ids : {len(multi_id_names)}")
 
-    # preview of the first 10 examples
-    if multi_name_ids:
-        print("\nExamples: id -> multiple names")
-        for k, v in list(multi_name_ids.items())[:10]:
-            print(f"  {k}: {v}")
+    # ========================================================
+    # PRINT: المطاعم اللي اتجمعت في مطعم واحد
+    # ========================================================
 
-    if multi_id_names:
-        print("\nExamples: name -> multiple ids")
-        for k, v in list(multi_id_names.items())[:10]:
-            print(f"  {k}: {v}")
+    print("\n" + "#" * 60)
+    print(f"RESTAURANTS MERGED INTO ONE ({len(merged)})")
+    print("#" * 60)
+
+    for brand, info in sorted(
+        merged.items(), key=lambda x: -x[1]["unique_names"]
+    ):
+        print(
+            f"\n{brand}  "
+            f"[{info['unique_names']} names | {info['unique_ids']} ids]"
+        )
+
+        if len(info["name_variants"]) > 1:
+            print(f"  spelling variants: {info['name_variants']}")
+
+        for n in info["names"]:
+            print(f"    - {n}")
 
     result["ids_with_multiple_names"] = multi_name_ids
     result["names_with_multiple_ids"] = multi_id_names
+    result["restaurants_grouped"] = grouped
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
