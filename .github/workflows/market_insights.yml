@@ -43,6 +43,9 @@ jobs:
             restaurants_grouped.json
             unique_branches.json
             branches_grouped.json
+            restaurant_branch_counts.json
+            restaurants_multiple_branches.json
+            cuisine_distribution.json
             duplicates_details.json
             restaurants_multiple_names.json
             analysis_log.txt

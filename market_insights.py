@@ -19,8 +19,12 @@ BRANCHES_FILE = "unique_branches.json"
 BRANCHES_GROUPED_FILE = "branches_grouped.json"
 DUPLICATES_FILE = "duplicates_details.json"
 MULTI_NAMES_FILE = "restaurants_multiple_names.json"
+BRANCH_COUNTS_FILE = "restaurant_branch_counts.json"
+MULTI_BRANCHES_FILE = "restaurants_multiple_branches.json"
+CUISINE_FILE = "cuisine_distribution.json"
 
-SAMPLES = 5   # عدد الأمثلة اللي بتتطبع في اللوج
+SAMPLES = 5            # عدد الأمثلة اللي بتتطبع في اللوج
+CUISINE_SAMPLES = 10   # عدد الـ cuisines اللي بتتطبع في اللوج
 
 s3 = boto3.client(
     "s3",
@@ -101,6 +105,10 @@ def split_counts(counts):
     }
 
 
+def safe_div(a, b, digits=2):
+    return round(a / b, digits) if b else 0
+
+
 def short_list(values, n=5):
     values = list(values)
     if len(values) <= n:
@@ -160,6 +168,10 @@ def main():
     # (restaurant id, branchId) -> Counter(branchName)
     pair_names = defaultdict(Counter)
 
+    # cuisines: id -> set of cuisines (lowercase key) + شكل الكتابة
+    id_to_cuisines = defaultdict(set)
+    cuisine_forms = defaultdict(Counter)
+
     total_records = 0
 
     # ----------------------------------------------------
@@ -174,6 +186,7 @@ def main():
             name = clean(r.get("name"))
             b_id = clean(r.get("branchId"))
             b_name = clean(r.get("branchName"))
+            cuisine_str = clean(r.get("cuisineString"))
 
             # restaurants
             if _id:
@@ -200,6 +213,16 @@ def main():
                 counter = pair_names[(_id, b_id)]
                 if b_name:
                     counter[b_name] += 1
+
+            # cuisines (نقسم على الفاصلة)
+            if _id and cuisine_str:
+                for part in cuisine_str.split(","):
+                    p = re.sub(r"\s+", " ", part).strip()
+                    if not p:
+                        continue
+                    ck = p.lower()
+                    id_to_cuisines[_id].add(ck)
+                    cuisine_forms[ck][p] += 1
 
         print(f"[{i}/{len(files)}] {key} -> {len(records)} records")
 
@@ -254,7 +277,7 @@ def main():
     brand_to_ids = defaultdict(set)
     brand_variants = defaultdict(Counter)
 
-    for name in names:
+    for name in sorted(names):      # sorted عشان النتيجة تبقى ثابتة
         k = brand_key(name)
         if not k:
             continue
@@ -264,20 +287,43 @@ def main():
 
     grouped = {}            # restaurants after grouping
     branches_grouped = {}   # branches after grouping
+    rep_ids = {}            # restaurant (display) -> representative id
+    brand_cuisines = {}     # restaurant (display) -> set of cuisines
+    branch_to_brands = defaultdict(set)   # branchId -> المطاعم اللي ظهر فيها
+    used_rep_ids = set()
 
-    for k, brand_names in brand_to_names.items():
+    for k in sorted(brand_to_names):
+        brand_names = brand_to_names[k]
         display = brand_variants[k].most_common(1)[0][0]
 
         if display in grouped:
             display = f"{display} ({k})"
 
+        # id تمثيلي للمطعم = أقل id من ids المطعم
+        candidates = sorted(brand_to_ids[k], key=sort_key)
+        rep_id = next(
+            (c for c in candidates if c not in used_rep_ids), None
+        )
+        if rep_id is None:
+            rep_id = candidates[0] if candidates else f"no_id:{k}"
+        used_rep_ids.add(rep_id)
+        rep_ids[display] = rep_id
+
         # فروع المطعم (بعد التجميع): branchId -> Counter(branchName)
         brand_branches = {}
+        cuisines = set()
         for rid in brand_to_ids[k]:
             for bid in id_to_branch_ids.get(rid, ()):
                 brand_branches.setdefault(bid, Counter()).update(
                     pair_names[(rid, bid)]
                 )
+            cuisines.update(id_to_cuisines.get(rid, ()))
+
+        brand_cuisines[display] = cuisines
+
+        # نسجل كل فرع ظهر تحت أنهي مطعم
+        for bid in brand_branches:
+            branch_to_brands[bid].add(display)
 
         b_names = set()
         for c in brand_branches.values():
@@ -310,6 +356,48 @@ def main():
     merged = {b: g for b, g in grouped.items() if g["unique_names"] > 1}
 
     # ----------------------------------------------------
+    # branch ids shared between more than one restaurant
+    # ----------------------------------------------------
+    shared_branch_ids = {
+        bid: sorted(brands)
+        for bid, brands in sorted(
+            branch_to_brands.items(), key=lambda x: sort_key(x[0])
+        )
+        if len(brands) > 1
+    }
+    extra_branches_counted = sum(
+        len(b) - 1 for b in shared_branch_ids.values()
+    )
+
+    # ----------------------------------------------------
+    # branches per restaurant (after grouping)
+    # ----------------------------------------------------
+    restaurant_branch_counts = {}        # كل المطاعم
+    restaurants_multiple_branches = {}   # اللي ليها أكتر من فرع
+
+    ordered = sorted(
+        grouped.items(),
+        key=lambda x: (-x[1]["unique_branch_ids"], x[0]),
+    )
+
+    for display, g in ordered:
+        rid = rep_ids[display]
+
+        restaurant_branch_counts[rid] = {
+            "restaurant": display,
+            "num_branches": g["unique_branch_ids"],
+            "num_ids": g["unique_ids"],
+        }
+
+        if g["unique_branch_ids"] > 1:
+            restaurants_multiple_branches[rid] = {
+                "restaurant": display,
+                "num_branches": g["unique_branch_ids"],
+                "ids": g["ids"],
+                "branches": branches_grouped[display]["branches"],
+            }
+
+    # ----------------------------------------------------
     # multiple branches vs single branch
     # ----------------------------------------------------
     by_id_counts = [len(id_to_branch_ids.get(rid, ())) for rid in ids]
@@ -322,7 +410,12 @@ def main():
         str(k): v for k, v in sorted(Counter(by_group_counts).items())
     }
 
-    # branches after grouping (مجموع فروع كل مطعم بعد التجميع)
+    # ----------------------------------------------------
+    # average / ratio (after grouping)
+    # ----------------------------------------------------
+    total_restaurants = len(grouped)
+    total_branches = sum(by_group_counts)
+
     ag_branch_ids = sum(
         v["unique_branch_ids"] for v in branches_grouped.values()
     )
@@ -333,6 +426,60 @@ def main():
         v["unique_branch_names_case_insensitive"]
         for v in branches_grouped.values()
     )
+
+    avg_branches = safe_div(total_branches, total_restaurants)
+    restaurants_pct_of_branches = safe_div(
+        total_restaurants * 100, total_branches
+    )
+    multi_pct = safe_div(
+        by_group_split["multiple_branches"] * 100, total_restaurants
+    )
+    single_pct = safe_div(
+        by_group_split["single_branch"] * 100, total_restaurants
+    )
+
+    # ----------------------------------------------------
+    # cuisine distribution (after grouping)
+    # ----------------------------------------------------
+    cuisine_counter = Counter()
+    for cuisines in brand_cuisines.values():
+        for c in cuisines:
+            cuisine_counter[c] += 1
+
+    cuisines_per_restaurant = Counter(
+        len(c) for c in brand_cuisines.values()
+    )
+
+    with_cuisine = sum(1 for c in brand_cuisines.values() if c)
+    without_cuisine = total_restaurants - with_cuisine
+
+    restaurants_per_cuisine = [
+        {
+            "cuisine": top_name(cuisine_forms[c]),
+            "restaurants": n,
+            "percentage_of_restaurants": safe_div(
+                n * 100, total_restaurants
+            ),
+        }
+        for c, n in sorted(
+            cuisine_counter.items(), key=lambda x: (-x[1], x[0])
+        )
+    ]
+
+    cuisine_distribution = {
+        "total_restaurants": total_restaurants,
+        "restaurants_with_cuisine": with_cuisine,
+        "restaurants_without_cuisine": without_cuisine,
+        "unique_cuisines": len(cuisine_counter),
+        "note": (
+            "A restaurant can have several cuisines, so it is counted under "
+            "each one. The percentages can add up to more than 100."
+        ),
+        "restaurants_per_cuisine": restaurants_per_cuisine,
+        "cuisines_per_restaurant_distribution": {
+            str(k): v for k, v in sorted(cuisines_per_restaurant.items())
+        },
+    }
 
     # ----------------------------------------------------
     # summary
@@ -363,9 +510,25 @@ def main():
             "unique_branch_id": ag_branch_ids,
             "unique_branch_name": ag_branch_names,
             "unique_branch_name_case_insensitive": ag_branch_names_ci,
+            "branch_ids_in_multiple_restaurants": len(shared_branch_ids),
+            "extra_branches_counted_after_grouping": extra_branches_counted,
             "grouped_multiple_branches": by_group_split["multiple_branches"],
             "grouped_single_branch": by_group_split["single_branch"],
             "grouped_no_branch_id": by_group_split["no_branch_id"],
+        },
+        "Branches per restaurant (after grouping)": {
+            "total_restaurants": total_restaurants,
+            "total_branches": total_branches,
+            "avg_branches_per_restaurant": avg_branches,
+            "ratio_restaurants_to_branches": f"1 : {avg_branches}",
+            "restaurants_pct_of_branches": restaurants_pct_of_branches,
+            "restaurants_multiple_branches_pct": multi_pct,
+            "restaurants_single_branch_pct": single_pct,
+        },
+        "Cuisines (after grouping)": {
+            "unique_cuisines": len(cuisine_counter),
+            "restaurants_with_cuisine": with_cuisine,
+            "restaurants_without_cuisine": without_cuisine,
         },
         "Some details about duplicates": {
             "ids_with_multiple_names": len(multi_name_ids),
@@ -402,8 +565,12 @@ def main():
         "names_with_multiple_ids": multi_id_names,
         "branch_ids_with_multiple_names": multi_name_branch_ids,
         "branch_names_with_multiple_ids": multi_id_branch_names,
+        "branch_ids_in_multiple_restaurants": shared_branch_ids,
     })
     save_json(MULTI_NAMES_FILE, merged)
+    save_json(BRANCH_COUNTS_FILE, restaurant_branch_counts)
+    save_json(MULTI_BRANCHES_FILE, restaurants_multiple_branches)
+    save_json(CUISINE_FILE, cuisine_distribution)
 
     # ----------------------------------------------------
     # SAMPLES (التفاصيل الكاملة في الملفات)
@@ -450,12 +617,46 @@ def main():
         "Unique branches after grouping (top restaurants)",
         len(branches_grouped),
         [
-            f"{b}: {g['unique_branch_ids']} branch ids | "
-            f"{g['unique_branch_names']} branch names"
+            f"{b}: {g['unique_branch_ids']} branch ids"
             for b, g in top_branches_grouped
         ],
         BRANCHES_GROUPED_FILE,
     )
+
+    print_block(
+        "Branches per restaurant (restaurant_id | restaurant: branches)",
+        len(restaurant_branch_counts),
+        [
+            f"{rid} | {v['restaurant']}: {v['num_branches']} branches"
+            for rid, v in list(restaurant_branch_counts.items())[:SAMPLES]
+        ],
+        BRANCH_COUNTS_FILE,
+    )
+
+    print_block(
+        "Restaurants with more than one branch",
+        len(restaurants_multiple_branches),
+        [
+            f"{rid} | {v['restaurant']}: {v['num_branches']} branches"
+            for rid, v in list(restaurants_multiple_branches.items())[:SAMPLES]
+        ],
+        MULTI_BRANCHES_FILE,
+    )
+
+    print_block(
+        "Restaurants per cuisine (top)",
+        len(restaurants_per_cuisine),
+        [
+            f"{c['cuisine']}: {c['restaurants']} restaurants "
+            f"({c['percentage_of_restaurants']}%)"
+            for c in restaurants_per_cuisine[:CUISINE_SAMPLES]
+        ],
+        CUISINE_FILE,
+    )
+
+    print("\nCuisines per restaurant:")
+    for n, count in sorted(cuisines_per_restaurant.items()):
+        print(f"  {n} cuisine(s): {count} restaurants")
 
     print_block(
         "ids with multiple names",
@@ -493,6 +694,15 @@ def main():
         ],
         DUPLICATES_FILE,
     )
+    print_block(
+        "branch ids shared by more than one restaurant",
+        len(shared_branch_ids),
+        [
+            f"{bid} -> {short_list(brands)}"
+            for bid, brands in list(shared_branch_ids.items())[:SAMPLES]
+        ],
+        DUPLICATES_FILE,
+    )
 
     # restaurants merged into one (top by number of names)
     top_merged = sorted(
@@ -524,13 +734,16 @@ def main():
     print("\n" + "=" * 70)
     print("SAVED FILES")
     print("=" * 70)
-    print(f"{SUMMARY_FILE:<30}: summary numbers")
-    print(f"{RESTAURANTS_FILE:<30}: {len(unique_restaurants)} {{id, name}}")
-    print(f"{RESTAURANTS_GROUPED_FILE:<30}: {len(grouped)} restaurants after grouping")
-    print(f"{BRANCHES_FILE:<30}: {len(unique_branches)} {{branchId, branchName}}")
-    print(f"{BRANCHES_GROUPED_FILE:<30}: branches per grouped restaurant")
-    print(f"{DUPLICATES_FILE:<30}: the 4 multiple-mapping lists")
-    print(f"{MULTI_NAMES_FILE:<30}: {len(merged)} restaurants with multiple names")
+    print(f"{SUMMARY_FILE:<32}: summary numbers")
+    print(f"{RESTAURANTS_FILE:<32}: {len(unique_restaurants)} {{id, name}}")
+    print(f"{RESTAURANTS_GROUPED_FILE:<32}: {len(grouped)} restaurants after grouping")
+    print(f"{BRANCHES_FILE:<32}: {len(unique_branches)} {{branchId, branchName}}")
+    print(f"{BRANCHES_GROUPED_FILE:<32}: branches per grouped restaurant")
+    print(f"{BRANCH_COUNTS_FILE:<32}: {len(restaurant_branch_counts)} restaurants -> num of branches")
+    print(f"{MULTI_BRANCHES_FILE:<32}: {len(restaurants_multiple_branches)} restaurants with more than one branch")
+    print(f"{CUISINE_FILE:<32}: restaurants per cuisine")
+    print(f"{DUPLICATES_FILE:<32}: the 5 multiple-mapping lists")
+    print(f"{MULTI_NAMES_FILE:<32}: {len(merged)} restaurants with multiple names")
 
 
 if __name__ == "__main__":
