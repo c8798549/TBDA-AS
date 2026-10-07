@@ -48,5 +48,6 @@ jobs:
             cuisine_distribution.json
             duplicates_details.json
             restaurants_multiple_names.json
+            restaurants_merged_by_id.json
             analysis_log.txt
           if-no-files-found: warn
