@@ -1,4 +1,4 @@
-name: Unique Counts
+name: Geography Insights
 
 on:
   workflow_dispatch:
