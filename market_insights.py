@@ -828,7 +828,7 @@ def main():
                             f"{area['branch_count']:,} branches"
                         )
 
-            elif section == "Restaurant Density Extremes":
+            elif section == "Restaurant Density Extremes" and k == "highest_density_areas":
                 print("\n  Top 10 highest-density areas:")
 
                 for area in values["highest_density_areas"]:
