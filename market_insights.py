@@ -23,6 +23,7 @@ MERGED_BY_ID_FILE = "restaurants_merged_by_id.json"
 BRANCH_COUNTS_FILE = "restaurant_branch_counts.json"
 MULTI_BRANCHES_FILE = "restaurants_multiple_branches.json"
 CUISINE_FILE = "cuisine_distribution.json"
+CITY_DISTRIBUTION_FILE = "restaurant_city_distribution.json"
 
 SAMPLES = 5            # عدد الأمثلة اللي بتتطبع في اللوج
 CUISINE_SAMPLES = 10   # عدد الـ cuisines اللي بتتطبع في اللوج
@@ -160,6 +161,7 @@ def main():
     ids, names, names_lower = set(), set(), set()
     id_to_names = defaultdict(Counter)
     name_to_ids = defaultdict(set)
+    id_to_cities = defaultdict(set)
 
     # branches (branchId / branchName)
     branch_ids, branch_names, branch_names_lower = set(), set(), set()
@@ -188,6 +190,7 @@ def main():
             b_id = clean(r.get("branchId"))
             b_name = clean(r.get("branchName"))
             cuisine_str = clean(r.get("cuisineString"))
+            shop_city = clean(r.get("shopCity"))
 
             # restaurants
             if _id:
@@ -198,6 +201,10 @@ def main():
             if _id and name:
                 id_to_names[_id][name] += 1
                 name_to_ids[name].add(_id)
+
+            # restaurant cities
+            if _id and shop_city:
+                id_to_cities[_id].add(shop_city)
 
             # branches
             if b_id:
@@ -532,6 +539,41 @@ def main():
         },
     }
 
+        # ---------------------------------------------------------
+    # Restaurant distribution by city (after grouping)
+    # ---------------------------------------------------------
+
+    city_to_restaurants = defaultdict(set)
+
+    for display, group in grouped.items():
+        group_ids = group["ids"]
+
+        group_cities = set()
+
+        for rid in group_ids:
+            group_cities.update(id_to_cities.get(rid, set()))
+
+        for city in group_cities:
+            city_to_restaurants[city].add(display)
+
+    restaurant_city_distribution = []
+
+    total_grouped_restaurants = len(grouped)
+
+    for city in sorted(city_to_restaurants, key=sort_key):
+        restaurant_count = len(city_to_restaurants[city])
+
+        percentage = safe_div(
+            restaurant_count * 100,
+            total_grouped_restaurants
+        )
+
+        restaurant_city_distribution.append({
+            "shopCity": city,
+            "restaurant_count": restaurant_count,
+            "percentage": percentage
+        })
+
     # ----------------------------------------------------
     # summary
     # ----------------------------------------------------
@@ -578,6 +620,11 @@ def main():
             "restaurants_multiple_branches_pct": multi_pct,
             "restaurants_single_branch_pct": single_pct,
         },
+
+        "Restaurant Distribution by City":{
+            "restaurant_distribution_by_city": restaurant_city_distribution,
+        },
+
         "Cuisines (after grouping)": {
             "unique_cuisines": len(cuisine_counter),
             "restaurants_with_cuisine": with_cuisine,
@@ -625,6 +672,8 @@ def main():
     save_json(BRANCH_COUNTS_FILE, restaurant_branch_counts)
     save_json(MULTI_BRANCHES_FILE, restaurants_multiple_branches)
     save_json(CUISINE_FILE, cuisine_distribution)
+    save_json(CITY_DISTRIBUTION_FILE,restaurant_city_distribution
+)
 
     # ----------------------------------------------------
     # SAMPLES (التفاصيل الكاملة في الملفات)
