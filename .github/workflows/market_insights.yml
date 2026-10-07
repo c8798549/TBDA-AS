@@ -49,9 +49,8 @@ jobs:
             duplicates_details.json
             restaurants_multiple_names.json
             restaurants_merged_by_id.json
-            restaurant_city_distribution.json
-            branch_distribution_by_area.json
-            restaurant_distribution_by_area.json
-            restaurant_density_extremes.json
+            restaurants_by_city.json
+            branches_by_area.json
+            restaurant_density_by_area.json
             analysis_log.txt
           if-no-files-found: warn

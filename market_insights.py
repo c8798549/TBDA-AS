@@ -23,13 +23,13 @@ MERGED_BY_ID_FILE = "restaurants_merged_by_id.json"
 BRANCH_COUNTS_FILE = "restaurant_branch_counts.json"
 MULTI_BRANCHES_FILE = "restaurants_multiple_branches.json"
 CUISINE_FILE = "cuisine_distribution.json"
-CITY_DISTRIBUTION_FILE = "restaurant_city_distribution.json"
-BRANCH_DISTRIBUTION_BY_AREA_FILE = "branch_distribution_by_area.json"
-RESTAURANT_DISTRIBUTION_BY_AREA_FILE = "restaurant_distribution_by_area.json"
-RESTAURANT_DENSITY_EXTREMES_FILE = "restaurant_density_extremes.json"
+CITY_FILE = "restaurants_by_city.json"
+AREA_BRANCHES_FILE = "branches_by_area.json"
+DENSITY_FILE = "restaurant_density_by_area.json"
 
 SAMPLES = 5            # عدد الأمثلة اللي بتتطبع في اللوج
 CUISINE_SAMPLES = 10   # عدد الـ cuisines اللي بتتطبع في اللوج
+AREA_SAMPLES = 10      # عدد المدن/المناطق اللي بتتطبع في اللوج
 
 s3 = boto3.client(
     "s3",
@@ -67,6 +67,21 @@ def clean(value):
     return value or None
 
 
+def norm_code(value):
+    """يوحّد أكواد المدينة/المنطقة: 1 و 1.0 و "1" كلهم "1"."""
+    if value is None:
+        return None
+    if isinstance(value, float):
+        if value != value:          # NaN
+            return None
+        if value.is_integer():
+            return str(int(value))
+    text = str(value).strip()
+    if re.fullmatch(r"-?\d+\.0+", text):
+        text = text.split(".")[0]
+    return text or None
+
+
 def sort_key(value):
     """ترتيب الـ ids رقميًا لو أرقام، وإلا نصيًا."""
     value = str(value)
@@ -95,7 +110,7 @@ def brand_key(name):
 
 
 def top_name(counter):
-    """أكتر اسم اتكرر (None لو مفيش أسماء)."""
+    """أكتر قيمة اتكررت (None لو مفيش)."""
     if not counter:
         return None
     return counter.most_common(1)[0][0]
@@ -164,17 +179,11 @@ def main():
     ids, names, names_lower = set(), set(), set()
     id_to_names = defaultdict(Counter)
     name_to_ids = defaultdict(set)
-    id_to_cities = defaultdict(set)
-    area_to_restaurants = defaultdict(set)
-    
 
     # branches (branchId / branchName)
     branch_ids, branch_names, branch_names_lower = set(), set(), set()
     branch_id_to_names = defaultdict(Counter)
     branch_name_to_ids = defaultdict(set)
-    # shopArea -> cities
-    area_to_cities = defaultdict(set)
-    area_to_branch_ids = defaultdict(set)
 
     # (restaurant id, branchId) -> Counter(branchName)
     pair_names = defaultdict(Counter)
@@ -182,6 +191,10 @@ def main():
     # cuisines: id -> set of cuisines (lowercase key) + شكل الكتابة
     id_to_cuisines = defaultdict(set)
     cuisine_forms = defaultdict(Counter)
+
+    # موقع الفرع: branchId -> Counter(shopCity / shopArea)
+    branch_city = defaultdict(Counter)
+    branch_area = defaultdict(Counter)
 
     total_records = 0
 
@@ -198,8 +211,8 @@ def main():
             b_id = clean(r.get("branchId"))
             b_name = clean(r.get("branchName"))
             cuisine_str = clean(r.get("cuisineString"))
-            shop_city = clean(r.get("shopCity"))
-            shop_area = clean(r.get("shopArea"))
+            city = norm_code(r.get("shopCity"))
+            area = norm_code(r.get("shopArea"))
 
             # restaurants
             if _id:
@@ -210,14 +223,6 @@ def main():
             if _id and name:
                 id_to_names[_id][name] += 1
                 name_to_ids[name].add(_id)
-
-            # restaurant cities
-            if _id and shop_city:
-                id_to_cities[_id].add(shop_city)
-
-            # shopArea -> restaurants
-            if _id and shop_area:
-                area_to_restaurants[shop_area].add(_id)
 
             # branches
             if b_id:
@@ -245,14 +250,11 @@ def main():
                     id_to_cuisines[_id].add(ck)
                     cuisine_forms[ck][p] += 1
 
-            #shopArea
-            if shop_area and b_id:
-                area_to_branch_ids[shop_area].add(b_id)
-
-            # shopArea -> city
-            if shop_area and shop_city:
-                area_to_cities[shop_area].add(shop_city)
-            
+            # location (مدينة / منطقة المحل)
+            if b_id and city:
+                branch_city[b_id][city] += 1
+            if b_id and area:
+                branch_area[b_id][area] += 1
 
         print(f"[{i}/{len(files)}] {key} -> {len(records)} records")
 
@@ -260,6 +262,13 @@ def main():
     id_to_branch_ids = defaultdict(set)
     for (rid, bid) in pair_names:
         id_to_branch_ids[rid].add(bid)
+
+    # قيمة واحدة لكل فرع (الأكتر تكرارًا)
+    branch_city_top = {bid: top_name(c) for bid, c in branch_city.items()}
+    branch_area_top = {bid: top_name(c) for bid, c in branch_area.items()}
+
+    branches_multi_city = sum(1 for c in branch_city.values() if len(c) > 1)
+    branches_multi_area = sum(1 for c in branch_area.values() if len(c) > 1)
 
     # ----------------------------------------------------
     # multiple mappings
@@ -348,6 +357,8 @@ def main():
     branches_grouped = {}   # branches per restaurant after grouping
     rep_ids = {}            # restaurant (display) -> representative id
     brand_cuisines = {}     # restaurant (display) -> set of cuisines
+    brand_cities = {}       # restaurant (display) -> set of cities
+    brand_areas = {}        # restaurant (display) -> set of areas
     branch_to_brands = defaultdict(set)   # branchId -> المطاعم اللي ظهر فيها
     used_rep_ids = set()
 
@@ -396,6 +407,18 @@ def main():
             cuisines.update(id_to_cuisines.get(rid, ()))
 
         brand_cuisines[display] = cuisines
+
+        # مدن ومناطق المطعم (من مواقع فروعه)
+        brand_cities[display] = {
+            branch_city_top[bid]
+            for bid in brand_branches
+            if bid in branch_city_top
+        }
+        brand_areas[display] = {
+            branch_area_top[bid]
+            for bid in brand_branches
+            if bid in branch_area_top
+        }
 
         # نسجل كل فرع ظهر تحت أنهي مطعم
         for bid in brand_branches:
@@ -561,167 +584,146 @@ def main():
         },
     }
 
-    # ---------------------------------------------------------
-    # Restaurant distribution by city (after grouping)
-    # ---------------------------------------------------------
-
-    city_to_restaurants = defaultdict(set)
-
-    for display, group in grouped.items():
-        group_ids = group["ids"]
-
-        group_cities = set()
-
-        for rid in group_ids:
-            group_cities.update(id_to_cities.get(rid, set()))
-
-        for city in group_cities:
-            city_to_restaurants[city].add(display)
-
-    restaurant_city_distribution = []
-
-    total_grouped_restaurants = len(grouped)
-
-    for city in sorted(city_to_restaurants, key=sort_key):
-        restaurant_count = len(city_to_restaurants[city])
-
-        percentage = safe_div(
-            restaurant_count * 100,
-            total_grouped_restaurants
-        )
-
-        restaurant_city_distribution.append({
-            "shopCity": city,
-            "restaurant_count": restaurant_count,
-            "percentage": percentage
-        })
-
     # ----------------------------------------------------
-    # Branch distribution by area
+    # city distribution (restaurants after grouping + branches)
     # ----------------------------------------------------
+    all_branches_count = len(branch_ids)
 
-    branch_distribution_by_area = defaultdict(list)
+    city_restaurants = Counter()
+    for cities in brand_cities.values():
+        for c in cities:
+            city_restaurants[c] += 1
 
-    for area in sorted(area_to_branch_ids, key=sort_key):
-        cities = area_to_cities.get(area, set())
+    city_branches = Counter(
+        branch_city_top[bid] for bid in branch_ids if bid in branch_city_top
+    )
 
-        if not cities:
-            continue
+    all_cities = set(city_restaurants) | set(city_branches)
 
-        city = sorted(cities, key=sort_key)[0]
-
-        branch_distribution_by_area[city].append({
-            "shopArea": area,
-            "branch_count": len(area_to_branch_ids[area])
-        })
-
-    branch_distribution_by_area = {
-        city: {
-            "areas": areas
+    restaurants_per_city = [
+        {
+            "city": c,
+            "restaurants": city_restaurants.get(c, 0),
+            "pct_of_restaurants": safe_div(
+                city_restaurants.get(c, 0) * 100, total_restaurants
+            ),
+            "branches": city_branches.get(c, 0),
+            "pct_of_branches": safe_div(
+                city_branches.get(c, 0) * 100, all_branches_count
+            ),
         }
-        for city, areas in sorted(
-            branch_distribution_by_area.items(),
-            key=lambda x: sort_key(x[0])
+        for c in sorted(
+            all_cities,
+            key=lambda c: (-city_restaurants.get(c, 0), sort_key(c)),
         )
+    ]
+
+    cities_per_restaurant = Counter(len(c) for c in brand_cities.values())
+    restaurants_with_city = sum(1 for c in brand_cities.values() if c)
+    restaurants_without_city = total_restaurants - restaurants_with_city
+    branches_with_city = sum(city_branches.values())
+
+    city_distribution = {
+        "total_restaurants": total_restaurants,
+        "restaurants_with_city": restaurants_with_city,
+        "restaurants_without_city": restaurants_without_city,
+        "unique_cities": len(all_cities),
+        "note": (
+            "A restaurant with branches in several cities is counted under "
+            "each city, so the restaurant counts can add up to more than "
+            "the total. City values are codes (no names in the data)."
+        ),
+        "restaurants_per_city": restaurants_per_city,
+        "cities_per_restaurant_distribution": {
+            str(k): v for k, v in sorted(cities_per_restaurant.items())
+        },
     }
 
     # ----------------------------------------------------
-    # Restaurant distribution by area
+    # area distribution: branches per area
     # ----------------------------------------------------
+    area_branches = Counter(
+        branch_area_top[bid] for bid in branch_ids if bid in branch_area_top
+    )
+    branches_with_area = sum(area_branches.values())
 
-    area_to_grouped_restaurants = defaultdict(set)
-
-    restaurant_to_areas = defaultdict(set)
-
-    for area, restaurant_ids in area_to_restaurants.items():
-        for rid in restaurant_ids:
-            restaurant_to_areas[rid].add(area)
-
-    for display, group in grouped.items():
-        group_ids = group["ids"]
-        group_areas = set()
-
-        for rid in group_ids:
-            group_areas.update(
-                restaurant_to_areas.get(rid, set())
-            )
-
-        for area in group_areas:
-            area_to_grouped_restaurants[area].add(display)
-
-
-    restaurant_distribution_by_area = defaultdict(list)
-
-    total_grouped_restaurants = len(grouped)
-
-    for area in sorted(area_to_grouped_restaurants, key=sort_key):
-        cities = area_to_cities.get(area, set())
-
-        if not cities:
-            continue
-
-        city = sorted(cities, key=sort_key)[0]
-
-        restaurant_count = len(
-            area_to_grouped_restaurants[area]
-        )
-
-        percentage = safe_div(
-            restaurant_count * 100,
-            total_grouped_restaurants
-        )
-
-        restaurant_distribution_by_area[city].append({
-            "shopArea": area,
-            "restaurant_count": restaurant_count,
-            "percentage": percentage
-        })
-
-    restaurant_distribution_by_area = {
-        city: {
-            "areas": areas
+    branches_per_area = [
+        {
+            "area": a,
+            "branches": n,
+            "pct_of_branches": safe_div(n * 100, all_branches_count),
         }
-        for city, areas in sorted(
-            restaurant_distribution_by_area.items(),
-            key=lambda x: sort_key(x[0])
+        for a, n in sorted(
+            area_branches.items(), key=lambda x: (-x[1], sort_key(x[0]))
         )
+    ]
+
+    area_branches_distribution = {
+        "total_branches": all_branches_count,
+        "branches_with_area": branches_with_area,
+        "branches_without_area": all_branches_count - branches_with_area,
+        "unique_areas": len(area_branches),
+        "branches_with_multiple_areas": branches_multi_area,
+        "note": (
+            "Each branch is counted once, under its most frequent shopArea. "
+            "Area values are codes (no names in the data)."
+        ),
+        "branches_per_area": branches_per_area,
     }
 
     # ----------------------------------------------------
-    # highest and lowest density
+    # density: restaurants per area (after grouping)
     # ----------------------------------------------------
-    all_area_restaurant_distribution = []
+    area_restaurants = Counter()
+    for areas in brand_areas.values():
+        for a in areas:
+            area_restaurants[a] += 1
 
-    for city, city_data in restaurant_distribution_by_area.items():
-        for area in city_data["areas"]:
-            all_area_restaurant_distribution.append({
-                "shopCity": city,
-                "shopArea": area["shopArea"],
-                "restaurant_count": area["restaurant_count"],
-                "percentage": area["percentage"]
-            })
+    all_areas = set(area_restaurants) | set(area_branches)
 
-    highest_density_areas = sorted(
-        all_area_restaurant_distribution,
-        key=lambda x: (
-            -x["restaurant_count"],
-            sort_key(x["shopCity"]),
-            sort_key(x["shopArea"])
+    density_list = [
+        {
+            "area": a,
+            "restaurants": area_restaurants.get(a, 0),
+            "pct_of_restaurants": safe_div(
+                area_restaurants.get(a, 0) * 100, total_restaurants
+            ),
+            "branches": area_branches.get(a, 0),
+            "avg_branches_per_restaurant": safe_div(
+                area_branches.get(a, 0), area_restaurants.get(a, 0)
+            ),
+        }
+        for a in sorted(
+            all_areas,
+            key=lambda a: (-area_restaurants.get(a, 0), sort_key(a)),
         )
-    )[:10]
+    ]
 
-    lowest_density_areas = sorted(
-        all_area_restaurant_distribution,
-        key=lambda x: (
-            x["restaurant_count"],
-            sort_key(x["shopCity"]),
-            sort_key(x["shopArea"])
-        )
-    )[:10]
+    top_areas = density_list[:AREA_SAMPLES]
+    bottom_areas = sorted(
+        density_list, key=lambda x: (x["restaurants"], sort_key(x["area"]))
+    )[:AREA_SAMPLES]
 
-    restaurant_density_extremes = {
-        "highest_density_areas": highest_density_areas,
-        "lowest_density_areas": lowest_density_areas
+    areas_with_single_restaurant = sum(
+        1 for a in density_list if a["restaurants"] == 1
+    )
+    restaurants_with_area = sum(1 for a in brand_areas.values() if a)
+
+    density_distribution = {
+        "total_restaurants": total_restaurants,
+        "restaurants_with_area": restaurants_with_area,
+        "restaurants_without_area": total_restaurants - restaurants_with_area,
+        "unique_areas": len(all_areas),
+        "areas_with_single_restaurant": areas_with_single_restaurant,
+        "note": (
+            "Density here = number of restaurants (after grouping) that have "
+            "at least one branch in the area. A restaurant with branches in "
+            "several areas is counted in each. There is no area size or "
+            "population in the data, so this is a count, not per km2."
+        ),
+        "highest_density_areas": top_areas,
+        "lowest_density_areas": bottom_areas,
+        "all_areas": density_list,
     }
 
     # ----------------------------------------------------
@@ -770,28 +772,23 @@ def main():
             "restaurants_multiple_branches_pct": multi_pct,
             "restaurants_single_branch_pct": single_pct,
         },
-
-        "Restaurant Distribution by City":{
-            "restaurant_distribution_by_city": restaurant_city_distribution,
-        },
-
-        "Branch Distribution by Area": {
-            "branch_distribution_by_area": branch_distribution_by_area,
-        },
-
-        "Restaurant Distribution by Area": {
-            "restaurant_distribution_by_area": restaurant_distribution_by_area,
-        },
-
-        "Restaurant Density Extremes": {
-            "highest_density_areas": highest_density_areas,
-            "lowest_density_areas": lowest_density_areas,
-        },
-
         "Cuisines (after grouping)": {
             "unique_cuisines": len(cuisine_counter),
             "restaurants_with_cuisine": with_cuisine,
             "restaurants_without_cuisine": without_cuisine,
+        },
+        "Locations (shopCity / shopArea)": {
+            "unique_cities": len(all_cities),
+            "restaurants_with_city": restaurants_with_city,
+            "restaurants_without_city": restaurants_without_city,
+            "branches_with_city": branches_with_city,
+            "unique_areas": len(all_areas),
+            "restaurants_with_area": restaurants_with_area,
+            "branches_with_area": branches_with_area,
+            "branches_without_area": all_branches_count - branches_with_area,
+            "areas_with_single_restaurant": areas_with_single_restaurant,
+            "branches_with_multiple_cities": branches_multi_city,
+            "branches_with_multiple_areas": branches_multi_area,
         },
         "Some details about duplicates": {
             "ids_with_multiple_names": len(multi_name_ids),
@@ -807,50 +804,10 @@ def main():
 
     for section, values in summary.items():
         print(f"\n{section}")
-
         for k, v in values.items():
+            print(f"{k:<38}: {v}")
 
-            if section == "Restaurant Distribution by City" and k == "restaurant_distribution_by_city":
-                for city in v:
-                    print(
-                        f"  City {city['shopCity']:<3}: "
-                        f"{city['restaurant_count']:,} restaurants "
-                        f"({city['percentage']:.2f}%)"
-                    )
-
-            elif section == "Branch Distribution by Area" and k == "branch_distribution_by_area":
-                for city, city_data in v.items():
-                    print(f"  City {city}")
-
-                    for area in city_data["areas"]:
-                        print(
-                            f"    Area {area['shopArea']:<6}: "
-                            f"{area['branch_count']:,} branches"
-                        )
-
-            elif section == "Restaurant Density Extremes" and k == "highest_density_areas":
-                print("\n  Top 10 highest-density areas:")
-
-                for area in values["highest_density_areas"]:
-                    print(
-                        f"    City {area['shopCity']}, "
-                        f"Area {area['shopArea']}: "
-                        f"{area['restaurant_count']:,} restaurants "
-                        f"({area['percentage']:.2f}%)"
-                    )
-
-                print("\n  Bottom 10 lowest-density areas:")
-
-                for area in values["lowest_density_areas"]:
-                    print(
-                        f"    City {area['shopCity']}, "
-                        f"Area {area['shopArea']}: "
-                        f"{area['restaurant_count']:,} restaurants "
-                        f"({area['percentage']:.2f}%)"
-                    )
-
-            else:
-                print(f"{k:<38}: {v}")
+    print("\n")
 
     # ----------------------------------------------------
     # SAVE FILES
@@ -875,10 +832,9 @@ def main():
     save_json(BRANCH_COUNTS_FILE, restaurant_branch_counts)
     save_json(MULTI_BRANCHES_FILE, restaurants_multiple_branches)
     save_json(CUISINE_FILE, cuisine_distribution)
-    save_json(CITY_DISTRIBUTION_FILE,restaurant_city_distribution)
-    save_json(BRANCH_DISTRIBUTION_BY_AREA_FILE,branch_distribution_by_area)
-    save_json(RESTAURANT_DISTRIBUTION_BY_AREA_FILE,restaurant_distribution_by_area)
-    save_json(RESTAURANT_DENSITY_EXTREMES_FILE,restaurant_density_extremes)
+    save_json(CITY_FILE, city_distribution)
+    save_json(AREA_BRANCHES_FILE, area_branches_distribution)
+    save_json(DENSITY_FILE, density_distribution)
 
     # ----------------------------------------------------
     # SAMPLES (التفاصيل الكاملة في الملفات)
@@ -952,41 +908,6 @@ def main():
     )
 
     print_block(
-        "Restaurant distribution by city",
-        len(restaurant_city_distribution),
-        [
-            f"{c['shopCity']}: {c['restaurant_count']} restaurants "
-            f"({c['percentage']}%)"
-            for c in restaurant_city_distribution
-        ],
-        CITY_DISTRIBUTION_FILE,
-    )
-
-    print("\nBranch distribution by area")
-
-    total_areas = sum(
-        len(city_data["areas"])
-        for city_data in branch_distribution_by_area.values()
-    )
-
-    print(f"  Total areas: {total_areas}")
-    print(f"  Total cities: {len(branch_distribution_by_area)}")
-
-    for city, city_data in branch_distribution_by_area.items():
-        print(f"\n  City {city}")
-
-        for area in city_data["areas"]:
-            print(
-                f"    Area {area['shopArea']:<6}: "
-                f"{area['branch_count']:,} branches"
-            )
-
-    print(
-        f"\n  -> full details: "
-        f"{BRANCH_DISTRIBUTION_BY_AREA_FILE}"
-    )
-    
-    print_block(
         "Restaurants per cuisine (top)",
         len(restaurants_per_cuisine),
         [
@@ -1001,6 +922,60 @@ def main():
     for n, count in sorted(cuisines_per_restaurant.items()):
         print(f"  {n} cuisine(s): {count} restaurants")
 
+    # ---- city ----
+    print_block(
+        "Restaurants per city (city code)",
+        len(restaurants_per_city),
+        [
+            f"city {c['city']}: {c['restaurants']} restaurants "
+            f"({c['pct_of_restaurants']}%) | {c['branches']} branches "
+            f"({c['pct_of_branches']}%)"
+            for c in restaurants_per_city[:AREA_SAMPLES]
+        ],
+        CITY_FILE,
+    )
+
+    print("\nCities per restaurant:")
+    for n, count in sorted(cities_per_restaurant.items()):
+        print(f"  {n} city(ies): {count} restaurants")
+
+    # ---- area ----
+    print_block(
+        "Branches per area (top)",
+        len(branches_per_area),
+        [
+            f"area {a['area']}: {a['branches']} branches "
+            f"({a['pct_of_branches']}%)"
+            for a in branches_per_area[:AREA_SAMPLES]
+        ],
+        AREA_BRANCHES_FILE,
+    )
+
+    print_block(
+        "Highest restaurant density areas",
+        len(density_list),
+        [
+            f"area {a['area']}: {a['restaurants']} restaurants "
+            f"({a['pct_of_restaurants']}%) | {a['branches']} branches | "
+            f"avg {a['avg_branches_per_restaurant']} branches/restaurant"
+            for a in top_areas
+        ],
+        DENSITY_FILE,
+    )
+
+    print_block(
+        f"Lowest restaurant density areas "
+        f"({areas_with_single_restaurant} areas have only 1 restaurant)",
+        len(density_list),
+        [
+            f"area {a['area']}: {a['restaurants']} restaurants "
+            f"({a['pct_of_restaurants']}%) | {a['branches']} branches"
+            for a in bottom_areas
+        ],
+        DENSITY_FILE,
+    )
+
+    # ---- duplicates ----
     print_block(
         "ids with multiple names",
         len(multi_name_ids),
@@ -1099,11 +1074,10 @@ def main():
     print(f"{BRANCHES_GROUPED_FILE:<32}: branches per grouped restaurant")
     print(f"{BRANCH_COUNTS_FILE:<32}: {len(restaurant_branch_counts)} restaurants -> num of branches")
     print(f"{MULTI_BRANCHES_FILE:<32}: {len(restaurants_multiple_branches)} restaurants with more than one branch")
-    print(f"{CITY_DISTRIBUTION_FILE:<32}: restaurant distribution by city")
-    print(f"{BRANCH_DISTRIBUTION_BY_AREA_FILE:<32}: branch distribution by area")
-    print(f"{RESTAURANT_DISTRIBUTION_BY_AREA_FILE:<32}: restaurant distribution by area")
-    print(f"{RESTAURANT_DENSITY_EXTREMES_FILE:<32}: Top 10 and Bottom 10 areas by restaurant count")
     print(f"{CUISINE_FILE:<32}: restaurants per cuisine")
+    print(f"{CITY_FILE:<32}: restaurants + branches per city")
+    print(f"{AREA_BRANCHES_FILE:<32}: branches per area")
+    print(f"{DENSITY_FILE:<32}: restaurant density per area (top / bottom)")
     print(f"{DUPLICATES_FILE:<32}: the 5 multiple-mapping lists")
     print(f"{MULTI_NAMES_FILE:<32}: {len(merged)} restaurants with multiple names")
     print(f"{MERGED_BY_ID_FILE:<32}: {len(merged_by_id)} restaurants merged by shared id")
