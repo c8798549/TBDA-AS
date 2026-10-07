@@ -593,7 +593,7 @@ def main():
     # Branch distribution by area
     # ----------------------------------------------------
 
-    branch_distribution_by_area = defaultdict(dict)
+    branch_distribution_by_area = defaultdict(list)
 
     for area in sorted(area_to_branch_ids, key=sort_key):
         cities = area_to_cities.get(area, set())
@@ -603,9 +603,10 @@ def main():
 
         city = sorted(cities, key=sort_key)[0]
 
-        branch_distribution_by_area[city][area] = len(
-            area_to_branch_ids[area]
-        )
+        branch_distribution_by_area[city].append({
+            "shopArea": area,
+            "branch_count": len(area_to_branch_ids[area])
+        })
 
     branch_distribution_by_area = {
         city: {
@@ -668,6 +669,10 @@ def main():
             "restaurant_distribution_by_city": restaurant_city_distribution,
         },
 
+        "Branch Distribution by Area": {
+            "branch_distribution_by_area": branch_distribution_by_area,
+        },
+
         "Cuisines (after grouping)": {
             "unique_cuisines": len(cuisine_counter),
             "restaurants_with_cuisine": with_cuisine,
@@ -697,10 +702,19 @@ def main():
                         f"{city['restaurant_count']:,} restaurants "
                         f"({city['percentage']:.2f}%)"
                     )
+
+            elif section == "Branch Distribution by Area" and k == "branch_distribution_by_area":
+                for city, city_data in v.items():
+                    print(f"  City {city}")
+
+                    for area in city_data["areas"]:
+                        print(
+                            f"    Area {area['shopArea']:<6}: "
+                            f"{area['branch_count']:,} branches"
+                        )
+
             else:
                 print(f"{k:<38}: {v}")
-
-    print("\n")
 
     # ----------------------------------------------------
     # SAVE FILES
