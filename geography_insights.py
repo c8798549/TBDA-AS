@@ -59,18 +59,45 @@ def sort_key(value):
         return (1, value.lower())
 
 
-def brand_key(name):
+def first_segment(name):
     """
-    Normalize restaurant name for grouping.
+    Same concept used in the old market_insights logic.
+
+    Example:
+        "Pizza Hut, Kuwait" -> "Pizza Hut"
     """
 
     if not name:
         return None
 
-    name = clean(name).lower()
+    return name.split(",")[0].strip()
 
-    name = re.sub(r"[^\w\s]", " ", name)
-    name = re.sub(r"\s+", " ", name).strip()
+
+def brand_key(name):
+    """
+    Same normalization concept used by the old grouping logic.
+    """
+
+    if not name:
+        return None
+
+    name = unicodedata.normalize(
+        "NFKC",
+        name
+    )
+
+    name = name.replace(
+        "'",
+        ""
+    )
+
+    name = name.lower()
+
+    name = re.sub(
+        r"\s+",
+        " ",
+        name
+    ).strip()
 
     return name
 
@@ -83,7 +110,13 @@ def safe_div(numerator, denominator):
 
 
 def save_json(filename, data):
-    with open(filename, "w", encoding="utf-8") as f:
+
+    with open(
+        filename,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
         json.dump(
             data,
             f,
@@ -93,14 +126,19 @@ def save_json(filename, data):
 
 
 def load_records(bucket, key):
+
     response = s3.get_object(
         Bucket=bucket,
         Key=key
     )
 
-    content = response["Body"].read().decode("utf-8")
+    content = response[
+        "Body"
+    ].read().decode("utf-8")
 
-    data = json.loads(content)
+    data = json.loads(
+        content
+    )
 
     if isinstance(data, list):
         return data
@@ -113,107 +151,199 @@ def load_records(bucket, key):
 
 # =========================================================
 # Restaurant Grouping
+#
+# SAME CONCEPT AS OLD market_insights.py
+#
+# 1. Get the first segment of restaurant names.
+# 2. Normalize the brand key.
+# 3. Keep brand -> restaurant IDs.
+# 4. If the same restaurant ID contains multiple brand
+#    keys, connect those brand keys.
+# 5. Use union-find to create the final groups.
 # =========================================================
 
 def build_restaurant_groups(
-    id_to_names,
-    name_to_ids
+    id_to_names
 ):
-    """
-    Group restaurant IDs that share the same normalized name.
 
-    A grouped restaurant represents the actual restaurant/brand,
-    even if it has multiple restaurant IDs.
-    """
+    # -----------------------------------------------------
+    # restaurant ID -> brand keys
+    # -----------------------------------------------------
+
+    id_to_brands = defaultdict(set)
+
+    # -----------------------------------------------------
+    # brand key -> restaurant IDs
+    # -----------------------------------------------------
+
+    brand_to_ids = defaultdict(set)
+
+    for restaurant_id, names in id_to_names.items():
+
+        for name in names:
+
+            segment = first_segment(
+                name
+            )
+
+            normalized_brand = brand_key(
+                segment
+            )
+
+            if not normalized_brand:
+                continue
+
+            id_to_brands[
+                restaurant_id
+            ].add(
+                normalized_brand
+            )
+
+            brand_to_ids[
+                normalized_brand
+            ].add(
+                restaurant_id
+            )
+
+    # -----------------------------------------------------
+    # Union-find
+    # -----------------------------------------------------
 
     parent = {}
 
+    for brand in brand_to_ids:
+
+        parent[brand] = brand
+
     def find(x):
+
         if parent[x] != x:
-            parent[x] = find(parent[x])
+
+            parent[x] = find(
+                parent[x]
+            )
 
         return parent[x]
 
     def union(a, b):
+
         root_a = find(a)
         root_b = find(b)
 
         if root_a != root_b:
+
             parent[root_b] = root_a
 
     # -----------------------------------------------------
-    # Create nodes for restaurant IDs
+    # Same restaurant ID may contain multiple brand keys.
+    # Connect those brand keys.
     # -----------------------------------------------------
 
-    for restaurant_id in id_to_names:
-        parent[restaurant_id] = restaurant_id
+    for restaurant_id, brands in (
+        id_to_brands.items()
+    ):
 
-    # -----------------------------------------------------
-    # Connect IDs sharing the same normalized name
-    # -----------------------------------------------------
+        brands = list(brands)
 
-    for name, ids in name_to_ids.items():
-
-        ids = list(ids)
-
-        if len(ids) < 2:
+        if len(brands) < 2:
             continue
 
-        first_id = ids[0]
+        first_brand = brands[0]
 
-        for restaurant_id in ids[1:]:
-            union(first_id, restaurant_id)
+        for brand in brands[1:]:
 
-    # -----------------------------------------------------
-    # Build connected groups
-    # -----------------------------------------------------
-
-    groups = defaultdict(set)
-
-    for restaurant_id in parent:
-
-        root = find(restaurant_id)
-
-        groups[root].add(restaurant_id)
+            union(
+                first_brand,
+                brand
+            )
 
     # -----------------------------------------------------
-    # Build display information
+    # Build brand groups
+    # -----------------------------------------------------
+
+    brand_groups = defaultdict(set)
+
+    for brand in brand_to_ids:
+
+        root = find(
+            brand
+        )
+
+        brand_groups[
+            root
+        ].add(
+            brand
+        )
+
+    # -----------------------------------------------------
+    # Convert brand groups into restaurant groups
     # -----------------------------------------------------
 
     grouped = {}
 
-    for group_ids in groups.values():
+    for brand_group in (
+        brand_groups.values()
+    ):
 
-        all_names = set()
+        group_ids = set()
 
-        for restaurant_id in group_ids:
+        group_names = set()
 
-            all_names.update(
-                id_to_names.get(
-                    restaurant_id,
-                    set()
-                )
+        for brand in brand_group:
+
+            group_ids.update(
+                brand_to_ids[
+                    brand
+                ]
             )
 
-        if not all_names:
+            for restaurant_id in (
+                brand_to_ids[
+                    brand
+                ]
+            ):
+
+                group_names.update(
+                    id_to_names.get(
+                        restaurant_id,
+                        set()
+                    )
+                )
+
+        if not group_ids:
             continue
 
+        # Keep the shortest available actual name
+        # as display name, same concept as old script.
         display_name = sorted(
-            all_names,
+            group_names,
+            key=lambda x: (
+                len(x),
+                x.lower()
+            )
+        )[0] if group_names else sorted(
+            brand_group,
             key=lambda x: (
                 len(x),
                 x.lower()
             )
         )[0]
 
-        grouped[display_name] = {
+        grouped[
+            display_name
+        ] = {
             "ids": sorted(
                 group_ids,
                 key=sort_key
             ),
+
             "names": sorted(
-                all_names,
+                group_names,
                 key=lambda x: x.lower()
+            ),
+
+            "brands": sorted(
+                brand_group
             )
         }
 
@@ -226,10 +356,12 @@ def build_restaurant_groups(
 
 def main():
 
-    bucket = os.environ["CF_R2_BUCKET_NAME"]
+    bucket = os.environ[
+        "CF_R2_BUCKET_NAME"
+    ]
 
     print("=" * 70)
-    print("AREA RESTAURANT ANALYSIS")
+    print("GEOGRAPHY INSIGHTS")
     print("=" * 70)
 
     # =====================================================
@@ -252,11 +384,17 @@ def main():
             []
         ):
 
-            key = obj["Key"]
+            key = obj[
+                "Key"
+            ]
 
-            if key.lower().endswith(".json"):
+            if key.lower().endswith(
+                ".json"
+            ):
 
-                json_keys.append(key)
+                json_keys.append(
+                    key
+                )
 
     json_keys.sort()
 
@@ -279,11 +417,8 @@ def main():
 
     records = []
 
-    # Restaurant ID -> names
+    # Restaurant ID -> original names
     id_to_names = defaultdict(set)
-
-    # Normalized restaurant name -> IDs
-    name_to_ids = defaultdict(set)
 
     # Area -> restaurant IDs
     area_to_restaurant_ids = defaultdict(set)
@@ -291,7 +426,7 @@ def main():
     # Area -> branch IDs
     area_to_branch_ids = defaultdict(set)
 
-    # Area -> cities
+    # Area -> city
     area_to_cities = defaultdict(set)
 
     # Restaurant ID -> areas
@@ -299,11 +434,6 @@ def main():
 
     # Restaurant ID -> cuisines
     restaurant_id_to_cuisines = defaultdict(set)
-
-    # Area -> cuisine -> grouped restaurant names
-    area_cuisine_restaurants = defaultdict(
-        lambda: defaultdict(set)
-    )
 
     # =====================================================
     # 3. Read all files
@@ -366,18 +496,6 @@ def main():
                     restaurant_name
                 )
 
-                normalized_name = brand_key(
-                    restaurant_name
-                )
-
-                if normalized_name:
-
-                    name_to_ids[
-                        normalized_name
-                    ].add(
-                        restaurant_id
-                    )
-
             # -------------------------------------------------
             # Area / Restaurant
             # -------------------------------------------------
@@ -432,24 +550,30 @@ def main():
             # -------------------------------------------------
             # Cuisine
             #
-            # Use cuisineString:
+            # IMPORTANT:
+            # Use cuisineString, not cuisines.
             #
-            # "Beverages, Pastries, Sandwiches"
+            # Example:
+            # "Healthy, Sandwiches, Burgers"
             #
-            # becomes:
-            #
-            # {"Beverages", "Pastries", "Sandwiches"}
+            # -> Healthy
+            # -> Sandwiches
+            # -> Burgers
             # -------------------------------------------------
 
             cuisine_string = clean(
-                r.get("cuisineString")
+                r.get(
+                    "cuisineString"
+                )
             )
 
             cleaned_cuisines = set()
 
             if cuisine_string:
 
-                for cuisine in cuisine_string.split(","):
+                for cuisine in (
+                    cuisine_string.split(",")
+                ):
 
                     cuisine = clean(
                         cuisine
@@ -477,21 +601,21 @@ def main():
     )
 
     # =====================================================
-    # 4. Group restaurants
+    # 4. SAME OLD RESTAURANT GROUPING
     # =====================================================
 
     grouped = build_restaurant_groups(
-        id_to_names,
-        name_to_ids
+        id_to_names
     )
 
-    total_grouped_restaurants = len(
+    unique_restaurants_after_grouping = len(
         grouped
     )
 
     print(
-        f"Grouped restaurants: "
-        f"{total_grouped_restaurants:,}"
+        f"unique_restaurants_after_grouping"
+        f"     : "
+        f"{unique_restaurants_after_grouping:,}"
     )
 
     # =====================================================
@@ -502,13 +626,15 @@ def main():
 
     grouped_restaurant_to_areas = defaultdict(set)
 
-    for display_name, group in grouped.items():
-
-        group_ids = group["ids"]
+    for display_name, group in (
+        grouped.items()
+    ):
 
         group_areas = set()
 
-        for restaurant_id in group_ids:
+        for restaurant_id in (
+            group["ids"]
+        ):
 
             group_areas.update(
                 restaurant_id_to_areas.get(
@@ -532,14 +658,18 @@ def main():
             )
 
     # =====================================================
-    # 6. Build cuisine information for grouped restaurants
+    # 6. Grouped restaurant -> cuisines
     # =====================================================
 
     grouped_restaurant_to_cuisines = defaultdict(set)
 
-    for display_name, group in grouped.items():
+    for display_name, group in (
+        grouped.items()
+    ):
 
-        for restaurant_id in group["ids"]:
+        for restaurant_id in (
+            group["ids"]
+        ):
 
             grouped_restaurant_to_cuisines[
                 display_name
@@ -551,8 +681,12 @@ def main():
             )
 
     # =====================================================
-    # 7. Area / Cuisine
+    # 7. Area -> Cuisine -> Actual restaurants
     # =====================================================
+
+    area_cuisine_restaurants = defaultdict(
+        lambda: defaultdict(set)
+    )
 
     for display_name in grouped:
 
@@ -585,12 +719,10 @@ def main():
     # =====================================================
 
     print(
-        "\nBuilding cuisine "
-        "concentration analysis..."
+        "\nBuilding cuisine concentration..."
     )
 
-    # cuisine -> all grouped restaurants
-    # having this cuisine
+    # Cuisine -> all actual/grouped restaurants
     cuisine_total_restaurants = defaultdict(set)
 
     for area, cuisine_data in (
@@ -610,7 +742,7 @@ def main():
     area_cuisine_concentration = {}
 
     for area in sorted(
-        area_cuisine_restaurants,
+        area_to_grouped_restaurants,
         key=sort_key
     ):
 
@@ -628,14 +760,13 @@ def main():
             else None
         )
 
-        area_total_restaurants = len(
-            area_to_grouped_restaurants.get(
-                area,
-                set()
-            )
+        restaurant_count = len(
+            area_to_grouped_restaurants[
+                area
+            ]
         )
 
-        cuisines_result = []
+        cuisine_results = []
 
         for cuisine in sorted(
             area_cuisine_restaurants[
@@ -644,45 +775,54 @@ def main():
             key=lambda x: x.lower()
         ):
 
-            restaurant_count = len(
+            cuisine_restaurants = (
                 area_cuisine_restaurants[
                     area
                 ][cuisine]
             )
 
-            percentage_of_area = safe_div(
-                restaurant_count * 100,
-                area_total_restaurants
+            cuisine_count = len(
+                cuisine_restaurants
             )
 
-            total_cuisine_restaurants = len(
+            area_percentage = safe_div(
+                cuisine_count * 100,
+                restaurant_count
+            )
+
+            total_with_cuisine = len(
                 cuisine_total_restaurants[
                     cuisine
                 ]
             )
 
-            percentage_of_all_cuisine_restaurants = safe_div(
-                restaurant_count * 100,
-                total_cuisine_restaurants
+            cuisine_global_percentage = safe_div(
+                cuisine_count * 100,
+                total_with_cuisine
             )
 
-            cuisines_result.append({
-                "cuisine": cuisine,
+            cuisine_results.append({
+
+                "cuisine":
+                    cuisine,
+
                 "restaurant_count":
-                    restaurant_count,
+                    cuisine_count,
+
                 "percentage_of_area_restaurants":
                     round(
-                        percentage_of_area,
+                        area_percentage,
                         2
                     ),
+
                 "percentage_of_all_restaurants_with_cuisine":
                     round(
-                        percentage_of_all_cuisine_restaurants,
+                        cuisine_global_percentage,
                         2
                     )
             })
 
-        cuisines_result.sort(
+        cuisine_results.sort(
             key=lambda x: (
                 -x[
                     "percentage_of_area_restaurants"
@@ -699,27 +839,33 @@ def main():
         area_cuisine_concentration[
             area
         ] = {
-            "shopCity": city,
-            "shopArea": area,
+
+            "shopCity":
+                city,
+
+            "shopArea":
+                area,
+
             "restaurant_count":
-                area_total_restaurants,
+                restaurant_count,
+
             "cuisines":
-                cuisines_result
+                cuisine_results
         }
 
-    # =====================================================
-    # 8. Top areas for each cuisine
-    # =====================================================
+    # -----------------------------------------------------
+    # Top areas for each cuisine
+    # -----------------------------------------------------
 
-    cuisine_concentration_extremes = defaultdict(list)
+    top_areas_by_cuisine = defaultdict(list)
 
     for area, data in (
         area_cuisine_concentration.items()
     ):
 
-        for cuisine_data in data[
-            "cuisines"
-        ]:
+        for cuisine_data in (
+            data["cuisines"]
+        ):
 
             cuisine = (
                 cuisine_data[
@@ -727,7 +873,7 @@ def main():
                 ]
             )
 
-            cuisine_concentration_extremes[
+            top_areas_by_cuisine[
                 cuisine
             ].append({
 
@@ -750,11 +896,9 @@ def main():
                     ]
             })
 
-    for cuisine in (
-        cuisine_concentration_extremes
-    ):
+    for cuisine in top_areas_by_cuisine:
 
-        cuisine_concentration_extremes[
+        top_areas_by_cuisine[
             cuisine
         ].sort(
             key=lambda x: (
@@ -768,22 +912,16 @@ def main():
 
                 sort_key(
                     x[
-                        "shopCity"
-                    ]
-                ),
-
-                sort_key(
-                    x[
                         "shopArea"
                     ]
                 )
             )
         )
 
-        cuisine_concentration_extremes[
+        top_areas_by_cuisine[
             cuisine
         ] = (
-            cuisine_concentration_extremes[
+            top_areas_by_cuisine[
                 cuisine
             ][:10]
         )
@@ -791,11 +929,11 @@ def main():
     # =====================================================
     # ANALYSIS 2
     #
-    # Areas that lack certain cuisines
+    # Areas that lack / underrepresent cuisines
     # =====================================================
 
     print(
-        "Building cuisine gaps analysis..."
+        "Building cuisine gaps..."
     )
 
     all_cuisines = sorted(
@@ -803,47 +941,30 @@ def main():
         key=lambda x: x.lower()
     )
 
-    area_cuisine_gaps = {}
-
-    # -----------------------------------------------------
-    # Calculate average percentage of each cuisine
-    # across areas where it exists
-    # -----------------------------------------------------
-
+    # Cuisine -> percentage in each area
+    # where that cuisine exists
     cuisine_area_percentages = defaultdict(list)
 
     for area, data in (
         area_cuisine_concentration.items()
     ):
 
-        area_total = data[
-            "restaurant_count"
-        ]
+        for cuisine_data in (
+            data["cuisines"]
+        ):
 
-        for cuisine in all_cuisines:
-
-            count = len(
-                area_cuisine_restaurants[
-                    area
-                ].get(
-                    cuisine,
-                    set()
-                )
+            cuisine_area_percentages[
+                cuisine_data[
+                    "cuisine"
+                ]
+            ].append(
+                cuisine_data[
+                    "percentage_of_area_restaurants"
+                ]
             )
 
-            percentage = safe_div(
-                count * 100,
-                area_total
-            )
-
-            if count > 0:
-
-                cuisine_area_percentages[
-                    cuisine
-                ].append(
-                    percentage
-                )
-
+    # Average share of cuisine across areas
+    # where the cuisine exists
     cuisine_average_percentage = {}
 
     for cuisine, percentages in (
@@ -857,24 +978,18 @@ def main():
             len(percentages)
         )
 
-    # -----------------------------------------------------
-    # Find missing / underrepresented cuisines
-    # -----------------------------------------------------
+    area_cuisine_gaps = {}
 
     for area in sorted(
-        area_cuisine_concentration,
+        area_to_grouped_restaurants,
         key=sort_key
     ):
 
-        data = (
-            area_cuisine_concentration[
+        restaurant_count = len(
+            area_to_grouped_restaurants[
                 area
             ]
         )
-
-        area_total = data[
-            "restaurant_count"
-        ]
 
         cities = area_to_cities.get(
             area,
@@ -903,9 +1018,9 @@ def main():
                 )
             )
 
-            percentage = safe_div(
+            area_percentage = safe_div(
                 count * 100,
-                area_total
+                restaurant_count
             )
 
             average_percentage = (
@@ -915,25 +1030,16 @@ def main():
                 )
             )
 
-            if average_percentage > 0:
-
-                gap_percentage = (
-                    average_percentage
-                    - percentage
-                )
-
-            else:
-
-                gap_percentage = 0
+            gap = (
+                average_percentage
+                - area_percentage
+            )
 
             if count == 0:
 
                 gap_type = "missing"
 
-            elif (
-                percentage
-                < average_percentage
-            ):
+            elif area_percentage < average_percentage:
 
                 gap_type = "low"
 
@@ -951,7 +1057,7 @@ def main():
 
                 "percentage_of_area_restaurants":
                     round(
-                        percentage,
+                        area_percentage,
                         2
                     ),
 
@@ -963,7 +1069,7 @@ def main():
 
                 "gap_percentage_points":
                     round(
-                        gap_percentage,
+                        gap,
                         2
                     ),
 
@@ -998,7 +1104,7 @@ def main():
                 area,
 
             "restaurant_count":
-                area_total,
+                restaurant_count,
 
             "cuisine_gaps":
                 gaps
@@ -1007,32 +1113,31 @@ def main():
     # =====================================================
     # ANALYSIS 3
     #
-    # Areas with many branches but few actual restaurants
+    # Many branches vs few actual restaurants
     # =====================================================
 
     print(
-        "Building branch / restaurant "
-        "ratio analysis..."
+        "Building branch / restaurant analysis..."
     )
 
     area_branch_restaurant_ratio = []
 
     for area in sorted(
-        area_to_branch_ids,
+        area_to_grouped_restaurants,
         key=sort_key
     ):
 
         branch_count = len(
-            area_to_branch_ids[
-                area
-            ]
-        )
-
-        restaurant_count = len(
-            area_to_grouped_restaurants.get(
+            area_to_branch_ids.get(
                 area,
                 set()
             )
+        )
+
+        restaurant_count = len(
+            area_to_grouped_restaurants[
+                area
+            ]
         )
 
         ratio = safe_div(
@@ -1054,9 +1159,9 @@ def main():
             else None
         )
 
-        restaurant_percentage = safe_div(
+        percentage_of_all_restaurants = safe_div(
             restaurant_count * 100,
-            total_grouped_restaurants
+            unique_restaurants_after_grouping
         )
 
         area_branch_restaurant_ratio.append({
@@ -1081,19 +1186,15 @@ def main():
 
             "percentage_of_all_grouped_restaurants":
                 round(
-                    restaurant_percentage,
+                    percentage_of_all_restaurants,
                     2
                 )
         })
 
-    # -----------------------------------------------------
-    # Highest branch / restaurant ratios
-    # -----------------------------------------------------
-
+    # Highest ratios
     highest_branch_restaurant_ratio = sorted(
         area_branch_restaurant_ratio,
         key=lambda x: (
-
             -x[
                 "branch_to_restaurant_ratio"
             ],
@@ -1108,12 +1209,6 @@ def main():
 
             sort_key(
                 x[
-                    "shopCity"
-                ]
-            ),
-
-            sort_key(
-                x[
                     "shopArea"
                 ]
             )
@@ -1121,7 +1216,7 @@ def main():
     )[:20]
 
     # =====================================================
-    # 9. Save outputs
+    # 8. Save outputs
     # =====================================================
 
     cuisine_concentration_output = {
@@ -1132,7 +1227,7 @@ def main():
         "top_areas_by_cuisine":
             dict(
                 sorted(
-                    cuisine_concentration_extremes.items(),
+                    top_areas_by_cuisine.items(),
                     key=lambda x: x[0].lower()
                 )
             )
@@ -1144,7 +1239,21 @@ def main():
             area_cuisine_gaps,
 
         "cuisines_analyzed":
-            all_cuisines
+            all_cuisines,
+
+        "average_percentage_by_cuisine":
+            {
+                cuisine: round(
+                    percentage,
+                    2
+                )
+
+                for cuisine, percentage
+                in sorted(
+                    cuisine_average_percentage.items(),
+                    key=lambda x: x[0].lower()
+                )
+            }
     }
 
     branch_restaurant_output = {
@@ -1153,9 +1262,6 @@ def main():
             area_branch_restaurant_ratio,
 
         "highest_branch_to_restaurant_ratio":
-            highest_branch_restaurant_ratio,
-
-        "high_branch_low_restaurant_areas":
             highest_branch_restaurant_ratio
     }
 
@@ -1169,8 +1275,8 @@ def main():
             "records":
                 len(records),
 
-            "grouped_restaurants":
-                total_grouped_restaurants,
+            "unique_restaurants_after_grouping":
+                unique_restaurants_after_grouping,
 
             "unique_areas":
                 len(
@@ -1183,37 +1289,18 @@ def main():
                 )
         },
 
-        "areas_with_cuisine_concentration": {
+        "analyses": {
 
-            "description":
-                "Cuisine distribution and concentration for each area.",
+            "cuisine_concentration":
+                CUISINE_CONCENTRATION_FILE,
 
-            "file":
-                CUISINE_CONCENTRATION_FILE
-        },
+            "cuisine_gaps":
+                CUISINE_GAPS_FILE,
 
-        "areas_with_cuisine_gaps": {
-
-            "description":
-                "Cuisines that are missing or underrepresented in each area.",
-
-            "file":
-                CUISINE_GAPS_FILE
-        },
-
-        "areas_with_many_branches_few_restaurants": {
-
-            "description":
-                "Areas ranked by branch-to-restaurant ratio.",
-
-            "file":
+            "branch_restaurant_ratio":
                 BRANCH_RESTAURANT_RATIO_FILE
         }
     }
-
-    # -----------------------------------------------------
-    # Save JSON files
-    # -----------------------------------------------------
 
     save_json(
         CUISINE_CONCENTRATION_FILE,
@@ -1236,92 +1323,106 @@ def main():
     )
 
     # =====================================================
-    # 10. Console summary
+    # 9. Console summary
     # =====================================================
 
-    print(
-        "\n" + "=" * 70
-    )
+    print()
+    print("=" * 70)
+    print("RESULT SUMMARY")
+    print("=" * 70)
 
     print(
-        "RESULT SUMMARY"
-    )
-
-    print(
-        "=" * 70
-    )
-
-    print(
-        f"\nJSON files: "
+        f"\nJSON files"
+        f"                         : "
         f"{len(json_keys):,}"
     )
 
     print(
-        f"Records: "
+        f"records"
+        f"                            : "
         f"{len(records):,}"
     )
 
     print(
-        f"Grouped restaurants: "
-        f"{total_grouped_restaurants:,}"
+        f"unique_restaurants_after_grouping"
+        f"     : "
+        f"{unique_restaurants_after_grouping:,}"
     )
 
     print(
-        f"Areas: "
+        f"unique_areas"
+        f"                         : "
         f"{len(area_to_grouped_restaurants):,}"
     )
 
     print(
-        f"Cuisines: "
+        f"unique_cuisines"
+        f"                      : "
         f"{len(all_cuisines):,}"
     )
 
-    # -----------------------------------------------------
-    # Cuisine concentration samples
-    # -----------------------------------------------------
+    # =====================================================
+    # Top cuisine concentrations
+    # =====================================================
 
     print(
-        "\nTop cuisine concentrations by area:"
+        "\nTop cuisine concentrations:"
     )
 
-    for area in sorted(
-        area_cuisine_concentration,
-        key=sort_key
-    )[:10]:
+    concentration_samples = []
 
-        data = (
-            area_cuisine_concentration[
-                area
+    for area, data in (
+        area_cuisine_concentration.items()
+    ):
+
+        for cuisine_data in (
+            data["cuisines"][:3]
+        ):
+
+            concentration_samples.append({
+
+                "shopCity":
+                    data["shopCity"],
+
+                "shopArea":
+                    area,
+
+                **cuisine_data
+            })
+
+    concentration_samples.sort(
+        key=lambda x: (
+            -x[
+                "percentage_of_area_restaurants"
+            ],
+
+            -x[
+                "restaurant_count"
             ]
         )
+    )
+
+    for item in concentration_samples[:20]:
 
         print(
-            f"\n  City "
-            f"{data['shopCity']}, "
+            f"  City "
+            f"{item['shopCity']}, "
             f"Area "
-            f"{area}"
+            f"{item['shopArea']} - "
+            f"{item['cuisine']}: "
+            f"{item['restaurant_count']:,} "
+            f"restaurants "
+            f"("
+            f"{item['percentage_of_area_restaurants']:.2f}%"
+            f")"
         )
 
-        for cuisine in data[
-            "cuisines"
-        ][:5]:
-
-            print(
-                f"    "
-                f"{cuisine['cuisine']}: "
-                f"{cuisine['restaurant_count']:,} "
-                f"restaurants "
-                f"("
-                f"{cuisine['percentage_of_area_restaurants']:.2f}%"
-                f")"
-            )
-
-    # -----------------------------------------------------
-    # Cuisine gaps samples
-    # -----------------------------------------------------
+    # =====================================================
+    # Top cuisine gaps
+    # =====================================================
 
     print(
-        "\nAreas with strongest cuisine gaps:"
+        "\nStrongest cuisine gaps:"
     )
 
     gap_samples = []
@@ -1337,9 +1438,7 @@ def main():
             gap_samples.append({
 
                 "shopCity":
-                    data[
-                        "shopCity"
-                    ],
+                    data["shopCity"],
 
                 "shopArea":
                     area,
@@ -1349,104 +1448,75 @@ def main():
 
     gap_samples.sort(
         key=lambda x: (
-
             -x[
                 "gap_percentage_points"
             ],
 
             x[
                 "restaurant_count"
-            ],
-
-            sort_key(
-                x[
-                    "shopCity"
-                ]
-            ),
-
-            sort_key(
-                x[
-                    "shopArea"
-                ]
-            )
+            ]
         )
     )
 
-    for gap in gap_samples[:20]:
+    for item in gap_samples[:20]:
 
         print(
             f"  City "
-            f"{gap['shopCity']}, "
+            f"{item['shopCity']}, "
             f"Area "
-            f"{gap['shopArea']} - "
-            f"{gap['cuisine']}: "
-            f"{gap['restaurant_count']} "
-            f"restaurants "
-            f"("
-            f"{gap['gap_type']}, "
+            f"{item['shopArea']} - "
+            f"{item['cuisine']}: "
+            f"{item['gap_type']}, "
             f"gap "
-            f"{gap['gap_percentage_points']:.2f} pp"
-            f")"
+            f"{item['gap_percentage_points']:.2f} pp"
         )
 
-    # -----------------------------------------------------
-    # Branch / restaurant ratio
-    # -----------------------------------------------------
+    # =====================================================
+    # Branch / restaurant
+    # =====================================================
 
     print(
-        "\nAreas with many branches "
-        "but few actual restaurants:"
+        "\nHighest branch / restaurant ratios:"
     )
 
-    for area in (
+    for item in (
         highest_branch_restaurant_ratio
     ):
 
         print(
             f"  City "
-            f"{area['shopCity']}, "
+            f"{item['shopCity']}, "
             f"Area "
-            f"{area['shopArea']}: "
-            f"{area['branch_count']:,} branches / "
-            f"{area['restaurant_count']:,} restaurants "
+            f"{item['shopArea']}: "
+            f"{item['branch_count']:,} branches / "
+            f"{item['restaurant_count']:,} restaurants "
             f"(ratio "
-            f"{area['branch_to_restaurant_ratio']:.2f})"
+            f"{item['branch_to_restaurant_ratio']:.2f})"
         )
 
     # =====================================================
-    # 11. Saved files
+    # Saved files
     # =====================================================
 
+    print()
+    print("=" * 70)
+    print("SAVED FILES")
+    print("=" * 70)
+
     print(
-        "\n" + "=" * 70
+        SUMMARY_FILE
     )
 
     print(
-        "SAVED FILES"
+        CUISINE_CONCENTRATION_FILE
     )
 
     print(
-        "=" * 70
+        CUISINE_GAPS_FILE
     )
 
     print(
-        f"{SUMMARY_FILE:<45}"
-        f" overall summary"
-    )
-
-    print(
-        f"{CUISINE_CONCENTRATION_FILE:<45}"
-        f" cuisine concentration by area"
-    )
-
-    print(
-        f"{CUISINE_GAPS_FILE:<45}"
-        f" cuisine gaps by area"
-    )
-
-    print(
-        f"{BRANCH_RESTAURANT_RATIO_FILE:<45}"
-        f" branch / restaurant ratio by area"
+        BRANCH_RESTAURANT_RATIO_FILE
     )
 
     print(
