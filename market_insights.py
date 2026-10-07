@@ -24,6 +24,7 @@ BRANCH_COUNTS_FILE = "restaurant_branch_counts.json"
 MULTI_BRANCHES_FILE = "restaurants_multiple_branches.json"
 CUISINE_FILE = "cuisine_distribution.json"
 CITY_DISTRIBUTION_FILE = "restaurant_city_distribution.json"
+BRANCH_DISTRIBUTION_BY_AREA_FILE = "branch_distribution_by_area.json"
 
 SAMPLES = 5            # عدد الأمثلة اللي بتتطبع في اللوج
 CUISINE_SAMPLES = 10   # عدد الـ cuisines اللي بتتطبع في اللوج
@@ -163,13 +164,14 @@ def main():
     name_to_ids = defaultdict(set)
     id_to_cities = defaultdict(set)
     
-    # shopArea -> cities
-    area_to_cities = defaultdict(set)
 
     # branches (branchId / branchName)
     branch_ids, branch_names, branch_names_lower = set(), set(), set()
     branch_id_to_names = defaultdict(Counter)
     branch_name_to_ids = defaultdict(set)
+    # shopArea -> cities
+    area_to_cities = defaultdict(set)
+    area_to_branch_ids = defaultdict(set)
 
     # (restaurant id, branchId) -> Counter(branchName)
     pair_names = defaultdict(Counter)
@@ -236,9 +238,14 @@ def main():
                     id_to_cuisines[_id].add(ck)
                     cuisine_forms[ck][p] += 1
 
-            #shop areas and shopcity
+            #shopArea
+            if shop_area and b_id:
+                area_to_branch_ids[shop_area].add(b_id)
+
+            # shopArea -> city
             if shop_area and shop_city:
                 area_to_cities[shop_area].add(shop_city)
+            
 
         print(f"[{i}/{len(files)}] {key} -> {len(records)} records")
 
@@ -583,32 +590,31 @@ def main():
         })
 
     # ----------------------------------------------------
-    # shopArea <-> shopCity relationship
+    # Branch distribution by area
     # ----------------------------------------------------
 
-    areas_in_multiple_cities = {
-        area: sorted(cities, key=sort_key)
-        for area, cities in sorted(
-            area_to_cities.items(),
+    branch_distribution_by_area = defaultdict(dict)
+
+    for area in sorted(area_to_branch_ids, key=sort_key):
+        cities = area_to_cities.get(area, set())
+
+        if not cities:
+            continue
+
+        city = sorted(cities, key=sort_key)[0]
+
+        branch_distribution_by_area[city][area] = len(
+            area_to_branch_ids[area]
+        )
+
+    branch_distribution_by_area = {
+        city: {
+            "areas": areas
+        }
+        for city, areas in sorted(
+            branch_distribution_by_area.items(),
             key=lambda x: sort_key(x[0])
         )
-        if len(cities) > 1
-    }
-
-    areas_in_single_city = {
-        area: sorted(cities, key=sort_key)
-        for area, cities in sorted(
-            area_to_cities.items(),
-            key=lambda x: sort_key(x[0])
-        )
-        if len(cities) == 1
-    }
-
-    area_city_relationship = {
-        "total_unique_areas": len(area_to_cities),
-        "areas_in_single_city": len(areas_in_single_city),
-        "areas_in_multiple_cities": len(areas_in_multiple_cities),
-        "areas_with_multiple_cities": areas_in_multiple_cities,
     }
 
     # ----------------------------------------------------
@@ -661,8 +667,6 @@ def main():
         "Restaurant Distribution by City":{
             "restaurant_distribution_by_city": restaurant_city_distribution,
         },
-
-        "Shop Area - City Relationship": area_city_relationship,
 
         "Cuisines (after grouping)": {
             "unique_cuisines": len(cuisine_counter),
@@ -721,8 +725,8 @@ def main():
     save_json(BRANCH_COUNTS_FILE, restaurant_branch_counts)
     save_json(MULTI_BRANCHES_FILE, restaurants_multiple_branches)
     save_json(CUISINE_FILE, cuisine_distribution)
-    save_json(CITY_DISTRIBUTION_FILE,restaurant_city_distribution
-)
+    save_json(CITY_DISTRIBUTION_FILE,restaurant_city_distribution)
+    save_json(BRANCH_DISTRIBUTION_BY_AREA_FILE,branch_distribution_by_area)
 
     # ----------------------------------------------------
     # SAMPLES (التفاصيل الكاملة في الملفات)
@@ -804,6 +808,30 @@ def main():
             for c in restaurant_city_distribution
         ],
         CITY_DISTRIBUTION_FILE,
+    )
+
+    print("\nBranch distribution by area")
+
+    total_areas = sum(
+        len(city_data["areas"])
+        for city_data in branch_distribution_by_area.values()
+    )
+
+    print(f"  Total areas: {total_areas}")
+    print(f"  Total cities: {len(branch_distribution_by_area)}")
+
+    for city, city_data in branch_distribution_by_area.items():
+        print(f"\n  City {city}")
+
+        for area, branch_count in city_data["areas"].items():
+            print(
+                f"    Area {area:<6}: "
+                f"{branch_count:,} branches"
+            )
+
+    print(
+        f"\n  -> full details: "
+        f"{BRANCH_DISTRIBUTION_BY_AREA_FILE}"
     )
     
     print_block(
@@ -920,6 +948,7 @@ def main():
     print(f"{BRANCH_COUNTS_FILE:<32}: {len(restaurant_branch_counts)} restaurants -> num of branches")
     print(f"{MULTI_BRANCHES_FILE:<32}: {len(restaurants_multiple_branches)} restaurants with more than one branch")
     print(f"{CITY_DISTRIBUTION_FILE:<32}: restaurant distribution by city")
+    print(f"{BRANCH_DISTRIBUTION_BY_AREA_FILE:<32}: branch distribution by area")
     print(f"{CUISINE_FILE:<32}: restaurants per cuisine")
     print(f"{DUPLICATES_FILE:<32}: the 5 multiple-mapping lists")
     print(f"{MULTI_NAMES_FILE:<32}: {len(merged)} restaurants with multiple names")
