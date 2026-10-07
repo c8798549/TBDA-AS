@@ -194,7 +194,7 @@ def main():
             b_name = clean(r.get("branchName"))
             cuisine_str = clean(r.get("cuisineString"))
             shop_city = clean(r.get("shopCity"))
-            shop_areas = r.get("shopArea", [])
+            shop_area = clean(r.get("shopArea"))
 
             # restaurants
             if _id:
@@ -236,15 +236,9 @@ def main():
                     id_to_cuisines[_id].add(ck)
                     cuisine_forms[ck][p] += 1
 
-            #shop areas ans shopcity
-            if isinstance(shop_areas, str):
-                shop_areas = [shop_areas]
-
-            for area in shop_areas:
-                area = clean(area)
-
-                if area and shop_city:
-                    area_to_cities[area].add(shop_city)
+            #shop areas and shopcity
+            if shop_area and shop_city:
+                area_to_cities[shop_area].add(shop_city)
 
         print(f"[{i}/{len(files)}] {key} -> {len(records)} records")
 
