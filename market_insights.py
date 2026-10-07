@@ -837,10 +837,10 @@ def main():
     for city, city_data in branch_distribution_by_area.items():
         print(f"\n  City {city}")
 
-        for area, branch_count in city_data["areas"].items():
+        for area in city_data["areas"]:
             print(
-                f"    Area {area:<6}: "
-                f"{branch_count:,} branches"
+                f"    Area {area['shopArea']:<6}: "
+                f"{area['branch_count']:,} branches"
             )
 
     print(
