@@ -26,6 +26,8 @@ CUISINE_FILE = "cuisine_distribution.json"
 CITY_FILE = "restaurants_by_city.json"
 AREA_BRANCHES_FILE = "branches_by_area.json"
 DENSITY_FILE = "restaurant_density_by_area.json"
+VERTICAL_TYPE_FILE = "vertical_type_distribution.json"
+
 
 SAMPLES = 5                  # عدد الأمثلة اللي بتتطبع في اللوج
 CUISINE_SAMPLES = 10         # عدد الـ cuisines اللي بتتطبع في اللوج
@@ -42,6 +44,16 @@ BUCKET = os.environ["CF_R2_BUCKET_NAME"]
 
 APOSTROPHES = re.compile(r"[\'`´‘’ʼ′ʻ]")
 
+VERTICAL_TYPE_NAMES = {
+    "0": "Restaurant / Food",
+    "1": "Grocery",
+    "2": "Pharmacy / Health & Beauty",
+    "3": "Flowers / Gifts",
+    "4": "Electronics",
+    "5": "Pet Supplies / Pet Shop",
+    "6": "Cosmetics / Beauty",
+    "9": "Specialty Store",
+}
 
 # ============================================================
 # HELPERS
@@ -189,6 +201,8 @@ def main():
     ids, names, names_lower = set(), set(), set()
     id_to_names = defaultdict(Counter)
     name_to_ids = defaultdict(set)
+    id_to_vertical_types = defaultdict(set)          # id -> set of verticalType
+    
 
     # branches (branchId / branchName)
     branch_ids, branch_names, branch_names_lower = set(), set(), set()
@@ -262,6 +276,10 @@ def main():
                     ck = p.lower()
                     id_to_cuisines[_id].add(ck)
                     cuisine_forms[ck][p] += 1
+
+            vertical_type = norm_code(r.get("verticalType"))
+            if _id and vertical_type:
+                id_to_vertical_types[_id].add(vertical_type)
 
             # location (مدينة / منطقة المحل)
             if b_id and city:
@@ -415,6 +433,13 @@ def main():
             cuisines.update(id_to_cuisines.get(rid, ()))
 
         brand_cuisines[display] = cuisines
+
+        # vertical types
+        brand_vertical_types = {}
+        vertical_types = set()
+        for rid in comp_ids:
+            vertical_types.update(id_to_vertical_types.get(rid, ()))
+        brand_vertical_types[display] = vertical_types
 
         # كل مدن ومناطق فروع المطعم (set، فكل مدينة/منطقة بتتعدّ مرة)
         cities_set = set()
@@ -608,6 +633,49 @@ def main():
             str(k): v for k, v in sorted(cuisines_per_restaurant.items())
         },
     }
+
+    # ----------------------------------------------------
+    # verticalType distribution (after grouping)
+    # ----------------------------------------------------
+    vt_counter = Counter()
+    for vts in brand_vertical_types.values():
+        for vt in vts:
+            vt_counter[vt] += 1
+
+    vertical_types_per_restaurant = Counter(
+        len(v) for v in brand_vertical_types.values()
+    )
+
+    with_vt = sum(1 for v in brand_vertical_types.values() if v)
+    without_vt = total_restaurants - with_vt
+
+    restaurants_per_vertical_type = [
+        {
+            "code": vt,
+            "name": VERTICAL_TYPE_NAMES.get(vt, "Unknown"),
+            "restaurants": n,
+            "percentage_of_restaurants": safe_div(n * 100, total_restaurants),
+        }
+        for vt, n in sorted(
+            vt_counter.items(), key=lambda x: (-x[1], sort_key(x[0]))
+        )
+    ]
+
+    vertical_type_distribution = {
+        "total_restaurants": total_restaurants,
+        "restaurants_with_vertical_type": with_vt,
+        "restaurants_without_vertical_type": without_vt,
+        "unique_vertical_types": len(vt_counter),
+        "note": (
+            "Each restaurant has exactly one verticalType (0-9). "
+            "A restaurant is counted once under its type."
+        ),
+        "vertical_types": restaurants_per_vertical_type,
+        "vertical_types_per_restaurant_distribution": {
+            str(k): v for k, v in sorted(vertical_types_per_restaurant.items())
+        },
+    }
+
 
     # ----------------------------------------------------
     # area -> city  (من الثلاثية: فرع + منطقة + مدينة)
@@ -844,6 +912,13 @@ def main():
             "restaurants_with_cuisine": with_cuisine,
             "restaurants_without_cuisine": without_cuisine,
         },
+
+        "Vertical Types (after grouping)": {
+            "unique_vertical_types": len(vt_counter),
+            "restaurants_with_vertical_type": with_vt,
+            "restaurants_without_vertical_type": without_vt,
+        },
+
         "Locations (shopCity / shopArea)": {
             "unique_cities": len(all_cities),
             "restaurants_with_city": restaurants_with_city,
@@ -904,6 +979,7 @@ def main():
     save_json(MERGED_BY_ID_FILE, merged_by_id)
     save_json(BRANCH_COUNTS_FILE, restaurant_branch_counts)
     save_json(MULTI_BRANCHES_FILE, restaurants_multiple_branches)
+    save_json(VERTICAL_TYPE_FILE, vertical_type_distribution)
     save_json(CUISINE_FILE, cuisine_distribution)
     save_json(CITY_FILE, city_distribution)
     save_json(AREA_BRANCHES_FILE, area_branches_distribution)
@@ -989,6 +1065,17 @@ def main():
             for c in restaurants_per_cuisine[:CUISINE_SAMPLES]
         ],
         CUISINE_FILE,
+    )
+
+    print_block(
+        "Restaurants per vertical type",
+        len(restaurants_per_vertical_type),
+        [
+            f"{v['name']} ({v['code']}): {v['restaurants']} restaurants "
+            f"({v['percentage_of_restaurants']}%)"
+            for v in restaurants_per_vertical_type
+        ],
+        VERTICAL_TYPE_FILE,
     )
 
     print("\nCuisines per restaurant:")
@@ -1187,6 +1274,7 @@ def main():
     print(f"{BRANCH_COUNTS_FILE:<32}: {len(restaurant_branch_counts)} restaurants -> num of branches")
     print(f"{MULTI_BRANCHES_FILE:<32}: {len(restaurants_multiple_branches)} restaurants with more than one branch")
     print(f"{CUISINE_FILE:<32}: restaurants per cuisine")
+    print(f"{VERTICAL_TYPE_FILE:<32}: restaurants per vertical type")
     print(f"{CITY_FILE:<32}: restaurants + branches per city")
     print(f"{AREA_BRANCHES_FILE:<32}: branches per area (with city)")
     print(f"{DENSITY_FILE:<32}: restaurant density per area (top / bottom)")
