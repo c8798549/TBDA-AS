@@ -28,12 +28,12 @@ MIN_CUISINE_IN_AREA = 5          # أقل عدد مطاعم من النوع في
 LIFT_MIN = 1.5                   # أقل lift لـ #6
 DOMINANCE_MIN_SHARE = 0.40       # نسبة الهيمنة في #7
 FEW_AREAS_MAX = 3                # أقصى عدد مناطق لـ "قليلة" في #11
-LOCAL_MIN_RESTAURANTS = 5        # أقل مطاعم لقايمة الأنواع المحلية في #11
+LOCAL_MIN_RESTAURANTS = 3        # أقل مطاعم لقايمة الأنواع المحلية في #11
 SHARED_MIN_PCT_OF_AREAS = 0.80   # نسبة المناطق لـ "مشترك" في #10
 
 MAX_PER_AREA_CONCENTRATION = 10  # أقصى عدد أنواع بتتحفظ لكل منطقة في #6
 MAX_AREAS_PER_CUISINE = 10       # أقصى عدد مناطق بتتحفظ لكل نوع في #6
-MAX_COMBINATIONS_SAVED = 500     # أقصى عدد أزواج/مجموعات بتتحفظ في #9
+MAX_COMBINATIONS_SAVED = 2000     # أقصى عدد أزواج/مجموعات بتتحفظ في #9
 
 SAMPLES = 5                      # عدد الأمثلة المطبوعة
 TOP_N_PRINT = 10                 # عدد الترتيبات المطبوعة

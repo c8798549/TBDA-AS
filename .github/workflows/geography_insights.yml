@@ -36,7 +36,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: unique-counts
+          name: geography_insights
           path: |
             geography_insights.json
             area_cuisine_concentration.json
