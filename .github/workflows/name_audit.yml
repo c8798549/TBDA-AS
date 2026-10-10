@@ -1,0 +1,53 @@
+name: Name Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      r2_prefix:
+        description: "R2 prefix"
+        required: true
+        default: "merged-restaurant-info/year=2025/month=09/day=17/"
+      search_terms:
+        description: "Names to look up (comma separated)"
+        required: false
+        default: "starbucks"
+
+jobs:
+  name-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install boto3
+
+      - name: Run name audit
+        env:
+          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+          R2_PREFIX: ${{ github.event.inputs.r2_prefix }}
+          AUDIT_SEARCH: ${{ github.event.inputs.search_terms }}
+        run: python name_audit.py 2>&1 | tee name_audit_log.txt
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: name-audit
+          path: |
+            name_audit.json
+            name_audit_prefix_candidates.json
+            name_audit_similar_names.json
+            name_audit_suspicious_merges.json
+            name_audit_name_patterns.json
+            name_audit_search.json
+            name_audit_log.txt
+          if-no-files-found: warn
