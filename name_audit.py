@@ -224,15 +224,7 @@ def main():
     branch_city = defaultdict(set)
     id_to_cuisines = defaultdict(set)
     id_to_slug = defaultdict(dict)      
-    id_to_urls = defaultdict(set) 
-
-    if _id:
-        slug = clean(r.get("restaurantSlug"))
-        if slug and "slug" not in id_to_slug[_id]:
-            id_to_slug[_id]["slug"] = slug
-        url = clean(r.get("branchUrl"))
-        if url:
-            id_to_urls[_id].add(url)     
+    id_to_urls = defaultdict(set)      
 
     # id -> {brand key من branchName -> {branchIds}}
     id_branch_brands = defaultdict(lambda: defaultdict(set))
@@ -275,6 +267,13 @@ def main():
                 if bk:
                     id_branch_brands[_id][bk].add(b_id)
                     bk_example.setdefault(bk, b_name)
+            # if _id:
+            #         slug = clean(r.get("restaurantSlug"))
+            #         if slug and "slug" not in id_to_slug[_id]:
+            #             id_to_slug[_id]["slug"] = slug
+            #         url = clean(r.get("branchUrl"))
+            #         if url:
+            #             id_to_urls[_id].add(url)
 
             restaurant_rows.append({
                     "id": clean(r.get("id")),
