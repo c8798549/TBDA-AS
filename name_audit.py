@@ -1151,7 +1151,55 @@ def main():
         )
     )
 
-    # Save CSV.
+    # ============================================================
+    # REMOVE DUPLICATES
+    # ============================================================
+
+    # Remove duplicate IDs within the same proposed grouping.
+    # Keep the first record encountered for each (Grouping label, id).
+    deduplicated_rows = []
+    seen_group_ids = set()
+
+    for row in grouping_review_rows:
+        record_id = clean(row.get("id"))
+        group_label = clean(row.get("Grouping label"))
+
+        # If ID is missing, use the available record fields to
+        # identify duplicate rows without merging unrelated records.
+        if record_id:
+            dedup_key = (group_label, record_id)
+        else:
+            dedup_key = (
+                group_label,
+                clean(row.get("name")),
+                clean(row.get("restaurantSlug")),
+                clean(row.get("branchUrl")),
+            )
+
+        if dedup_key in seen_group_ids:
+            continue
+
+        seen_group_ids.add(dedup_key)
+        deduplicated_rows.append(row)
+
+    grouping_review_rows = deduplicated_rows
+
+    # ============================================================
+    # STABLE ORDERING
+    # ============================================================
+
+    grouping_review_rows.sort(
+        key=lambda row: (
+            str(row["Grouping label"] or "").lower(),
+            str(row["name"] or "").lower(),
+            str(row["id"] or ""),
+        )
+    )
+
+    # ============================================================
+    # SAVE CSV
+    # ============================================================
+
     csv_columns = [
         "Grouping label",
         "id",
@@ -1171,13 +1219,17 @@ def main():
         writer.writeheader()
         writer.writerows(grouping_review_rows)
 
-    # Save JSON.
+    # ============================================================
+    # SAVE JSON
+    # ============================================================
+
     save_json(GROUPING_JSON_FILE, {
         "note": (
             "Includes records belonging to an existing group or a "
             "candidate group produced by the name audit rules. "
             "Proposed groupings are for review and are not applied "
-            "to the source data."
+            "to the source data. Duplicate IDs within the same "
+            "Grouping label are removed."
         ),
         "records_exported": len(grouping_review_rows),
         "groups_exported": len(included_roots),
@@ -1187,8 +1239,9 @@ def main():
 
     print(f"Grouping review CSV: {GROUPING_CSV_FILE}")
     print(f"Grouping review JSON: {GROUPING_JSON_FILE}")
-    print(f"Grouping review rows: {len(grouping_review_rows)}")
+    print(f"Grouping review rows after deduplication: {len(grouping_review_rows)}")
     print(f"Grouping review groups: {len(included_roots)}")
+
 
 
     rule_descriptions = {
