@@ -8,9 +8,9 @@ on:
         required: true
         default: "merged-restaurant-info/year=2025/month=09/day=17/"
       search_terms:
-        description: "Names to look up (comma separated)"
+        description: "Optional: names to look up (comma separated)"
         required: false
-        default: "starbucks"
+        default: ""
 
 jobs:
   name-audit:
@@ -44,10 +44,13 @@ jobs:
           name: name-audit
           path: |
             name_audit.json
+            name_audit_name_patterns.json
+            name_audit_first_token_clusters.json
             name_audit_prefix_candidates.json
+            name_audit_branchname_evidence.json
             name_audit_similar_names.json
             name_audit_suspicious_merges.json
-            name_audit_name_patterns.json
+            name_audit_rule_merges.json
             name_audit_search.json
             name_audit_log.txt
           if-no-files-found: warn
