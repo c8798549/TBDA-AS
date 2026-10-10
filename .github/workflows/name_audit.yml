@@ -52,5 +52,7 @@ jobs:
             name_audit_suspicious_merges.json
             name_audit_rule_merges.json
             name_audit_search.json
+            restaurant_grouping_review.csv
+            restaurant_grouping_review.json
             name_audit_log.txt
           if-no-files-found: warn
