@@ -1,0 +1,6812 @@
+[
+  {
+    "Grouping label":"24 Piraso",
+    "id":15545,
+    "name":"24 Piraso",
+    "restaurantSlug":"24-piraso",
+    "branchUrl":"\/kuwait\/24-piraso",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"24 Piraso",
+    "id":653391,
+    "name":"24 Piraso",
+    "restaurantSlug":"24-piraso-dhk-fnaites",
+    "branchUrl":"\/kuwait\/24-piraso-dhk-fnaites",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"32 Burger",
+    "id":24537,
+    "name":"32 Burger, Ardiya Small Industrial TGO",
+    "restaurantSlug":"32-burger",
+    "branchUrl":"\/kuwait\/32-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"70\/30",
+    "id":631865,
+    "name":"70\/30",
+    "restaurantSlug":7030,
+    "branchUrl":"\/kuwait\/7030",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"70\/30",
+    "id":675612,
+    "name":"70\/30",
+    "restaurantSlug":"7030-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/7030-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Abby Shawaya",
+    "id":24426,
+    "name":"Abby Shawaya",
+    "restaurantSlug":"abby-shawaya",
+    "branchUrl":"\/kuwait\/abby-shawaya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Abby Shawaya",
+    "id":673753,
+    "name":"Abby Shawaya",
+    "restaurantSlug":"abby-shawayadh-kitchenjahra",
+    "branchUrl":"\/kuwait\/abby-shawayadh-kitchenjahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Abieta Restaurant",
+    "id":5895,
+    "name":"Abieta Restaurant",
+    "restaurantSlug":"abieta-restaurant",
+    "branchUrl":"\/kuwait\/abieta-restaurant",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Abieta Restaurant",
+    "id":672248,
+    "name":"Abieta Restaurant",
+    "restaurantSlug":"abieta-restaurant-dh-kitchensalmya",
+    "branchUrl":"\/kuwait\/abieta-restaurant-dh-kitchensalmya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Achar Chefna",
+    "id":2364,
+    "name":"Achar Chefna",
+    "restaurantSlug":"achar-chefna",
+    "branchUrl":"\/kuwait\/achar-chefna",
+    "grouping_reason":"branchname_high; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Achar Chefna",
+    "id":663831,
+    "name":"Achar Chefna (Lake Mall)",
+    "restaurantSlug":"archar-chefna-dh-kitchenlake-mall",
+    "branchUrl":"\/kuwait\/archar-chefna-dh-kitchenlake-mall",
+    "grouping_reason":"branchname_high; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Agnii",
+    "id":25429,
+    "name":"Agnii",
+    "restaurantSlug":"agnii",
+    "branchUrl":"\/kuwait\/agnii",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Agnii",
+    "id":669319,
+    "name":"Agnii",
+    "restaurantSlug":"agniidh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/agniidh-kitchensalmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Aish Time",
+    "id":672951,
+    "name":"Aish Time",
+    "restaurantSlug":"aish-time",
+    "branchUrl":"\/kuwait\/aish-time",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Aish Time",
+    "id":675172,
+    "name":"Aish Time",
+    "restaurantSlug":"aish-time-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/aish-time-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Al Baraka",
+    "id":652258,
+    "name":"Al Baraka",
+    "restaurantSlug":"al-baraka-land",
+    "branchUrl":"\/kuwait\/al-baraka-land",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Al Baraka",
+    "id":684288,
+    "name":"Al Baraka Express",
+    "restaurantSlug":"al-baraka-express",
+    "branchUrl":"\/kuwait\/al-baraka-express",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Al Halabi",
+    "id":658179,
+    "name":"Al Halabi",
+    "restaurantSlug":"alhalabi",
+    "branchUrl":"\/kuwait\/alhalabi",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Al Halabi",
+    "id":677634,
+    "name":"Al Halabi",
+    "restaurantSlug":"al-halabi",
+    "branchUrl":"\/kuwait\/al-halabi",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Al kadi",
+    "id":9591,
+    "name":"Al kadi",
+    "restaurantSlug":"al-kadi",
+    "branchUrl":"\/kuwait\/al-kadi",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Al kadi",
+    "id":684929,
+    "name":"Al Kadi Sweet",
+    "restaurantSlug":"al-kadi-sweet",
+    "branchUrl":"\/kuwait\/al-kadi-sweet",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"AlFuhod",
+    "id":28779,
+    "name":"AlFuhod",
+    "restaurantSlug":"al-fuhod",
+    "branchUrl":"\/kuwait\/al-fuhod",
+    "grouping_reason":"prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"AlFuhod",
+    "id":621581,
+    "name":"Alfuhod Games",
+    "restaurantSlug":"alfuhod-games",
+    "branchUrl":"\/kuwait\/alfuhod-games",
+    "grouping_reason":"prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"AlMunesh Palace",
+    "id":28841,
+    "name":"Almunesh Palace",
+    "restaurantSlug":"almunesh-palace-juice",
+    "branchUrl":"\/kuwait\/almunesh-palace-juice",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"AlMunesh Palace",
+    "id":697005,
+    "name":"AlMunesh Palace",
+    "restaurantSlug":"almunesh-palace-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/almunesh-palace-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Alternative",
+    "id":630141,
+    "name":"Alternative",
+    "restaurantSlug":"aletrnative",
+    "branchUrl":"\/kuwait\/aletrnative",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Alternative",
+    "id":675248,
+    "name":"Alternative",
+    "restaurantSlug":"aletrnative-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/aletrnative-dh-kitchen-ardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Amiti Noura",
+    "id":656239,
+    "name":"Amiti Noura",
+    "restaurantSlug":"amti-noura",
+    "branchUrl":"\/kuwait\/amti-noura",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Amiti Noura",
+    "id":676495,
+    "name":"Amiti Noura",
+    "restaurantSlug":"amiti-noura-avenues",
+    "branchUrl":"\/kuwait\/amiti-noura-avenues",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Arabi",
+    "id":656499,
+    "name":"Arabi",
+    "restaurantSlug":"arabi",
+    "branchUrl":"\/kuwait\/arabi",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Arabi",
+    "id":22953,
+    "name":"Shawarma Arabi",
+    "restaurantSlug":"arabi",
+    "branchUrl":"\/kuwait\/arabi",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Arabica",
+    "id":24668,
+    "name":"Arabica",
+    "restaurantSlug":"arabica",
+    "branchUrl":"\/kuwait\/arabica",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Arabica",
+    "id":682322,
+    "name":"Arabica Coffee House",
+    "restaurantSlug":"arabica-coffee-house",
+    "branchUrl":"\/kuwait\/arabica-coffee-house",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Aseer Station",
+    "id":19904,
+    "name":"Aseer Station",
+    "restaurantSlug":"aseer-station",
+    "branchUrl":"\/kuwait\/aseer-station",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Aseer Station",
+    "id":1608,
+    "name":"Aseer Time (Fresh Juices)",
+    "restaurantSlug":"aseer-time-fresh-juices",
+    "branchUrl":"\/kuwait\/aseer-time-fresh-juices",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Asha's",
+    "id":634452,
+    "name":"Asha's",
+    "restaurantSlug":"ashas-rai",
+    "branchUrl":"\/kuwait\/ashas-rai",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Asha's",
+    "id":663768,
+    "name":"Asha's",
+    "restaurantSlug":"asha-s-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/asha-s-dh-kitchen-ardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Asha's",
+    "id":652410,
+    "name":"Asha's, Jabriya",
+    "restaurantSlug":"ashas-dk-jabriya",
+    "branchUrl":"\/kuwait\/ashas-dk-jabriya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Asha's",
+    "id":634166,
+    "name":"Asha's, Mahboula",
+    "restaurantSlug":"ashas-mahboula",
+    "branchUrl":"\/kuwait\/ashas-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Asha's",
+    "id":634159,
+    "name":"Asha's, Salmiya Boulevard",
+    "restaurantSlug":"ashas-salmiya-boulevard",
+    "branchUrl":"\/kuwait\/ashas-salmiya-boulevard",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Asha's",
+    "id":697760,
+    "name":"Asha`s, Sabah Al-Salem",
+    "restaurantSlug":"ashas-sabah-al-salem",
+    "branchUrl":"\/kuwait\/ashas-sabah-al-salem",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Asha's",
+    "id":634165,
+    "name":"Asha`s, Zahra, 360 Mall, Zahra",
+    "restaurantSlug":"ashas-zahra-360-mall",
+    "branchUrl":"\/kuwait\/ashas-zahra-360-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Ayam Zaman",
+    "id":656521,
+    "name":"Ayam Zaman",
+    "restaurantSlug":"ayam-zaman",
+    "branchUrl":"\/kuwait\/ayam-zaman",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Ayam Zaman",
+    "id":9132,
+    "name":"Ayam Zaman",
+    "restaurantSlug":"ayam-zaman",
+    "branchUrl":"\/kuwait\/ayam-zaman",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"B Fit",
+    "id":625795,
+    "name":"B Fit",
+    "restaurantSlug":"b-fit",
+    "branchUrl":"\/kuwait\/b-fit",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"B Fit",
+    "id":677535,
+    "name":"B Fit",
+    "restaurantSlug":"be-fit-dh-kitech-jahra",
+    "branchUrl":"\/kuwait\/be-fit-dh-kitech-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Babak",
+    "id":115,
+    "name":"Babak  - Ardhiya tmp",
+    "restaurantSlug":"babak",
+    "branchUrl":"\/kuwait\/babak",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BACKYARD",
+    "id":660831,
+    "name":"BACKYARD",
+    "restaurantSlug":"backyard",
+    "branchUrl":"\/kuwait\/backyard",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BACKYARD",
+    "id":689245,
+    "name":"Backyard",
+    "restaurantSlug":"backyard-dh-kitchen-ardhiya",
+    "branchUrl":"\/kuwait\/backyard-dh-kitchen-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Barid Qalbik Juice",
+    "id":658765,
+    "name":"Barid Qalbik Juice",
+    "restaurantSlug":"barid-qalbik",
+    "branchUrl":"\/kuwait\/barid-qalbik",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Barid Qalbik Juice",
+    "id":666023,
+    "name":"Barid Qalbik juice",
+    "restaurantSlug":"barid-qalbikdh-kitchenardhiya",
+    "branchUrl":"\/kuwait\/barid-qalbikdh-kitchenardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BB's",
+    "id":696829,
+    "name":"BB's",
+    "restaurantSlug":"bbs",
+    "branchUrl":"\/kuwait\/bbs",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BB's",
+    "id":703950,
+    "name":"BB's",
+    "restaurantSlug":"bbs-dh-kitchen-lake-mall",
+    "branchUrl":"\/kuwait\/bbs-dh-kitchen-lake-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BBQ Bros",
+    "id":661116,
+    "name":"BBQ Bros",
+    "restaurantSlug":"bbq-bros",
+    "branchUrl":"\/kuwait\/bbq-bros",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BBQ Bros",
+    "id":689246,
+    "name":"BBQ Bros",
+    "restaurantSlug":"bbq-bros-dh-kitchen-ardhiya",
+    "branchUrl":"\/kuwait\/bbq-bros-dh-kitchen-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BBQ Burger",
+    "id":22952,
+    "name":"BBQ Burger",
+    "restaurantSlug":"bbq-burger",
+    "branchUrl":"\/kuwait\/bbq-burger",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"BBQ Burger",
+    "id":26719,
+    "name":"BBQ Burger Box",
+    "restaurantSlug":"bbq-burger-box-s",
+    "branchUrl":"\/kuwait\/bbq-burger-box-s",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Bento",
+    "id":676226,
+    "name":"Bento",
+    "restaurantSlug":"bento",
+    "branchUrl":"\/kuwait\/bento",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Bento",
+    "id":689537,
+    "name":"Bento",
+    "restaurantSlug":"bento",
+    "branchUrl":"\/kuwait\/bento",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BigT",
+    "id":691279,
+    "name":"BigT",
+    "restaurantSlug":"bigt",
+    "branchUrl":"\/kuwait\/bigt",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BigT",
+    "id":692283,
+    "name":"BigT",
+    "restaurantSlug":"big-t-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/big-t-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Biryani Express",
+    "id":1958,
+    "name":"Biryani Express",
+    "restaurantSlug":"biryani-express",
+    "branchUrl":"\/kuwait\/biryani-express",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Biryani Express",
+    "id":646443,
+    "name":"Biryani Factory",
+    "restaurantSlug":"biryani-factory-fahaheel",
+    "branchUrl":"\/kuwait\/biryani-factory-fahaheel",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Biryani Express",
+    "id":10346,
+    "name":"Biryani Gate",
+    "restaurantSlug":"briyani-gate",
+    "branchUrl":"\/kuwait\/briyani-gate",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Biryani Express",
+    "id":8131,
+    "name":"Biryani House",
+    "restaurantSlug":"biryani-house",
+    "branchUrl":"\/kuwait\/biryani-house",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Blend Burger",
+    "id":11816,
+    "name":"Blend Burger",
+    "restaurantSlug":"blend-burger",
+    "branchUrl":"\/kuwait\/blend-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Blend Burger",
+    "id":688674,
+    "name":"Blend Burger",
+    "restaurantSlug":"blend-burger-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/blend-burger-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Blu Bun",
+    "id":665796,
+    "name":"Blu Bun",
+    "restaurantSlug":"blu-bun",
+    "branchUrl":"\/kuwait\/blu-bun",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Blu Bun",
+    "id":688620,
+    "name":"Blu Bun",
+    "restaurantSlug":"blu-bundh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/blu-bundh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Blue",
+    "id":619787,
+    "name":"Blue",
+    "restaurantSlug":"blue",
+    "branchUrl":"\/kuwait\/blue",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Blue",
+    "id":675247,
+    "name":"Blue",
+    "restaurantSlug":"blue-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/blue-dh-kitchen-ardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BOBA SHOP",
+    "id":663274,
+    "name":"BOBA SHOP",
+    "restaurantSlug":"boba-shop",
+    "branchUrl":"\/kuwait\/boba-shop",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"BOBA SHOP",
+    "id":700184,
+    "name":"Boba Time",
+    "restaurantSlug":"boba-time",
+    "branchUrl":"\/kuwait\/boba-time",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Bon Sweet",
+    "id":2732,
+    "name":"Bon Sweet",
+    "restaurantSlug":"bon-sweet",
+    "branchUrl":"\/kuwait\/bon-sweet",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Bon Sweet",
+    "id":693488,
+    "name":"Bon Sweet",
+    "restaurantSlug":"bon-sweet",
+    "branchUrl":"\/kuwait\/bon-sweet",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Bora Bora",
+    "id":28738,
+    "name":"Bora Bora",
+    "restaurantSlug":"bora-bora",
+    "branchUrl":"\/kuwait\/bora-bora",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Bora Bora",
+    "id":24628,
+    "name":"Bora Bora Al Laziz",
+    "restaurantSlug":"bo-ra-bora-al-laziz",
+    "branchUrl":"\/kuwait\/bo-ra-bora-al-laziz",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Bukhari Ozbaki",
+    "id":8050,
+    "name":"Bukhari Ozbaki",
+    "restaurantSlug":"ruzbek",
+    "branchUrl":"\/kuwait\/ruzbek",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BURGER BOUTIQUE",
+    "id":100,
+    "name":"BURGER BOUTIQUE",
+    "restaurantSlug":"burger-boutique",
+    "branchUrl":"\/kuwait\/burger-boutique",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BURGER BOUTIQUE",
+    "id":682474,
+    "name":"Burger Boutique",
+    "restaurantSlug":"burger-boutique-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/burger-boutique-dh-kitchen-ardiya",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"BURGER BOUTIQUE",
+    "id":59,
+    "name":"Burger Co",
+    "restaurantSlug":"burger-co",
+    "branchUrl":"\/kuwait\/burger-co",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"BURGER BOUTIQUE",
+    "id":629699,
+    "name":"Burger Gate",
+    "restaurantSlug":"burger-gate",
+    "branchUrl":"\/kuwait\/burger-gate",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"By The Butchery",
+    "id":700159,
+    "name":"By The Butchery",
+    "restaurantSlug":"by-the-butchery",
+    "branchUrl":"\/kuwait\/by-the-butchery",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"By The Butchery",
+    "id":700906,
+    "name":"By The Butchery",
+    "restaurantSlug":"by-the-butchery-dh-kitchen-fnaitess",
+    "branchUrl":"\/kuwait\/by-the-butchery-dh-kitchen-fnaitess",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Byalat Karak",
+    "id":21579,
+    "name":"Byalat Karak",
+    "restaurantSlug":"byalat-karak-shuwaikh-educational",
+    "branchUrl":"\/kuwait\/byalat-karak-shuwaikh-educational",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Byalat Karak",
+    "id":676330,
+    "name":"Byalat Karak",
+    "restaurantSlug":"byalat-karak-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/byalat-karak-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chapatti Rashid",
+    "id":666026,
+    "name":"Chapatti Rashid",
+    "restaurantSlug":"chapati-rashiddh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/chapati-rashiddh-kitchensalmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chapatti Rashid",
+    "id":6854,
+    "name":"Chapatti Rashid",
+    "restaurantSlug":"chapatti-rashid",
+    "branchUrl":"\/kuwait\/chapatti-rashid",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chapatti Rashid khan",
+    "id":651216,
+    "name":"Chapatti Rashid khan",
+    "restaurantSlug":"chapatti-rashid-khan",
+    "branchUrl":"\/kuwait\/chapatti-rashid-khan",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chapatti Rashid khan",
+    "id":666463,
+    "name":"Chapatti Rashid khan",
+    "restaurantSlug":"chapatti-rashid-khandh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/chapatti-rashid-khandh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chicken Co",
+    "id":21491,
+    "name":"Chicken Co",
+    "restaurantSlug":"chicken-co",
+    "branchUrl":"\/kuwait\/chicken-co",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Chicken Co",
+    "id":4199,
+    "name":"Chicken Express",
+    "restaurantSlug":"chicken-express",
+    "branchUrl":"\/kuwait\/chicken-express",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Chicken Co",
+    "id":702576,
+    "name":"Chicken station",
+    "restaurantSlug":"chicken-station",
+    "branchUrl":"\/kuwait\/chicken-station",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Chicken Joint",
+    "id":667781,
+    "name":"Chicken Joint",
+    "restaurantSlug":"chicken-joint",
+    "branchUrl":"\/kuwait\/chicken-joint",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chicken Joint",
+    "id":685628,
+    "name":"Chicken joint",
+    "restaurantSlug":"chicken-joint-dh-kitchen-jahar",
+    "branchUrl":"\/kuwait\/chicken-joint-dh-kitchen-jahar",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chili Pepper",
+    "id":12419,
+    "name":"Chili Pepper",
+    "restaurantSlug":"chili-pepper",
+    "branchUrl":"\/kuwait\/chili-pepper",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chili Pepper",
+    "id":681759,
+    "name":"Chili Pepper",
+    "restaurantSlug":"chillli-pepper-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/chillli-pepper-dh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"China Express",
+    "id":1322,
+    "name":"China Express",
+    "restaurantSlug":"china-village",
+    "branchUrl":"\/kuwait\/china-village",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"China Express",
+    "id":27723,
+    "name":"china gate",
+    "restaurantSlug":"china-gate",
+    "branchUrl":"\/kuwait\/china-gate",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"China Express",
+    "id":685241,
+    "name":"China House",
+    "restaurantSlug":"china-house",
+    "branchUrl":"\/kuwait\/china-house",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"China Garden",
+    "id":75,
+    "name":"China Garden",
+    "restaurantSlug":"china-garden",
+    "branchUrl":"\/kuwait\/china-garden",
+    "grouping_reason":"branchname_high; prefix_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"China Garden",
+    "id":668347,
+    "name":"China Garden Superfast",
+    "restaurantSlug":"china-gardendh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/china-gardendh-kitchensalmiya",
+    "grouping_reason":"branchname_high; prefix_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"CHKN",
+    "id":5639,
+    "name":"CHKN",
+    "restaurantSlug":"chkn",
+    "branchUrl":"\/kuwait\/chkn",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"CHKN",
+    "id":675138,
+    "name":"CHKN",
+    "restaurantSlug":"chkndh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/chkndh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chkn O Cluck",
+    "id":666341,
+    "name":"Chkn O Cluck",
+    "restaurantSlug":"chkn-o-cluckdh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/chkn-o-cluckdh-kitchen-salmiya",
+    "grouping_reason":"branchname_medium; current_group; same_text_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chkn O Cluck",
+    "id":668562,
+    "name":"Chkn O cluck",
+    "restaurantSlug":"chkn-o-cluck-dh-kitchen-lake-mall",
+    "branchUrl":"\/kuwait\/chkn-o-cluck-dh-kitchen-lake-mall",
+    "grouping_reason":"branchname_medium; current_group; same_text_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chkn O Cluck",
+    "id":18453,
+    "name":"CHKN O'CLUCK",
+    "restaurantSlug":"chken-o-cluck",
+    "branchUrl":"\/kuwait\/chken-o-cluck",
+    "grouping_reason":"branchname_medium; current_group; same_text_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chocolateness",
+    "id":1344,
+    "name":"Chocolateness",
+    "restaurantSlug":"chocolateness",
+    "branchUrl":"\/kuwait\/chocolateness",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Chocolateness",
+    "id":650887,
+    "name":"Chocolateness Express",
+    "restaurantSlug":"chocoletness-express-khalidya",
+    "branchUrl":"\/kuwait\/chocoletness-express-khalidya",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Cinescape",
+    "id":602081,
+    "name":"Cinescape",
+    "restaurantSlug":"cinescape",
+    "branchUrl":"\/kuwait\/cinescape",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Cinescape",
+    "id":686505,
+    "name":"Cinescape",
+    "restaurantSlug":"cinescape-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/cinescape-dh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"CocoaVia",
+    "id":1444,
+    "name":"CocoaVia, Al-Qurain TMP",
+    "restaurantSlug":"cocoavia",
+    "branchUrl":"\/kuwait\/cocoavia",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"CocoaVia",
+    "id":677738,
+    "name":"CocoaVia, Ardyhia",
+    "restaurantSlug":"cocoavia-west-abu-fetera",
+    "branchUrl":"\/kuwait\/cocoavia-west-abu-fetera",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Cookie Dough",
+    "id":2711,
+    "name":"Cookie Dough TGO,West Abu Fetera Small Indust TGO",
+    "restaurantSlug":"cookie-dough",
+    "branchUrl":"\/kuwait\/cookie-dough",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Corn and Potato",
+    "id":680432,
+    "name":"Corn and Potato",
+    "restaurantSlug":"corn-and-potato",
+    "branchUrl":"\/kuwait\/corn-and-potato",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Corn and Potato",
+    "id":697011,
+    "name":"Corn and Potato",
+    "restaurantSlug":"corn-and-potato-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/corn-and-potato-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Croissant",
+    "id":677983,
+    "name":"Croissant",
+    "restaurantSlug":"croissant",
+    "branchUrl":"\/kuwait\/croissant",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Croissant",
+    "id":685484,
+    "name":"Croissant Station",
+    "restaurantSlug":"croissant-station",
+    "branchUrl":"\/kuwait\/croissant-station",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Daddy's Burger",
+    "id":688675,
+    "name":"Daddy's Burger",
+    "restaurantSlug":"daddys-burger-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/daddys-burger-dh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Daddy's Burger",
+    "id":678490,
+    "name":"Daddy’s Burger",
+    "restaurantSlug":"daddys-burger",
+    "branchUrl":"\/kuwait\/daddys-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Dallah",
+    "id":18097,
+    "name":"Dallah",
+    "restaurantSlug":"dallah-",
+    "branchUrl":"\/kuwait\/dallah-",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Dallah",
+    "id":673976,
+    "name":"Dallah Cafe",
+    "restaurantSlug":"dallah",
+    "branchUrl":"\/kuwait\/dallah",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Dar Obona",
+    "id":4113,
+    "name":"Dar Obona",
+    "restaurantSlug":"dar-obona",
+    "branchUrl":"\/kuwait\/dar-obona",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Dar Obona",
+    "id":675122,
+    "name":"Dar Obona",
+    "restaurantSlug":"dar-obona-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/dar-obona-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Diet Care",
+    "id":21640,
+    "name":"Diet Care , Dasma",
+    "restaurantSlug":"diet-care-shamiya-yarmouk",
+    "branchUrl":"\/kuwait\/diet-care-shamiya-yarmouk",
+    "grouping_reason":"current_group; prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Diet Care",
+    "id":1447,
+    "name":"DIET CARE Abu Halifa",
+    "restaurantSlug":"diet-care--abu-halifa",
+    "branchUrl":"\/kuwait\/diet-care--abu-halifa",
+    "grouping_reason":"current_group; prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Diet Care",
+    "id":1165,
+    "name":"DIET CARE Hitten",
+    "restaurantSlug":"diet-care--hitteen",
+    "branchUrl":"\/kuwait\/diet-care--hitteen",
+    "grouping_reason":"current_group; prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Diet Care",
+    "id":2332,
+    "name":"DIET CARE Jahra",
+    "restaurantSlug":"diet-care--jahra",
+    "branchUrl":"\/kuwait\/diet-care--jahra",
+    "grouping_reason":"current_group; prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Diet Care",
+    "id":2237,
+    "name":"DIET CARE Rabiya",
+    "restaurantSlug":"diet-care--rabiya",
+    "branchUrl":"\/kuwait\/diet-care--rabiya",
+    "grouping_reason":"current_group; prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Diet Care",
+    "id":4043,
+    "name":"DIET CARE Salmiya",
+    "restaurantSlug":"diet-care--salmiya",
+    "branchUrl":"\/kuwait\/diet-care--salmiya",
+    "grouping_reason":"current_group; prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Diet Care",
+    "id":1446,
+    "name":"DIET CARE Sharq",
+    "restaurantSlug":"diet-care--sharq",
+    "branchUrl":"\/kuwait\/diet-care--sharq",
+    "grouping_reason":"current_group; prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Diet Care",
+    "id":4517,
+    "name":"Diet Care, Abdullah Al-Mubarak - West Jleeb",
+    "restaurantSlug":"diet-care--west-jleeb",
+    "branchUrl":"\/kuwait\/diet-care--west-jleeb",
+    "grouping_reason":"current_group; prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Dolma",
+    "id":683516,
+    "name":"Dolma",
+    "restaurantSlug":"dolma",
+    "branchUrl":"\/kuwait\/dolma",
+    "grouping_reason":"prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Dolma",
+    "id":694377,
+    "name":"Dolma Mahashi",
+    "restaurantSlug":"dolma-mahashi",
+    "branchUrl":"\/kuwait\/dolma-mahashi",
+    "grouping_reason":"prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Domino's Pizza",
+    "id":2100,
+    "name":"Domino's Pizza",
+    "restaurantSlug":"domino-pizza-tmp",
+    "branchUrl":"\/kuwait\/domino-pizza-tmp",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Domino's Pizza",
+    "id":664290,
+    "name":"Domino's Pizza",
+    "restaurantSlug":"dominos-pizza-tgo",
+    "branchUrl":"\/kuwait\/dominos-pizza-tgo",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Dr. Juice",
+    "id":3009,
+    "name":"Dr. Juice",
+    "restaurantSlug":"dr-juice",
+    "branchUrl":"\/kuwait\/dr-juice",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Dr. Juice",
+    "id":673768,
+    "name":"Dr. Juice",
+    "restaurantSlug":"dr-juicedh-kitchenjahra",
+    "branchUrl":"\/kuwait\/dr-juicedh-kitchenjahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Dukkan",
+    "id":677826,
+    "name":"Dukkan",
+    "restaurantSlug":"dukkan",
+    "branchUrl":"\/kuwait\/dukkan",
+    "grouping_reason":"noise_words_rule; prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Dukkan",
+    "id":11202,
+    "name":"Dukkan Express",
+    "restaurantSlug":"dukkan-express",
+    "branchUrl":"\/kuwait\/dukkan-express",
+    "grouping_reason":"noise_words_rule; prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Dunkin Donuts",
+    "id":668379,
+    "name":"Dunkin Donuts",
+    "restaurantSlug":"dunkin-donuts-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/dunkin-donuts-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Dunkin Donuts",
+    "id":8527,
+    "name":"Dunkin Donuts",
+    "restaurantSlug":"dunkin-donuts",
+    "branchUrl":"\/kuwait\/dunkin-donuts",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Duo Burger",
+    "id":27779,
+    "name":"Duo burger",
+    "restaurantSlug":"duomo-cafe",
+    "branchUrl":"\/kuwait\/duomo-cafe",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Duo Burger",
+    "id":675622,
+    "name":"Duo Burger",
+    "restaurantSlug":"duo-burger-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/duo-burger-dh-kitchen-ardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Dyay",
+    "id":627829,
+    "name":"Dyay",
+    "restaurantSlug":"dyay",
+    "branchUrl":"\/kuwait\/dyay",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Dyay",
+    "id":642570,
+    "name":"Dyay Makina",
+    "restaurantSlug":"dyay-makina",
+    "branchUrl":"\/kuwait\/dyay-makina",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"EAST",
+    "id":18454,
+    "name":"EAST",
+    "restaurantSlug":"east-cafe",
+    "branchUrl":"\/kuwait\/east-cafe",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"EAST",
+    "id":666047,
+    "name":"EAST,Fnaitess,(DH Kitchen)",
+    "restaurantSlug":"eastdh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/eastdh-kitchensalmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Eighty Six",
+    "id":24666,
+    "name":"Eighty Six, Abu Hassaniya",
+    "restaurantSlug":"eighty-six1",
+    "branchUrl":"\/kuwait\/eighty-six1",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"elEstez",
+    "id":650953,
+    "name":"elEstez",
+    "restaurantSlug":"el-estez",
+    "branchUrl":"\/kuwait\/el-estez",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"elEstez",
+    "id":693829,
+    "name":"elEstez",
+    "restaurantSlug":"elestez-dh-kiychen-mahboula",
+    "branchUrl":"\/kuwait\/elestez-dh-kiychen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663722,
+    "name":"Elevation Burger, Abu Ftaira",
+    "restaurantSlug":"abu-ftaira-elevation-burger",
+    "branchUrl":"\/kuwait\/abu-ftaira-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663721,
+    "name":"Elevation Burger, Abu Halifa",
+    "restaurantSlug":"abu-halifa-elevation-burger",
+    "branchUrl":"\/kuwait\/abu-halifa-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663730,
+    "name":"Elevation Burger, Al Masayel",
+    "restaurantSlug":"elevation-burger-masayel",
+    "branchUrl":"\/kuwait\/elevation-burger-masayel",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663725,
+    "name":"Elevation Burger, Al-Bedae",
+    "restaurantSlug":"bedae-elevation-burger",
+    "branchUrl":"\/kuwait\/bedae-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663724,
+    "name":"Elevation Burger, Ardhiya",
+    "restaurantSlug":"ardhiya-elevation-burger",
+    "branchUrl":"\/kuwait\/ardhiya-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":687978,
+    "name":"Elevation Burger, Bnaider",
+    "restaurantSlug":"elevation-burger-sabah-al-ahmad",
+    "branchUrl":"\/kuwait\/elevation-burger-sabah-al-ahmad",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663727,
+    "name":"Elevation Burger, Jabriya",
+    "restaurantSlug":"jabriya-elevation-burger",
+    "branchUrl":"\/kuwait\/jabriya-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663728,
+    "name":"Elevation Burger, Jahra - Jahra Area",
+    "restaurantSlug":"jahra-elevation-burger",
+    "branchUrl":"\/kuwait\/jahra-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663729,
+    "name":"Elevation Burger, Kaifan",
+    "restaurantSlug":"kaifan-elevation-burger",
+    "branchUrl":"\/kuwait\/kaifan-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":694332,
+    "name":"Elevation Burger, Khairan",
+    "restaurantSlug":"elevation-burger-khairan",
+    "branchUrl":"\/kuwait\/elevation-burger-khairan",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663731,
+    "name":"Elevation Burger, Mishref",
+    "restaurantSlug":"mishref-elevation-burger",
+    "branchUrl":"\/kuwait\/mishref-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663726,
+    "name":"Elevation Burger, Promenade",
+    "restaurantSlug":"hawally-elevation-burger",
+    "branchUrl":"\/kuwait\/hawally-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663733,
+    "name":"Elevation Burger, Qortuba",
+    "restaurantSlug":"qortuba-elevation-burger",
+    "branchUrl":"\/kuwait\/qortuba-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":663735,
+    "name":"Elevation Burger, Sulaibhikat",
+    "restaurantSlug":"sulaibhikat-elevation-burger",
+    "branchUrl":"\/kuwait\/sulaibhikat-elevation-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Elevation Burger",
+    "id":672859,
+    "name":"Elevation Burger, Warehouse Mall",
+    "restaurantSlug":"elevation-burger-warehouse-mall",
+    "branchUrl":"\/kuwait\/elevation-burger-warehouse-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Emberech",
+    "id":666410,
+    "name":"Emberech",
+    "restaurantSlug":"emberechdh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/emberechdh-kitchensalmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Emberech",
+    "id":8138,
+    "name":"Emberech",
+    "restaurantSlug":"emberech",
+    "branchUrl":"\/kuwait\/emberech",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Epic",
+    "id":25818,
+    "name":"Epic",
+    "restaurantSlug":"epic-restaurant",
+    "branchUrl":"\/kuwait\/epic-restaurant",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Epic",
+    "id":645352,
+    "name":"Epic",
+    "restaurantSlug":"epic",
+    "branchUrl":"\/kuwait\/epic",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Falafel Hamada",
+    "id":630844,
+    "name":"Falafel Hamada",
+    "restaurantSlug":"falafel-hamada",
+    "branchUrl":"\/kuwait\/falafel-hamada",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Falafel Hamada",
+    "id":669035,
+    "name":"Falafel Hamada",
+    "restaurantSlug":"falafel-hamada-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/falafel-hamada-dh-kitchen-ardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Farah",
+    "id":4425,
+    "name":"Farah",
+    "restaurantSlug":"farah",
+    "branchUrl":"\/kuwait\/farah",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Farah",
+    "id":674638,
+    "name":"Farah",
+    "restaurantSlug":"farah-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/farah-dh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"FARAHAT",
+    "id":1387,
+    "name":"FARAHAT",
+    "restaurantSlug":"farhat",
+    "branchUrl":"\/kuwait\/farhat",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"FARAHAT",
+    "id":692188,
+    "name":"Farahat",
+    "restaurantSlug":"farahat-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/farahat-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Farawla Wa Moz Juice",
+    "id":605564,
+    "name":"Farawla Wa Moz Juice",
+    "restaurantSlug":"farawla-wa-moz-juice",
+    "branchUrl":"\/kuwait\/farawla-wa-moz-juice",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Farawla Wa Moz Juice",
+    "id":665901,
+    "name":"Farawla Wa Moz Juice",
+    "restaurantSlug":"farawla-w-moz-dh-kitchen-ardhiya",
+    "branchUrl":"\/kuwait\/farawla-w-moz-dh-kitchen-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Fatayer Time",
+    "id":21486,
+    "name":"Fatayer Express",
+    "restaurantSlug":"fatayer-express",
+    "branchUrl":"\/kuwait\/fatayer-express",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Fatayer Time",
+    "id":6292,
+    "name":"Fatayer Station",
+    "restaurantSlug":"fatayer-station",
+    "branchUrl":"\/kuwait\/fatayer-station",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Fatayer Time",
+    "id":650185,
+    "name":"Fatayer Time",
+    "restaurantSlug":"fatayer-time",
+    "branchUrl":"\/kuwait\/fatayer-time",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Fatayer Time",
+    "id":661779,
+    "name":"Fatayer Time",
+    "restaurantSlug":"fatayer-time-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/fatayer-time-dh-kitchen-ardiya",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Fish & Co.",
+    "id":9441,
+    "name":"Fish & Co.",
+    "restaurantSlug":"fish-co",
+    "branchUrl":"\/kuwait\/fish-co",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Fish & Co.",
+    "id":26602,
+    "name":"Fish Store",
+    "restaurantSlug":"fish-store",
+    "branchUrl":"\/kuwait\/fish-store",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Flamin",
+    "id":641236,
+    "name":"Flamin",
+    "restaurantSlug":"flamin",
+    "branchUrl":"\/kuwait\/flamin",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Flamin",
+    "id":671024,
+    "name":"Flamin",
+    "restaurantSlug":"flamindh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/flamindh-kitchensalmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Flare Burger",
+    "id":655687,
+    "name":"Flare Burger",
+    "restaurantSlug":"flare-burger",
+    "branchUrl":"\/kuwait\/flare-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Flare Burger",
+    "id":697004,
+    "name":"Flare burger",
+    "restaurantSlug":"flare-burger-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/flare-burger-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Folds",
+    "id":692364,
+    "name":"Folds",
+    "restaurantSlug":"folds",
+    "branchUrl":"\/kuwait\/folds",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Folds",
+    "id":696385,
+    "name":"Folds",
+    "restaurantSlug":"folds-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/folds-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Fruit Time",
+    "id":688906,
+    "name":"Fruit & More",
+    "restaurantSlug":"fruit-more-new",
+    "branchUrl":"\/kuwait\/fruit-more-new",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Fruit Time",
+    "id":8514,
+    "name":"Fruit Box",
+    "restaurantSlug":"fruit-box",
+    "branchUrl":"\/kuwait\/fruit-box",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Fruit Time",
+    "id":695713,
+    "name":"Fruit House",
+    "restaurantSlug":"fruit-house",
+    "branchUrl":"\/kuwait\/fruit-house",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Fruit Time",
+    "id":657024,
+    "name":"Fruit Time",
+    "restaurantSlug":"fruit-time",
+    "branchUrl":"\/kuwait\/fruit-time",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Fruit Time",
+    "id":697013,
+    "name":"Fruit Time",
+    "restaurantSlug":"fruit-time-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/fruit-time-dh-kitchen-mahboula",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Go Fit",
+    "id":660773,
+    "name":"Go Fit",
+    "restaurantSlug":"go-fit",
+    "branchUrl":"\/kuwait\/go-fit",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Go Fit",
+    "id":677501,
+    "name":"Go fit, (DH kitchen) - Jahra",
+    "restaurantSlug":"go-fit-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/go-fit-dh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Hala Restaurant",
+    "id":9966,
+    "name":"Hala Restaurant",
+    "restaurantSlug":"hala",
+    "branchUrl":"\/kuwait\/hala",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Hala Restaurant",
+    "id":617442,
+    "name":"Hala Store",
+    "restaurantSlug":"hala-store",
+    "branchUrl":"\/kuwait\/hala-store",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Hash Burger",
+    "id":685859,
+    "name":"Hash Burger",
+    "restaurantSlug":"hash-burger-dh-kitchen-ardhiya",
+    "branchUrl":"\/kuwait\/hash-burger-dh-kitchen-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Hash Burger",
+    "id":7598,
+    "name":"Hash Burger",
+    "restaurantSlug":"hashburger11",
+    "branchUrl":"\/kuwait\/hashburger11",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Hazat Karak",
+    "id":689819,
+    "name":"Hazat Karak",
+    "restaurantSlug":"hazat-karak",
+    "branchUrl":"\/kuwait\/hazat-karak",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Hazat Karak",
+    "id":697873,
+    "name":"Hazat Karak",
+    "restaurantSlug":"hazat-karak-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/hazat-karak-dh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Heisenberg Restaurant",
+    "id":14117,
+    "name":"Heisenberg Restaurant",
+    "restaurantSlug":"heisenberg-restaurant",
+    "branchUrl":"\/kuwait\/heisenberg-restaurant",
+    "grouping_reason":"noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Heisenberg Restaurant",
+    "id":686204,
+    "name":"Heisenberg Restaurant (DH Kitchen) Jahra",
+    "restaurantSlug":"heisenberg-restaurant-dh-kitchen-jahar",
+    "branchUrl":"\/kuwait\/heisenberg-restaurant-dh-kitchen-jahar",
+    "grouping_reason":"noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"House of Juice",
+    "id":671968,
+    "name":"House of Juice",
+    "restaurantSlug":"house-of-juice",
+    "branchUrl":"\/kuwait\/house-of-juice",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"House of Juice",
+    "id":697018,
+    "name":"House of Juice",
+    "restaurantSlug":"house-of-juice-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/house-of-juice-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Hubbis",
+    "id":659821,
+    "name":"Hubbis",
+    "restaurantSlug":"hubbis",
+    "branchUrl":"\/kuwait\/hubbis",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Hubbis",
+    "id":666845,
+    "name":"Hubbis",
+    "restaurantSlug":"hubbisdh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/hubbisdh-kitchensalmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Hungry Bunny World",
+    "id":673778,
+    "name":"Hungry Bunny World",
+    "restaurantSlug":"hungry-bunny-dh-kitchen-al-jahra",
+    "branchUrl":"\/kuwait\/hungry-bunny-dh-kitchen-al-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Hungry Bunny World",
+    "id":8984,
+    "name":"Hungry Bunny World",
+    "restaurantSlug":"hungry-bunny",
+    "branchUrl":"\/kuwait\/hungry-bunny",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Indef",
+    "id":674305,
+    "name":"Indef",
+    "restaurantSlug":"indef-restaurant-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/indef-restaurant-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Indef",
+    "id":674587,
+    "name":"Indef",
+    "restaurantSlug":"indef",
+    "branchUrl":"\/kuwait\/indef",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Ingest",
+    "id":642853,
+    "name":"Ingest",
+    "restaurantSlug":"ingest",
+    "branchUrl":"\/kuwait\/ingest",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Ingest",
+    "id":686869,
+    "name":"Ingest",
+    "restaurantSlug":"ingestdh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/ingestdh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Italian Express",
+    "id":10803,
+    "name":"Italian Express",
+    "restaurantSlug":"italian-express",
+    "branchUrl":"\/kuwait\/italian-express",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Italian Express",
+    "id":601274,
+    "name":"Italian House",
+    "restaurantSlug":"italian-house",
+    "branchUrl":"\/kuwait\/italian-house",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Joy Tea",
+    "id":636932,
+    "name":"Joy Tea",
+    "restaurantSlug":"joy-tea",
+    "branchUrl":"\/kuwait\/joy-tea",
+    "grouping_reason":"branchname_high; noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Joy Tea",
+    "id":692013,
+    "name":"Joy Tea (DH Kitchen)",
+    "restaurantSlug":"joy-tea-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/joy-tea-dh-kitchen-mahboula",
+    "grouping_reason":"branchname_high; noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Juice Drink",
+    "id":671560,
+    "name":"Juice Drink",
+    "restaurantSlug":"juice-drink",
+    "branchUrl":"\/kuwait\/juice-drink",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Juice Drink",
+    "id":697010,
+    "name":"Juice Drink",
+    "restaurantSlug":"juice-drink-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/juice-drink-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Juice Time",
+    "id":663713,
+    "name":"Juice",
+    "restaurantSlug":"juice",
+    "branchUrl":"\/kuwait\/juice",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Juice Time",
+    "id":23868,
+    "name":"Juice Boutique kuwait",
+    "restaurantSlug":"juice-boutique-kuwait",
+    "branchUrl":"\/kuwait\/juice-boutique-kuwait",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Juice Time",
+    "id":25899,
+    "name":"Juice Factory",
+    "restaurantSlug":"juice-factory-new",
+    "branchUrl":"\/kuwait\/juice-factory-new",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Juice Time",
+    "id":630864,
+    "name":"Juice Store",
+    "restaurantSlug":"juice-store",
+    "branchUrl":"\/kuwait\/juice-store",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Juice Time",
+    "id":691025,
+    "name":"Juice Time",
+    "restaurantSlug":"juice-time",
+    "branchUrl":"\/kuwait\/juice-time",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Juice Time",
+    "id":697007,
+    "name":"Juice Time",
+    "restaurantSlug":"juice-time-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/juice-time-dh-kitchen-mahboula",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Kabsa Factory",
+    "id":697829,
+    "name":"Kabsa Factory",
+    "restaurantSlug":"kabsa-factory",
+    "branchUrl":"\/kuwait\/kabsa-factory",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Kabsa Factory",
+    "id":16998,
+    "name":"Kabsa House",
+    "restaurantSlug":"kabsa-house",
+    "branchUrl":"\/kuwait\/kabsa-house",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Kalha",
+    "id":26904,
+    "name":"Kalha",
+    "restaurantSlug":"kalha-kitopi",
+    "branchUrl":"\/kuwait\/kalha-kitopi",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Kalha",
+    "id":1805,
+    "name":"Kalha , Mahboula TGO",
+    "restaurantSlug":"kalha1",
+    "branchUrl":"\/kuwait\/kalha1",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Kalila Cafe",
+    "id":691978,
+    "name":"Kalila Cafe",
+    "restaurantSlug":"kalila-cafe",
+    "branchUrl":"\/kuwait\/kalila-cafe",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Kalila Cafe",
+    "id":692190,
+    "name":"Kalila Cafe",
+    "restaurantSlug":"kalila-cafe-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/kalila-cafe-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Karak Corner",
+    "id":641048,
+    "name":"Karak Corner",
+    "restaurantSlug":"karak-corner",
+    "branchUrl":"\/kuwait\/karak-corner",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Karak Corner",
+    "id":655269,
+    "name":"Karak Corner",
+    "restaurantSlug":"karak-corner",
+    "branchUrl":"\/kuwait\/karak-corner",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Karak House",
+    "id":615286,
+    "name":"Karak House",
+    "restaurantSlug":"karak-house",
+    "branchUrl":"\/kuwait\/karak-house",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Karak House",
+    "id":16453,
+    "name":"Karak Station",
+    "restaurantSlug":"karak-station-manqaf",
+    "branchUrl":"\/kuwait\/karak-station-manqaf",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"KFM - Kuwait Flour Mills & Bakeries",
+    "id":644466,
+    "name":"KFM - Kuwait Flour Mills & Bakeries",
+    "restaurantSlug":"kuwait-flour-mills-bakeries-company",
+    "branchUrl":"\/kuwait\/kuwait-flour-mills-bakeries-company",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Koala",
+    "id":648645,
+    "name":"Koala",
+    "restaurantSlug":"koala",
+    "branchUrl":"\/kuwait\/koala",
+    "grouping_reason":"branchname_high; prefix_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Koala",
+    "id":5635,
+    "name":"Koala Abdullah Almubarak",
+    "restaurantSlug":"abdullah-almubarak-coop-restaurant",
+    "branchUrl":"\/kuwait\/abdullah-almubarak-coop-restaurant",
+    "grouping_reason":"branchname_high; prefix_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Koala",
+    "id":2559,
+    "name":"Koala Surra Restaurant",
+    "restaurantSlug":"koala",
+    "branchUrl":"\/kuwait\/koala",
+    "grouping_reason":"branchname_high; prefix_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"KOKI",
+    "id":697408,
+    "name":"KOKI",
+    "restaurantSlug":"koki",
+    "branchUrl":"\/kuwait\/koki",
+    "grouping_reason":"noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"KOKI",
+    "id":699316,
+    "name":"KOKI (DH Kitchen)",
+    "restaurantSlug":"koki-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/koki-dh-kitchen-jahra",
+    "grouping_reason":"noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Koshari Time",
+    "id":657441,
+    "name":"Koshari Boutique",
+    "restaurantSlug":"koshari-boutique",
+    "branchUrl":"\/kuwait\/koshari-boutique",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Koshari Time",
+    "id":666544,
+    "name":"Koshari Boutique",
+    "restaurantSlug":"koshari-boutiquedh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/koshari-boutiquedh-kitchensalmiya",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Koshari Time",
+    "id":647362,
+    "name":"Koshari Station",
+    "restaurantSlug":"koshari-station",
+    "branchUrl":"\/kuwait\/koshari-station",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Koshari Time",
+    "id":21868,
+    "name":"koshari time",
+    "restaurantSlug":"kushri-time",
+    "branchUrl":"\/kuwait\/kushri-time",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Koshari Time",
+    "id":666454,
+    "name":"Koshari Time",
+    "restaurantSlug":"koshari-timedh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/koshari-timedh-kitchensalmiya",
+    "grouping_reason":"current_group; noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Kotton",
+    "id":25221,
+    "name":"Kotton",
+    "restaurantSlug":"kotton",
+    "branchUrl":"\/kuwait\/kotton",
+    "grouping_reason":"noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Kotton",
+    "id":699265,
+    "name":"Kotton (DH Kitchen)",
+    "restaurantSlug":"kotton-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/kotton-dh-kitchen-mahboula",
+    "grouping_reason":"noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Kout Way",
+    "id":677228,
+    "name":"Kout Way",
+    "restaurantSlug":"kout-way-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/kout-way-dh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Kout Way",
+    "id":731,
+    "name":"Kout Way",
+    "restaurantSlug":"kout-way",
+    "branchUrl":"\/kuwait\/kout-way",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"La Baguette",
+    "id":10799,
+    "name":"La Baguette",
+    "restaurantSlug":"la-baguette",
+    "branchUrl":"\/kuwait\/la-baguette",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"La Baguette",
+    "id":704697,
+    "name":"La Baguette",
+    "restaurantSlug":"la-baguette-dh-kitchen-jahra-2",
+    "branchUrl":"\/kuwait\/la-baguette-dh-kitchen-jahra-2",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Laban X Laban",
+    "id":670602,
+    "name":"Laban X Laban",
+    "restaurantSlug":"laban-x-laban",
+    "branchUrl":"\/kuwait\/laban-x-laban",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Laban X Laban",
+    "id":687434,
+    "name":"Laban X Laban",
+    "restaurantSlug":"laban-x-laban-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/laban-x-laban-dh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"LAFONTAINE Sweet",
+    "id":703939,
+    "name":"LAFONTAINE Sweet",
+    "restaurantSlug":"la-fontaine-sweet",
+    "branchUrl":"\/kuwait\/la-fontaine-sweet",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"LAROUSSE",
+    "id":689917,
+    "name":"Larousse",
+    "restaurantSlug":"larousse",
+    "branchUrl":"\/kuwait\/larousse",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"LAROUSSE",
+    "id":8143,
+    "name":"LAROUSSE",
+    "restaurantSlug":"la-rousse",
+    "branchUrl":"\/kuwait\/la-rousse",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Lavan",
+    "id":28004,
+    "name":"Lavan",
+    "restaurantSlug":"lavan",
+    "branchUrl":"\/kuwait\/lavan",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Lavan",
+    "id":646975,
+    "name":"Lavan",
+    "restaurantSlug":"lavan-fnaitees",
+    "branchUrl":"\/kuwait\/lavan-fnaitees",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Lazio",
+    "id":310,
+    "name":"Lazio",
+    "restaurantSlug":"lazio",
+    "branchUrl":"\/kuwait\/lazio",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Lazio",
+    "id":7142,
+    "name":"Lazio Kitchen Restaurant",
+    "restaurantSlug":"lazio-kitchen-restaurant",
+    "branchUrl":"\/kuwait\/lazio-kitchen-restaurant",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Le Relais De l`Entrecôte",
+    "id":27084,
+    "name":"Le Relais De l`Entrecôte, Ardiya Small Industrial",
+    "restaurantSlug":"le-relais-de-lentrecte",
+    "branchUrl":"\/kuwait\/le-relais-de-lentrecte",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Lets Patty",
+    "id":655835,
+    "name":"Lets Patty",
+    "restaurantSlug":"lets-patty",
+    "branchUrl":"\/kuwait\/lets-patty",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Lets Patty",
+    "id":668791,
+    "name":"Lets Patty",
+    "restaurantSlug":"lets-patty-dh-kitchen-lakemall",
+    "branchUrl":"\/kuwait\/lets-patty-dh-kitchen-lakemall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Life Care Pharmacy",
+    "id":658049,
+    "name":"Life Care Pharmacy",
+    "restaurantSlug":"life-care-pharmacy",
+    "branchUrl":"\/kuwait\/life-care-pharmacy",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Live Life",
+    "id":19100,
+    "name":"Live Life",
+    "restaurantSlug":"live-life",
+    "branchUrl":"\/kuwait\/live-life",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Live Life",
+    "id":667814,
+    "name":"Live Life",
+    "restaurantSlug":"live-life-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/live-life-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Local Chicken",
+    "id":613058,
+    "name":"Local Chicken",
+    "restaurantSlug":"local-chicken",
+    "branchUrl":"\/kuwait\/local-chicken",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Local Chicken",
+    "id":666342,
+    "name":"Local Chicken",
+    "restaurantSlug":"local-chickendh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/local-chickendh-kitchensalmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Local Chicken",
+    "id":668580,
+    "name":"Local Chicken",
+    "restaurantSlug":"local-chickendh-kitchen-lake-mall",
+    "branchUrl":"\/kuwait\/local-chickendh-kitchen-lake-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Love Diet Food",
+    "id":25176,
+    "name":"Love Diet Food",
+    "restaurantSlug":"love-diet-food",
+    "branchUrl":"\/kuwait\/love-diet-food",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Love Diet Food",
+    "id":667051,
+    "name":"Love Diet Food",
+    "restaurantSlug":"delivery-hero-kitchens-kuwait",
+    "branchUrl":"\/kuwait\/delivery-hero-kitchens-kuwait",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Loz wa Moz Juice",
+    "id":665890,
+    "name":"Loz wa Moz Juice",
+    "restaurantSlug":"loz-w-mozdh-kitchenardhiya",
+    "branchUrl":"\/kuwait\/loz-w-mozdh-kitchenardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Loz wa Moz Juice",
+    "id":8126,
+    "name":"Loz wa Moz Juice",
+    "restaurantSlug":"loz-wa-moz-juice",
+    "branchUrl":"\/kuwait\/loz-wa-moz-juice",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Lucky Bun",
+    "id":21309,
+    "name":"Lucky Bun, Ardiya tgo",
+    "restaurantSlug":"lucky-bun",
+    "branchUrl":"\/kuwait\/lucky-bun",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Lumiere",
+    "id":11663,
+    "name":"Lumiere",
+    "restaurantSlug":"lumiere",
+    "branchUrl":"\/kuwait\/lumiere",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Lumiere",
+    "id":650894,
+    "name":"Lumiere Sweet",
+    "restaurantSlug":"lumiere-cake",
+    "branchUrl":"\/kuwait\/lumiere-cake",
+    "grouping_reason":"prefix_high",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Machboos Trays",
+    "id":657603,
+    "name":"Machboos Trays",
+    "restaurantSlug":"machboos-trays",
+    "branchUrl":"\/kuwait\/machboos-trays",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Machboos Trays",
+    "id":678700,
+    "name":"Machboos Trays",
+    "restaurantSlug":"machboos-trays-dh-kitchen-ardhiya",
+    "branchUrl":"\/kuwait\/machboos-trays-dh-kitchen-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Magan (DH Kitchen)",
+    "id":682622,
+    "name":"Magan",
+    "restaurantSlug":"magan-kw",
+    "branchUrl":"\/kuwait\/magan-kw",
+    "grouping_reason":"current_group; noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Magan (DH Kitchen)",
+    "id":688053,
+    "name":"Magan (DH kitchen), Mahboula",
+    "restaurantSlug":"magan-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/magan-dh-kitchen-mahboula",
+    "grouping_reason":"current_group; noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Magan (DH Kitchen)",
+    "id":703606,
+    "name":"Magan (DH Kitchen), Salmiya",
+    "restaurantSlug":"magan-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/magan-dh-kitchen-salmiya",
+    "grouping_reason":"current_group; noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Maki",
+    "id":9,
+    "name":"Maki",
+    "restaurantSlug":"maki",
+    "branchUrl":"\/kuwait\/maki",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Maki",
+    "id":639611,
+    "name":"Maki Express",
+    "restaurantSlug":"maki-express",
+    "branchUrl":"\/kuwait\/maki-express",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Maki and Roll",
+    "id":611216,
+    "name":"Maki and Roll",
+    "restaurantSlug":"maki-and-roll",
+    "branchUrl":"\/kuwait\/maki-and-roll",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Mama Mariam",
+    "id":304,
+    "name":"Mama Mariam",
+    "restaurantSlug":"mama-mariam",
+    "branchUrl":"\/kuwait\/mama-mariam",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Mama Mariam",
+    "id":678333,
+    "name":"Mama Mariam",
+    "restaurantSlug":"mama-mariamdh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/mama-mariamdh-kitchensalmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Mama Suad",
+    "id":10649,
+    "name":"Mama Suad, Khairan TGo",
+    "restaurantSlug":"mama-suad2",
+    "branchUrl":"\/kuwait\/mama-suad2",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Manhattan Burger",
+    "id":9547,
+    "name":"Manhattan Burger",
+    "restaurantSlug":"manhattan-burger",
+    "branchUrl":"\/kuwait\/manhattan-burger",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Manhattan Burger",
+    "id":669363,
+    "name":"Manhattan Burger DH Kitchen",
+    "restaurantSlug":"manhattan-burger-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/manhattan-burger-dh-kitchen-ardiya",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661971,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-jabriya",
+    "branchUrl":"\/kuwait\/mccafe-jabriya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":675175,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-nuzha",
+    "branchUrl":"\/kuwait\/mccafe-nuzha",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":675176,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-al-qusour",
+    "branchUrl":"\/kuwait\/mccafe-al-qusour",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":675177,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-r-61-salmiya-3",
+    "branchUrl":"\/kuwait\/mccafe-r-61-salmiya-3",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":675178,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-r-118-gas-station--43",
+    "branchUrl":"\/kuwait\/mccafe-r-118-gas-station--43",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":675179,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-jahra-4",
+    "branchUrl":"\/kuwait\/mccafe-jahra-4",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":675180,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-jahra-6",
+    "branchUrl":"\/kuwait\/mccafe-jahra-6",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":675181,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-hadiya",
+    "branchUrl":"\/kuwait\/mccafe-hadiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":675182,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-r-120-new-dajeej",
+    "branchUrl":"\/kuwait\/mccafe-r-120-new-dajeej",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":677819,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-khaitan",
+    "branchUrl":"\/kuwait\/mccafe-khaitan",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":677820,
+    "name":"McCafe",
+    "restaurantSlug":"mccafe-sulaibikhat",
+    "branchUrl":"\/kuwait\/mccafe-sulaibikhat",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":677818,
+    "name":"McCafe,  Farwaniya - R05",
+    "restaurantSlug":"mccafe-farwaniya2-r1800108",
+    "branchUrl":"\/kuwait\/mccafe-farwaniya2-r1800108",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661964,
+    "name":"McCafe,  Hawally II,Hawally",
+    "restaurantSlug":"mccafe-hawally-ii",
+    "branchUrl":"\/kuwait\/mccafe-hawally-ii",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661965,
+    "name":"McCafe,  Jahra III,Jahra - Jahra Area",
+    "restaurantSlug":"mccafe-jahra-iii",
+    "branchUrl":"\/kuwait\/mccafe-jahra-iii",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661960,
+    "name":"McCafe,  Siddiq,Siddiq",
+    "restaurantSlug":"mccafe-siddiq",
+    "branchUrl":"\/kuwait\/mccafe-siddiq",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661959,
+    "name":"McCafe,  West Mishref,Mishrif",
+    "restaurantSlug":"mccafe-west-mishref",
+    "branchUrl":"\/kuwait\/mccafe-west-mishref",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661993,
+    "name":"McCafe,  Zahra COOP,Zahra",
+    "restaurantSlug":"mccafe-zahra-coop",
+    "branchUrl":"\/kuwait\/mccafe-zahra-coop",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661968,
+    "name":"McCafe, Abu Halifa Gas Station 8,Abu Halifa",
+    "restaurantSlug":"mccafe-abu-halifa-gas-station-8",
+    "branchUrl":"\/kuwait\/mccafe-abu-halifa-gas-station-8",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661951,
+    "name":"McCafe, Al Soor",
+    "restaurantSlug":"mccafe-kuwait-city-capital",
+    "branchUrl":"\/kuwait\/mccafe-kuwait-city-capital",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":690480,
+    "name":"McCafe, Al Tadamon Sporting Club",
+    "restaurantSlug":"mccafe-al-tadamon-sporting-club",
+    "branchUrl":"\/kuwait\/mccafe-al-tadamon-sporting-club",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661996,
+    "name":"McCafe, Al-Ahmadi,Al-Ahmadi",
+    "restaurantSlug":"mccafe-al-ahmadi",
+    "branchUrl":"\/kuwait\/mccafe-al-ahmadi",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661969,
+    "name":"McCafe, Al-Masayel,Al Masayel",
+    "restaurantSlug":"mccafe-al-masayel",
+    "branchUrl":"\/kuwait\/mccafe-al-masayel",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661994,
+    "name":"McCafe, Andalous,Andalous",
+    "restaurantSlug":"mccafe-andalous",
+    "branchUrl":"\/kuwait\/mccafe-andalous",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661980,
+    "name":"McCafe, Ardhiya,Ardhiya",
+    "restaurantSlug":"mccafe-ardhiya",
+    "branchUrl":"\/kuwait\/mccafe-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":663143,
+    "name":"McCafe, Ashbeliah",
+    "restaurantSlug":"mccafe-ashbeliah",
+    "branchUrl":"\/kuwait\/mccafe-ashbeliah",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661962,
+    "name":"McCafe, ASWAQ AL QURAIN,West Abu Fetera Small Indust",
+    "restaurantSlug":"mccafe-aswaq-al-qurain",
+    "branchUrl":"\/kuwait\/mccafe-aswaq-al-qurain",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661984,
+    "name":"McCafe, Bayan,Bayan",
+    "restaurantSlug":"mccafe-bayan",
+    "branchUrl":"\/kuwait\/mccafe-bayan",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661977,
+    "name":"McCafe, Dabahiya - Umm Al Hayman,Ali Sabah Al-Salem - Umm Al Hayman",
+    "restaurantSlug":"mccafe-dabahiya--umm-al-hayman",
+    "branchUrl":"\/kuwait\/mccafe-dabahiya--umm-al-hayman",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661970,
+    "name":"McCafe, Egaila",
+    "restaurantSlug":"mccafe-al-soor",
+    "branchUrl":"\/kuwait\/mccafe-al-soor",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661985,
+    "name":"McCafe, Fahaheel,Fahaheel",
+    "restaurantSlug":"mccafe-fahaheel",
+    "branchUrl":"\/kuwait\/mccafe-fahaheel",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":677817,
+    "name":"McCafe, Jaber Al Ahmad",
+    "restaurantSlug":"mccafe-sabah-al-nasser-sports",
+    "branchUrl":"\/kuwait\/mccafe-sabah-al-nasser-sports",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":695489,
+    "name":"McCafe, Jahra - Jahra Area",
+    "restaurantSlug":"mccafe-slayil-mall",
+    "branchUrl":"\/kuwait\/mccafe-slayil-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661976,
+    "name":"McCafe, Jahra 2,Jahra - Jahra Area",
+    "restaurantSlug":"mccafe-jahra-2",
+    "branchUrl":"\/kuwait\/mccafe-jahra-2",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":679276,
+    "name":"McCafe, Jahra 5",
+    "restaurantSlug":"mccafe-jahra-5",
+    "branchUrl":"\/kuwait\/mccafe-jahra-5",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":678989,
+    "name":"McCafe, Jahra Alfa Gas Station9",
+    "restaurantSlug":"mccafe-jahra-alfa-gas-station9",
+    "branchUrl":"\/kuwait\/mccafe-jahra-alfa-gas-station9",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661979,
+    "name":"McCafe, jleeb Alshuwiokh 2,Jeleeb Al-Shuyoukh",
+    "restaurantSlug":"mccafe-jleeb-alshuwiokh-2",
+    "branchUrl":"\/kuwait\/mccafe-jleeb-alshuwiokh-2",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661978,
+    "name":"McCafe, Kaifan,Kaifan",
+    "restaurantSlug":"mccafe-kaifan",
+    "branchUrl":"\/kuwait\/mccafe-kaifan",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661981,
+    "name":"McCafe, Kazmah Club,Kuwait City",
+    "restaurantSlug":"mccafe-kazmah-club",
+    "branchUrl":"\/kuwait\/mccafe-kazmah-club",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661982,
+    "name":"McCafe, Khairan,Khairan",
+    "restaurantSlug":"mccafe-khairan",
+    "branchUrl":"\/kuwait\/mccafe-khairan",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661963,
+    "name":"McCafe, LULU - Rai,Rai",
+    "restaurantSlug":"mccafe-lulu--rai",
+    "branchUrl":"\/kuwait\/mccafe-lulu--rai",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661990,
+    "name":"McCafe, Old Souq Salmiya,Salam",
+    "restaurantSlug":"mccafe-old-souq-salmiya",
+    "branchUrl":"\/kuwait\/mccafe-old-souq-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661966,
+    "name":"McCafe, Rehab",
+    "restaurantSlug":"mccafe-rehab",
+    "branchUrl":"\/kuwait\/mccafe-rehab",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661986,
+    "name":"McCafe, Rumaithiya",
+    "restaurantSlug":"mccafe-rumaithiya",
+    "branchUrl":"\/kuwait\/mccafe-rumaithiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661967,
+    "name":"McCafe, Sabah Al Salem R79,Sabah Al-Salem",
+    "restaurantSlug":"mccafe-sabah-al-salem-r79",
+    "branchUrl":"\/kuwait\/mccafe-sabah-al-salem-r79",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661992,
+    "name":"McCafe, Sabahiya Gas Station 115,Sabahiya",
+    "restaurantSlug":"mccafe-sabahiya-gas-station-115",
+    "branchUrl":"\/kuwait\/mccafe-sabahiya-gas-station-115",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661983,
+    "name":"McCafe, Salmiya Sahab",
+    "restaurantSlug":"mccafe-salmiya-sahab",
+    "branchUrl":"\/kuwait\/mccafe-salmiya-sahab",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661974,
+    "name":"McCafe, Shaab Co-Op,Shaab",
+    "restaurantSlug":"mccafe-shaab-co-op",
+    "branchUrl":"\/kuwait\/mccafe-shaab-co-op",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661958,
+    "name":"McCafe, Shuwaikh-R04,Shuwaikh",
+    "restaurantSlug":"mccafe-shuwaikh-r04",
+    "branchUrl":"\/kuwait\/mccafe-shuwaikh-r04",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661972,
+    "name":"McCafe, Sulaibikhat Club,Sulaibikhat",
+    "restaurantSlug":"mccafe-sulaibikhat-club",
+    "branchUrl":"\/kuwait\/mccafe-sulaibikhat-club",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661961,
+    "name":"McCafe, Sulaibiya-Al-Furda,Jahra - Sulaibiya",
+    "restaurantSlug":"mccafe-sulaibiya-al-furda",
+    "branchUrl":"\/kuwait\/mccafe-sulaibiya-al-furda",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661991,
+    "name":"McCafe, Surra,Surra",
+    "restaurantSlug":"mccafe-surra",
+    "branchUrl":"\/kuwait\/mccafe-surra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661995,
+    "name":"McCafe, TSC -Sulaibiya,Jahra - Sulaibiya",
+    "restaurantSlug":"mccafe-tsc-sulaibiya",
+    "branchUrl":"\/kuwait\/mccafe-tsc-sulaibiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McCafe",
+    "id":661975,
+    "name":"McCafe,Hawally 1,Hawally",
+    "restaurantSlug":"mccafehawally-1",
+    "branchUrl":"\/kuwait\/mccafehawally-1",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":656128,
+    "name":"McDonald's",
+    "restaurantSlug":"mcdonalds-1800059-bairaq-mall",
+    "branchUrl":"\/kuwait\/mcdonalds-1800059-bairaq-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":676020,
+    "name":"McDonald's, 1800122 Al Nasar Sports Club, Jaber Al Ahmad",
+    "restaurantSlug":"mcdonalds-1800122-al-nasar-sports-club",
+    "branchUrl":"\/kuwait\/mcdonalds-1800122-al-nasar-sports-club",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27930,
+    "name":"McDonald's, Abu Halifa Gas Station 8",
+    "restaurantSlug":"mcdonalds-abu-halifa--gas-station8--r83",
+    "branchUrl":"\/kuwait\/mcdonalds-abu-halifa--gas-station8--r83",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27928,
+    "name":"McDonald's, Al Qurain",
+    "restaurantSlug":"mcdonalds-al-qurain--r07",
+    "branchUrl":"\/kuwait\/mcdonalds-al-qurain--r07",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":656994,
+    "name":"McDonald's, Al Soor",
+    "restaurantSlug":"mcdonalds-r-109-al-soor-street",
+    "branchUrl":"\/kuwait\/mcdonalds-r-109-al-soor-street",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":690119,
+    "name":"McDonald's, Al Tadamon Sporting Club, Farwaniya",
+    "restaurantSlug":"mcdonalds-al-tadamon-sporting-club",
+    "branchUrl":"\/kuwait\/mcdonalds-al-tadamon-sporting-club",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601933,
+    "name":"McDonald's, ASWAQ AL QURAIN",
+    "restaurantSlug":"mcdonalds-west-abu-fetera-small-industrial",
+    "branchUrl":"\/kuwait\/mcdonalds-west-abu-fetera-small-industrial",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27941,
+    "name":"McDonald's, Bayan",
+    "restaurantSlug":"mcdonalds-bayan--r24",
+    "branchUrl":"\/kuwait\/mcdonalds-bayan--r24",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27942,
+    "name":"McDonald's, Ferdous",
+    "restaurantSlug":"mcdonalds-ferdous-r27",
+    "branchUrl":"\/kuwait\/mcdonalds-ferdous-r27",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601914,
+    "name":"McDonald's, Hadiya",
+    "restaurantSlug":"mcdonalds-hadiya-r34",
+    "branchUrl":"\/kuwait\/mcdonalds-hadiya-r34",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":672427,
+    "name":"McDonald's, Jahra 6",
+    "restaurantSlug":"mcdonalds-jahra-6-1800121",
+    "branchUrl":"\/kuwait\/mcdonalds-jahra-6-1800121",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601913,
+    "name":"McDonald's, Jahra III",
+    "restaurantSlug":"mcdonalds-jahra-iii",
+    "branchUrl":"\/kuwait\/mcdonalds-jahra-iii",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601918,
+    "name":"McDonald's, Khairan",
+    "restaurantSlug":"mcdonalds-mirqab--ice-skating-rink--r41",
+    "branchUrl":"\/kuwait\/mcdonalds-mirqab--ice-skating-rink--r41",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":11666,
+    "name":"McDonald's, Mahboula -Platinum",
+    "restaurantSlug":"mcdonalds1",
+    "branchUrl":"\/kuwait\/mcdonalds1",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601930,
+    "name":"McDonald's, National Guard - Fnaites",
+    "restaurantSlug":"mcdonalds-fnaites",
+    "branchUrl":"\/kuwait\/mcdonalds-fnaites",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":681871,
+    "name":"McDonald's, Opera Kuwait City, Kuwait City",
+    "restaurantSlug":"mcdonalds-opera-kuwait-city",
+    "branchUrl":"\/kuwait\/mcdonalds-opera-kuwait-city",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":659082,
+    "name":"McDonald's, R-118 Gas Station",
+    "restaurantSlug":"mcdonalds-r-118-gas-station--43",
+    "branchUrl":"\/kuwait\/mcdonalds-r-118-gas-station--43",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":667441,
+    "name":"McDonald's, R-120 NEW Dajeej",
+    "restaurantSlug":"mcdonalds-r-120-new-dajeej",
+    "branchUrl":"\/kuwait\/mcdonalds-r-120-new-dajeej",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601931,
+    "name":"McDonald's, Reggai - R59",
+    "restaurantSlug":"mcdonalds-reggai--r59",
+    "branchUrl":"\/kuwait\/mcdonalds-reggai--r59",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27585,
+    "name":"McDonald's, Rehab",
+    "restaurantSlug":"mcdonalds-rehab",
+    "branchUrl":"\/kuwait\/mcdonalds-rehab",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27927,
+    "name":"McDonald's, Sabah Al Salem",
+    "restaurantSlug":"mcdonalds-r46-ali-sabah-al-salem--umm-al-hayman",
+    "branchUrl":"\/kuwait\/mcdonalds-r46-ali-sabah-al-salem--umm-al-hayman",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27926,
+    "name":"McDonald's, Siddiq",
+    "restaurantSlug":"mcdonalds-r-103-al-ahmadi",
+    "branchUrl":"\/kuwait\/mcdonalds-r-103-al-ahmadi",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601922,
+    "name":"McDonald's, Sulaibikhat Club",
+    "restaurantSlug":"mcdonalds-rawda-garden-r58",
+    "branchUrl":"\/kuwait\/mcdonalds-rawda-garden-r58",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27947,
+    "name":"McDonald's, Zahra COOP",
+    "restaurantSlug":"mcdonalds-fnaites-r97",
+    "branchUrl":"\/kuwait\/mcdonalds-fnaites-r97",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27929,
+    "name":"McDonald's,Al-Qusour",
+    "restaurantSlug":"mcdonalds-al-qusoural-qusour--r35",
+    "branchUrl":"\/kuwait\/mcdonalds-al-qusoural-qusour--r35",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601905,
+    "name":"McDonald`s , Jabriya",
+    "restaurantSlug":"mcdonalds-jabriya-r06",
+    "branchUrl":"\/kuwait\/mcdonalds-jabriya-r06",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601929,
+    "name":"Mcdonald`s, Ahmad Al-Jaber,",
+    "restaurantSlug":"mcdonalds-al-jaber",
+    "branchUrl":"\/kuwait\/mcdonalds-al-jaber",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27946,
+    "name":"McDonald`s, Al-Liwan Mall Egaila",
+    "restaurantSlug":"mcdonalds-egaila--r70",
+    "branchUrl":"\/kuwait\/mcdonalds-egaila--r70",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27932,
+    "name":"McDonald`s, Al-Masayel",
+    "restaurantSlug":"mcdonalds-al-masayel--r86",
+    "branchUrl":"\/kuwait\/mcdonalds-al-masayel--r86",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27925,
+    "name":"McDonald`s, Andalous",
+    "restaurantSlug":"mcdonalds-andalous-r92",
+    "branchUrl":"\/kuwait\/mcdonalds-andalous-r92",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27945,
+    "name":"McDonald`s, Ardhiya",
+    "restaurantSlug":"mcdonalds-ardhiya--r89",
+    "branchUrl":"\/kuwait\/mcdonalds-ardhiya--r89",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27937,
+    "name":"McDonald`s, Ashbeliah",
+    "restaurantSlug":"mcdonalds-ashbeliah--r91",
+    "branchUrl":"\/kuwait\/mcdonalds-ashbeliah--r91",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601917,
+    "name":"Mcdonald`s, Dabahiya - Umm Al Hayman",
+    "restaurantSlug":"mcdonalds-ali-sabah-al-salem--umm-al-hayman",
+    "branchUrl":"\/kuwait\/mcdonalds-ali-sabah-al-salem--umm-al-hayman",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":652159,
+    "name":"McDonald`s, Dome Mall,Abu Halifa",
+    "restaurantSlug":"mcdonalds-dome-mall",
+    "branchUrl":"\/kuwait\/mcdonalds-dome-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27939,
+    "name":"McDonald`s, Fahaheel",
+    "restaurantSlug":"mcdonalds-fahaheel--r13",
+    "branchUrl":"\/kuwait\/mcdonalds-fahaheel--r13",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27935,
+    "name":"McDonald`s, Farwaniya - R05",
+    "restaurantSlug":"mcdonalds-farwaniya--r05",
+    "branchUrl":"\/kuwait\/mcdonalds-farwaniya--r05",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27944,
+    "name":"McDonald`s, Ferdous Park",
+    "restaurantSlug":"mcdonalds-sabah-al-nasserferdous--r85",
+    "branchUrl":"\/kuwait\/mcdonalds-sabah-al-nasserferdous--r85",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601908,
+    "name":"Mcdonald`s, Hawally 1",
+    "restaurantSlug":"mcdonalds-hawally-1",
+    "branchUrl":"\/kuwait\/mcdonalds-hawally-1",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601924,
+    "name":"Mcdonald`s, Hawally II",
+    "restaurantSlug":"mcdonalds-hawally-ii",
+    "branchUrl":"\/kuwait\/mcdonalds-hawally-ii",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601932,
+    "name":"McDonald`s, Jahra 2",
+    "restaurantSlug":"mcdonalds-jahra-2-r33",
+    "branchUrl":"\/kuwait\/mcdonalds-jahra-2-r33",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601934,
+    "name":"McDonald`s, Jahra 4",
+    "restaurantSlug":"mcdonalds-jahra-4-r73",
+    "branchUrl":"\/kuwait\/mcdonalds-jahra-4-r73",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":679275,
+    "name":"McDonald`s, Jahra 5",
+    "restaurantSlug":"mcdonalds-jahra-5",
+    "branchUrl":"\/kuwait\/mcdonalds-jahra-5",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":24158,
+    "name":"McDonald`s, Kaifan",
+    "restaurantSlug":"mcdonalds2",
+    "branchUrl":"\/kuwait\/mcdonalds2",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":639770,
+    "name":"McDonald`s, Kazmah Club",
+    "restaurantSlug":"mcdonalds-kazmah-club-1800112",
+    "branchUrl":"\/kuwait\/mcdonalds-kazmah-club-1800112",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601910,
+    "name":"Mcdonald`s, Khaitan",
+    "restaurantSlug":"mcdonalds-khaitan-r37",
+    "branchUrl":"\/kuwait\/mcdonalds-khaitan-r37",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601915,
+    "name":"McDonald`s, LULU - Rai",
+    "restaurantSlug":"mcdonalds-rai-lulu-market-r50",
+    "branchUrl":"\/kuwait\/mcdonalds-rai-lulu-market-r50",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27931,
+    "name":"McDonald`s, Magic Mall - Abu Halifa R25",
+    "restaurantSlug":"mcdonalds-abu-halifa-r25",
+    "branchUrl":"\/kuwait\/mcdonalds-abu-halifa-r25",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601909,
+    "name":"Mcdonald`s, Nuzha",
+    "restaurantSlug":"mcdonalds-nuzha-r17",
+    "branchUrl":"\/kuwait\/mcdonalds-nuzha-r17",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":656989,
+    "name":"McDonald`s, R-61 SALMIYA 3,Salmiya",
+    "restaurantSlug":"mcdonalds-r-61-salmiya-3",
+    "branchUrl":"\/kuwait\/mcdonalds-r-61-salmiya-3",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":650667,
+    "name":"Mcdonald`s, Rumaithiya",
+    "restaurantSlug":"mcdonalds-rumaithiya",
+    "branchUrl":"\/kuwait\/mcdonalds-rumaithiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":647521,
+    "name":"McDonald`s, Sabah Al Ahmed",
+    "restaurantSlug":"mcdonalds-sabah-al-ahmed",
+    "branchUrl":"\/kuwait\/mcdonalds-sabah-al-ahmed",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601927,
+    "name":"McDonald`s, Sabahiya Gas Station 115",
+    "restaurantSlug":"mcdonalds-sabahiya-gass-station-115",
+    "branchUrl":"\/kuwait\/mcdonalds-sabahiya-gass-station-115",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":600708,
+    "name":"McDonald`s, Salmiya 5th Ring Road",
+    "restaurantSlug":"mcdonalds-r-87-salmiya-5th-ring-road",
+    "branchUrl":"\/kuwait\/mcdonalds-r-87-salmiya-5th-ring-road",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":29098,
+    "name":"McDonald`s, Salmiya II",
+    "restaurantSlug":"mcdonalds-r-56-salmiya-2",
+    "branchUrl":"\/kuwait\/mcdonalds-r-56-salmiya-2",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":27940,
+    "name":"McDonald`s, Salmiya Sahab",
+    "restaurantSlug":"mcdonalds-salmiya-1-r02",
+    "branchUrl":"\/kuwait\/mcdonalds-salmiya-1-r02",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601906,
+    "name":"McDonald`s, Salwa",
+    "restaurantSlug":"mcdonalds-salwa-r90",
+    "branchUrl":"\/kuwait\/mcdonalds-salwa-r90",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601926,
+    "name":"Mcdonald`s, Shaab Co-Op",
+    "restaurantSlug":"mcdonalds-shaab-co-op",
+    "branchUrl":"\/kuwait\/mcdonalds-shaab-co-op",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601935,
+    "name":"McDonald`s, Sharq COOP",
+    "restaurantSlug":"mcdonalds-sharq-co-op",
+    "branchUrl":"\/kuwait\/mcdonalds-sharq-co-op",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601911,
+    "name":"McDonald`s, Shuwaikh-R04",
+    "restaurantSlug":"mcdonalds-shuwaikh-r04",
+    "branchUrl":"\/kuwait\/mcdonalds-shuwaikh-r04",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":695654,
+    "name":"McDonald`s, Slayil Mall, Jahra - Jahra Area",
+    "restaurantSlug":"mcdonalds-slayil-mall",
+    "branchUrl":"\/kuwait\/mcdonalds-slayil-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601912,
+    "name":"McDonald`s, Sulaibikhat",
+    "restaurantSlug":"mcdonalds-sulaibikhat",
+    "branchUrl":"\/kuwait\/mcdonalds-sulaibikhat",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601916,
+    "name":"Mcdonald`s, Sulaibiya-Al-Furda",
+    "restaurantSlug":"mcdonalds-sulaibiya-al-furda",
+    "branchUrl":"\/kuwait\/mcdonalds-sulaibiya-al-furda",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601919,
+    "name":"McDonald`s, Surra",
+    "restaurantSlug":"mcdonalds-surra",
+    "branchUrl":"\/kuwait\/mcdonalds-surra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601925,
+    "name":"McDonald`s, TSC -Sulaibiya",
+    "restaurantSlug":"mcdonalds-jahra-area--sahari-mall--r77",
+    "branchUrl":"\/kuwait\/mcdonalds-jahra-area--sahari-mall--r77",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601921,
+    "name":"McDonald`s, West Mishref",
+    "restaurantSlug":"mcdonalds-west-mishref",
+    "branchUrl":"\/kuwait\/mcdonalds-west-mishref",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601928,
+    "name":"McDonalds, jleeb Alshuwiokh 2",
+    "restaurantSlug":"mcdonalds-jleeb-alshuwiokh-2",
+    "branchUrl":"\/kuwait\/mcdonalds-jleeb-alshuwiokh-2",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":653883,
+    "name":"McDonalds, Manara Mall",
+    "restaurantSlug":"manara-mcdonalds-mall",
+    "branchUrl":"\/kuwait\/manara-mcdonalds-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"McDonald`s",
+    "id":601920,
+    "name":"McDonalds, Old Souq Salmiya",
+    "restaurantSlug":"mcdonalds-maidan-hawally",
+    "branchUrl":"\/kuwait\/mcdonalds-maidan-hawally",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Meme's Curry",
+    "id":669015,
+    "name":"Meme's Curry",
+    "restaurantSlug":"memes-currydh-kitchenardhiya",
+    "branchUrl":"\/kuwait\/memes-currydh-kitchenardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Meme's Curry",
+    "id":673798,
+    "name":"Meme's Curry",
+    "restaurantSlug":"memes-currydh-kitchen-al-jahra",
+    "branchUrl":"\/kuwait\/memes-currydh-kitchen-al-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Meme's Curry",
+    "id":9273,
+    "name":"Meme's Curry",
+    "restaurantSlug":"memes-curry",
+    "branchUrl":"\/kuwait\/memes-curry",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Milk Bun",
+    "id":660206,
+    "name":"Milk Bun",
+    "restaurantSlug":"milk-bun",
+    "branchUrl":"\/kuwait\/milk-bun",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Milk Bun",
+    "id":668174,
+    "name":"Milk Bun",
+    "restaurantSlug":"milk-bun-dh-kitchen-lake-mall",
+    "branchUrl":"\/kuwait\/milk-bun-dh-kitchen-lake-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"MJ Burger",
+    "id":675798,
+    "name":"MJ Burger",
+    "restaurantSlug":"mj-burger",
+    "branchUrl":"\/kuwait\/mj-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"MJ Burger",
+    "id":675817,
+    "name":"MJ Burger",
+    "restaurantSlug":"mj-burger-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/mj-burger-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Molok Alsham",
+    "id":6952,
+    "name":"Molok Alsham",
+    "restaurantSlug":"molok-alsham",
+    "branchUrl":"\/kuwait\/molok-alsham",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Molok Alsham",
+    "id":704907,
+    "name":"Molok Alsham",
+    "restaurantSlug":"molok-alsham-dh-kitcehn-mahboula",
+    "branchUrl":"\/kuwait\/molok-alsham-dh-kitcehn-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Monkey Cookies",
+    "id":1422,
+    "name":"Monkey Cookies",
+    "restaurantSlug":"monkey-cookies",
+    "branchUrl":"\/kuwait\/monkey-cookies",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Monkey Cookies",
+    "id":685441,
+    "name":"Monkey cookies",
+    "restaurantSlug":"monkey-cookies-dh-kitchen-lake-mall",
+    "branchUrl":"\/kuwait\/monkey-cookies-dh-kitchen-lake-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Moose have coffee",
+    "id":704299,
+    "name":"Moose have coffee",
+    "restaurantSlug":null,
+    "branchUrl":null,
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Moosh",
+    "id":645844,
+    "name":"Moosh",
+    "restaurantSlug":"moosh",
+    "branchUrl":"\/kuwait\/moosh",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Moosh",
+    "id":681622,
+    "name":"Moosh",
+    "restaurantSlug":"mooshdh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/mooshdh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Mr Potato",
+    "id":703692,
+    "name":"Mr Potato",
+    "restaurantSlug":"mr-potato",
+    "branchUrl":"\/kuwait\/mr-potato",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Mr Potato",
+    "id":705181,
+    "name":"Mr Potato",
+    "restaurantSlug":"mr-potato-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/mr-potato-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Mughal Mahal",
+    "id":6784,
+    "name":"Mughal Mahal",
+    "restaurantSlug":"mughal-mahal",
+    "branchUrl":"\/kuwait\/mughal-mahal",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Mughal Mahal",
+    "id":626776,
+    "name":"Mughal Mahal Express",
+    "restaurantSlug":"mughal-mahal-express",
+    "branchUrl":"\/kuwait\/mughal-mahal-express",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Mustard Burger",
+    "id":22996,
+    "name":"Mustard Burger",
+    "restaurantSlug":"kitopi-mustard-burger",
+    "branchUrl":"\/kuwait\/kitopi-mustard-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Mustard Burger",
+    "id":977,
+    "name":"Mustard Burger",
+    "restaurantSlug":"mustard-burger",
+    "branchUrl":"\/kuwait\/mustard-burger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Najma Royal Beirut",
+    "id":664836,
+    "name":"Najma Royal Beirut",
+    "restaurantSlug":"najma-royal-beirut",
+    "branchUrl":"\/kuwait\/najma-royal-beirut",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Najma Royal Beirut",
+    "id":696689,
+    "name":"Najma Royal Beirut",
+    "restaurantSlug":"najma-royal-beirut-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/najma-royal-beirut-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Naqanek",
+    "id":649794,
+    "name":"Naqanek",
+    "restaurantSlug":"naqanek",
+    "branchUrl":"\/kuwait\/naqanek",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Naqanek",
+    "id":702897,
+    "name":"Naqanek",
+    "restaurantSlug":"naqanek-dh-kitchen-ardhiya",
+    "branchUrl":"\/kuwait\/naqanek-dh-kitchen-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Noodles",
+    "id":85,
+    "name":"Noodles",
+    "restaurantSlug":"noodles",
+    "branchUrl":"\/kuwait\/noodles",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Noodles",
+    "id":695783,
+    "name":"Noodles Time",
+    "restaurantSlug":"noodles-time",
+    "branchUrl":"\/kuwait\/noodles-time",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Num Num",
+    "id":693620,
+    "name":"Num Num",
+    "restaurantSlug":"num-num",
+    "branchUrl":"\/kuwait\/num-num",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Num Num",
+    "id":702305,
+    "name":"Num Num",
+    "restaurantSlug":"num-num-dh-kitchen-jahra",
+    "branchUrl":"\/kuwait\/num-num-dh-kitchen-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Oishii Sushi",
+    "id":156,
+    "name":"Oishii Sushi",
+    "restaurantSlug":"oishii-sushi",
+    "branchUrl":"\/kuwait\/oishii-sushi",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Otro",
+    "id":642739,
+    "name":"Otro",
+    "restaurantSlug":"cool-bar",
+    "branchUrl":"\/kuwait\/cool-bar",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Otro",
+    "id":646243,
+    "name":"Otro",
+    "restaurantSlug":"otro",
+    "branchUrl":"\/kuwait\/otro",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"OVENLY",
+    "id":6612,
+    "name":"OVENLY",
+    "restaurantSlug":"ovenly",
+    "branchUrl":"\/kuwait\/ovenly",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"OVENLY",
+    "id":690819,
+    "name":"Ovenly",
+    "restaurantSlug":"ovenly-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/ovenly-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"PF Chang's",
+    "id":634152,
+    "name":"PF Chang's, Fahaheel",
+    "restaurantSlug":"pf-changs-fahaheel",
+    "branchUrl":"\/kuwait\/pf-changs-fahaheel",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"PF Chang's",
+    "id":634151,
+    "name":"PF Chang's, Shaab",
+    "restaurantSlug":"pfchangs--shaab",
+    "branchUrl":"\/kuwait\/pfchangs--shaab",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"PF Chang's",
+    "id":634150,
+    "name":"PF Chang's,Jabriya",
+    "restaurantSlug":"pf-changs-jabriya",
+    "branchUrl":"\/kuwait\/pf-changs-jabriya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"PF Chang's",
+    "id":634160,
+    "name":"PF Chang's,Mahboula",
+    "restaurantSlug":"pfchangs-mahboula",
+    "branchUrl":"\/kuwait\/pfchangs-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pinkberry",
+    "id":634632,
+    "name":"Pinkberry , Jabriya",
+    "restaurantSlug":"pinkberry-jabriya",
+    "branchUrl":"\/kuwait\/pinkberry-jabriya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pinkberry",
+    "id":666120,
+    "name":"Pinkberry, Boulevard Salmiya",
+    "restaurantSlug":"pinkberry-boulevard-salmiya",
+    "branchUrl":"\/kuwait\/pinkberry-boulevard-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pinkberry",
+    "id":634136,
+    "name":"Pinkberry, Burj Alshaya",
+    "restaurantSlug":"pinkberry-burj-alshaya",
+    "branchUrl":"\/kuwait\/pinkberry-burj-alshaya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pinkberry",
+    "id":634147,
+    "name":"Pinkberry, Egaila",
+    "restaurantSlug":"pinkberry-egaila",
+    "branchUrl":"\/kuwait\/pinkberry-egaila",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pinkberry",
+    "id":634146,
+    "name":"Pinkberry, Mahboula",
+    "restaurantSlug":"pinkberry-mahboula",
+    "branchUrl":"\/kuwait\/pinkberry-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pinkberry",
+    "id":634142,
+    "name":"Pinkberry, Mubarak Al Kabir",
+    "restaurantSlug":"pinkberry-mubarak-al-kabir",
+    "branchUrl":"\/kuwait\/pinkberry-mubarak-al-kabir",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pinkberry",
+    "id":670437,
+    "name":"Pinkberry, Warehouse Mall",
+    "restaurantSlug":"pinkberry-warehouse-mall",
+    "branchUrl":"\/kuwait\/pinkberry-warehouse-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":634174,
+    "name":"Pizza Express",
+    "restaurantSlug":"pizza-express-al-bedae",
+    "branchUrl":"\/kuwait\/pizza-express-al-bedae",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":634175,
+    "name":"Pizza Express, Abdulla Salem",
+    "restaurantSlug":"pizza-express-daiya",
+    "branchUrl":"\/kuwait\/pizza-express-daiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":634173,
+    "name":"Pizza Express, Al Ahmadi",
+    "restaurantSlug":"pizza-express-al-ahmadi",
+    "branchUrl":"\/kuwait\/pizza-express-al-ahmadi",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":676074,
+    "name":"Pizza Express, Avenues, Rai",
+    "restaurantSlug":"pizza-express-avenues",
+    "branchUrl":"\/kuwait\/pizza-express-avenues",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":634182,
+    "name":"Pizza Express, Bneid Al Gar",
+    "restaurantSlug":"pizza-express-benaid-al-qar",
+    "branchUrl":"\/kuwait\/pizza-express-benaid-al-qar",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":634140,
+    "name":"Pizza Express, Jabriya",
+    "restaurantSlug":"pizza-express-jabriya",
+    "branchUrl":"\/kuwait\/pizza-express-jabriya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":634179,
+    "name":"Pizza Express, Jahra",
+    "restaurantSlug":"pizza-express-jahra",
+    "branchUrl":"\/kuwait\/pizza-express-jahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":634184,
+    "name":"Pizza Express, Mahboula",
+    "restaurantSlug":"pizza-express-mahboula",
+    "branchUrl":"\/kuwait\/pizza-express-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":658916,
+    "name":"Pizza Express, Sabah Al-Nasser",
+    "restaurantSlug":"pizza-express-sabah-al-nasser",
+    "branchUrl":"\/kuwait\/pizza-express-sabah-al-nasser",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pizza Express",
+    "id":634181,
+    "name":"Pizza Express, Salmiya - Marina Crescent, Salmiya",
+    "restaurantSlug":"pizza-express-salmiya--marina-crescent",
+    "branchUrl":"\/kuwait\/pizza-express-salmiya--marina-crescent",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Potato and Corn",
+    "id":690667,
+    "name":"Potato and Corn",
+    "restaurantSlug":"potato-and-corn",
+    "branchUrl":"\/kuwait\/potato-and-corn",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Potato and Corn",
+    "id":697014,
+    "name":"Potato and Corn",
+    "restaurantSlug":"potato-and-corn-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/potato-and-corn-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pret A Manger",
+    "id":661021,
+    "name":"Pret A Manger",
+    "restaurantSlug":"pret-a-manger",
+    "branchUrl":"\/kuwait\/pret-a-manger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Pret A Manger",
+    "id":686273,
+    "name":"Pret A Manger",
+    "restaurantSlug":"pret-a-manger-dh-kitchen-ardhiya",
+    "branchUrl":"\/kuwait\/pret-a-manger-dh-kitchen-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Raising Cane's",
+    "id":633776,
+    "name":"Raising Cane's",
+    "restaurantSlug":"raising-canes-ahmadi-park",
+    "branchUrl":"\/kuwait\/raising-canes-ahmadi-park",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Raising Cane's",
+    "id":659566,
+    "name":"Raising Cane's, 360 Mall, Zahra",
+    "restaurantSlug":"raising-canes-360-mall",
+    "branchUrl":"\/kuwait\/raising-canes-360-mall",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Raising Cane's",
+    "id":650886,
+    "name":"Raising Cane's, Bneid Al Qar",
+    "restaurantSlug":"raising-canes-bneid-al-gar",
+    "branchUrl":"\/kuwait\/raising-canes-bneid-al-gar",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Raising Cane's",
+    "id":633778,
+    "name":"Raising Cane's, Mishrif",
+    "restaurantSlug":"raising-canes-rai",
+    "branchUrl":"\/kuwait\/raising-canes-rai",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Raising Cane's",
+    "id":658917,
+    "name":"Raising Cane's, Sabah Al-Nasser, Ardhiya",
+    "restaurantSlug":"raising-canes-sabah-al-nasser",
+    "branchUrl":"\/kuwait\/raising-canes-sabah-al-nasser",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Raising Cane's",
+    "id":633756,
+    "name":"Raising Cane's, Salmiya",
+    "restaurantSlug":"raising-canes-salmiya",
+    "branchUrl":"\/kuwait\/raising-canes-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Raising Cane's",
+    "id":633748,
+    "name":"Raising Cane's, Shuwaikh",
+    "restaurantSlug":"raising-canes-shuwaikh",
+    "branchUrl":"\/kuwait\/raising-canes-shuwaikh",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Raising Cane's",
+    "id":633755,
+    "name":"Raising Cane`s, Jabriya",
+    "restaurantSlug":"raising-canes-jabriya",
+    "branchUrl":"\/kuwait\/raising-canes-jabriya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Raising Cane's",
+    "id":682646,
+    "name":"Raising Cane`s, Jahra Mall, Jahra Area",
+    "restaurantSlug":"raising-canes-sabah-al-salem",
+    "branchUrl":"\/kuwait\/raising-canes-sabah-al-salem",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Reyhan",
+    "id":660841,
+    "name":"Reyhan",
+    "restaurantSlug":"reyhan",
+    "branchUrl":"\/kuwait\/reyhan",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Reyhan",
+    "id":689235,
+    "name":"Reyhan",
+    "restaurantSlug":"reyhan-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/reyhan-dh-kitchen-ardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Rock Shrimp",
+    "id":676277,
+    "name":"Rock Shrimp",
+    "restaurantSlug":"rock-shrimp",
+    "branchUrl":"\/kuwait\/rock-shrimp",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Rock Shrimp",
+    "id":697003,
+    "name":"Rock shrimp",
+    "restaurantSlug":"rock-shrimp-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/rock-shrimp-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Rose Boutique",
+    "id":640990,
+    "name":"Rose Boutique",
+    "restaurantSlug":"rose-boutique",
+    "branchUrl":"\/kuwait\/rose-boutique",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Rose Boutique",
+    "id":23354,
+    "name":"Rose House",
+    "restaurantSlug":"bait-ward",
+    "branchUrl":"\/kuwait\/bait-ward",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Roto",
+    "id":27191,
+    "name":"Roto",
+    "restaurantSlug":"roto",
+    "branchUrl":"\/kuwait\/roto",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Roto",
+    "id":666198,
+    "name":"Roto",
+    "restaurantSlug":"rotodh-kitchenardhiya",
+    "branchUrl":"\/kuwait\/rotodh-kitchenardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Round",
+    "id":658947,
+    "name":"Round",
+    "restaurantSlug":"round-up-food",
+    "branchUrl":"\/kuwait\/round-up-food",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Round",
+    "id":686215,
+    "name":"Round",
+    "restaurantSlug":"round-dh-kitchen-jahar",
+    "branchUrl":"\/kuwait\/round-dh-kitchen-jahar",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Sakura ( holiday inn Salmiya )",
+    "id":601996,
+    "name":"Sakura ( holiday inn Salmiya )",
+    "restaurantSlug":"sakura",
+    "branchUrl":"\/kuwait\/sakura",
+    "grouping_reason":"noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Sakura ( holiday inn Salmiya )",
+    "id":24,
+    "name":"Sakura (360 Mall)",
+    "restaurantSlug":"sakura",
+    "branchUrl":"\/kuwait\/sakura",
+    "grouping_reason":"noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Sakura ( holiday inn Salmiya )",
+    "id":601407,
+    "name":"Sakura (crowne plaza)",
+    "restaurantSlug":"sakura",
+    "branchUrl":"\/kuwait\/sakura",
+    "grouping_reason":"noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Salad Creation",
+    "id":674437,
+    "name":"Salad Creation",
+    "restaurantSlug":"salad-creationdh-kitchenjahra",
+    "branchUrl":"\/kuwait\/salad-creationdh-kitchenjahra",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Salad Creation",
+    "id":92,
+    "name":"Salad Creations",
+    "restaurantSlug":"salad-creations",
+    "branchUrl":"\/kuwait\/salad-creations",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Salt",
+    "id":687102,
+    "name":"Salt",
+    "restaurantSlug":"salt",
+    "branchUrl":"\/kuwait\/salt",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Salt",
+    "id":689465,
+    "name":"Salt",
+    "restaurantSlug":"salt-dh-kitchen-salmiya",
+    "branchUrl":"\/kuwait\/salt-dh-kitchen-salmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Samboosa Box",
+    "id":19103,
+    "name":"Samboosa Box",
+    "restaurantSlug":"samboosa-box-sharq",
+    "branchUrl":"\/kuwait\/samboosa-box-sharq",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Samboosa Box",
+    "id":15445,
+    "name":"Samboosa Factory",
+    "restaurantSlug":"samboosa-factory",
+    "branchUrl":"\/kuwait\/samboosa-factory",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Shabestan (360 mall)",
+    "id":886,
+    "name":"Shabestan (360 mall)",
+    "restaurantSlug":"shabestan",
+    "branchUrl":"\/kuwait\/shabestan",
+    "grouping_reason":"noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shabestan (360 mall)",
+    "id":601406,
+    "name":"Shabestan (crowne plaza)",
+    "restaurantSlug":"shabestan",
+    "branchUrl":"\/kuwait\/shabestan",
+    "grouping_reason":"noise_words_rule; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":658640,
+    "name":"Shake Shack  - The Lake Mall, Fnaitees,(Dh Kitchen)",
+    "restaurantSlug":"shake-shack-dh-kitchen-fnaitees",
+    "branchUrl":"\/kuwait\/shake-shack-dh-kitchen-fnaitees",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":633754,
+    "name":"Shake Shack - 360 Mall, Zahra",
+    "restaurantSlug":"shake-shack-zahra",
+    "branchUrl":"\/kuwait\/shake-shack-zahra",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":633752,
+    "name":"Shake Shack - Al Fanar Mall, Salmiya",
+    "restaurantSlug":"shake-shack-fanar-mall",
+    "branchUrl":"\/kuwait\/shake-shack-fanar-mall",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":633749,
+    "name":"Shake Shack - Al Mourouj, Subhan",
+    "restaurantSlug":"shake-shack-sabah-al-salem",
+    "branchUrl":"\/kuwait\/shake-shack-sabah-al-salem",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":658742,
+    "name":"Shake Shack - Al Nasser",
+    "restaurantSlug":"shake-shack-al-nasser-sport-club",
+    "branchUrl":"\/kuwait\/shake-shack-al-nasser-sport-club",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":633751,
+    "name":"Shake Shack - Jabriya Land 2",
+    "restaurantSlug":"shake-shack-jabriya",
+    "branchUrl":"\/kuwait\/shake-shack-jabriya",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":633753,
+    "name":"Shake Shack - Sidra Restaurants, Mahboula",
+    "restaurantSlug":"shake-shack--mahboula",
+    "branchUrl":"\/kuwait\/shake-shack--mahboula",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":633782,
+    "name":"Shake Shack - The Gate Mall, Egalia",
+    "restaurantSlug":"shake-shack-egaila",
+    "branchUrl":"\/kuwait\/shake-shack-egaila",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":633783,
+    "name":"Shake Shack, Abdullah Al Salem",
+    "restaurantSlug":"shake-shack-abdullah-al-salem",
+    "branchUrl":"\/kuwait\/shake-shack-abdullah-al-salem",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shake Shack",
+    "id":665245,
+    "name":"Shake Shack, Al-Ahmadi",
+    "restaurantSlug":"shake-shack-ahmadi",
+    "branchUrl":"\/kuwait\/shake-shack-ahmadi",
+    "grouping_reason":"current_group; noise_words_rule; prefix_medium; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shawarma Zone",
+    "id":11234,
+    "name":"Shawarma Zone",
+    "restaurantSlug":"shawarma-zone",
+    "branchUrl":"\/kuwait\/shawarma-zone",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shawarma Zone",
+    "id":661774,
+    "name":"Shawarma Zone",
+    "restaurantSlug":"shawarma-zone-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/shawarma-zone-dh-kitchen-ardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Shawarma Zone",
+    "id":668159,
+    "name":"Shawarma Zone",
+    "restaurantSlug":"shawarma-zonedh-kitchensalmiya",
+    "branchUrl":"\/kuwait\/shawarma-zonedh-kitchensalmiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Slider Station",
+    "id":600829,
+    "name":"Slider Station",
+    "restaurantSlug":"slider-station",
+    "branchUrl":"\/kuwait\/slider-station",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Slider Station",
+    "id":19928,
+    "name":"Slider Store",
+    "restaurantSlug":"slider-store",
+    "branchUrl":"\/kuwait\/slider-store",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Snack Box",
+    "id":704567,
+    "name":"Snack Box",
+    "restaurantSlug":"snack-box",
+    "branchUrl":"\/kuwait\/snack-box",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Snack Box",
+    "id":641795,
+    "name":"Snack house",
+    "restaurantSlug":"snack-house",
+    "branchUrl":"\/kuwait\/snack-house",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Soucolat",
+    "id":603917,
+    "name":"Soucolat",
+    "restaurantSlug":"soucolat",
+    "branchUrl":"\/kuwait\/soucolat",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Soucolat",
+    "id":636877,
+    "name":"Soucolat",
+    "restaurantSlug":"soucolat",
+    "branchUrl":"\/kuwait\/soucolat",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":656131,
+    "name":"Starbucks",
+    "restaurantSlug":"starbucks-sabah-al-ahmad-coop-3",
+    "branchUrl":"\/kuwait\/starbucks-sabah-al-ahmad-coop-3",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":681437,
+    "name":"Starbucks",
+    "restaurantSlug":"starbucks-the-platform-drive-thru",
+    "branchUrl":"\/kuwait\/starbucks-the-platform-drive-thru",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647252,
+    "name":"Starbucks (Ashbeliah)",
+    "restaurantSlug":"starbucks-ishbiliya-coop",
+    "branchUrl":"\/kuwait\/starbucks-ishbiliya-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647214,
+    "name":"Starbucks Al Bairaq Mall 1",
+    "restaurantSlug":"starbucks-al-bairaq-mall-1",
+    "branchUrl":"\/kuwait\/starbucks-al-bairaq-mall-1",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647216,
+    "name":"Starbucks Aswaq Al Qurain 1",
+    "restaurantSlug":"starbucks-aswaq-al-qurain-1",
+    "branchUrl":"\/kuwait\/starbucks-aswaq-al-qurain-1",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647217,
+    "name":"Starbucks Aswaq Al Qurain Drive",
+    "restaurantSlug":"starbucks-aswaq-al-qurain-drive-thru",
+    "branchUrl":"\/kuwait\/starbucks-aswaq-al-qurain-drive-thru",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":684630,
+    "name":"Starbucks Benaid Al Gar DT",
+    "restaurantSlug":"starbucks-benaid-al-gar-dt-al-amer-land",
+    "branchUrl":"\/kuwait\/starbucks-benaid-al-gar-dt-al-amer-land",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647223,
+    "name":"Starbucks Fintas Park",
+    "restaurantSlug":"starbucks-fintas-park",
+    "branchUrl":"\/kuwait\/starbucks-fintas-park",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":648703,
+    "name":"Starbucks Kipco Tower",
+    "restaurantSlug":"starbucks-kipco-tower",
+    "branchUrl":"\/kuwait\/starbucks-kipco-tower",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647235,
+    "name":"Starbucks Mahboula Alia Ghalia Towers",
+    "restaurantSlug":"starbucks-alliya",
+    "branchUrl":"\/kuwait\/starbucks-alliya",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647212,
+    "name":"Starbucks Sama Mall - Egaila",
+    "restaurantSlug":"starbucks-sama-mall-egaila",
+    "branchUrl":"\/kuwait\/starbucks-sama-mall-egaila",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647264,
+    "name":"Starbucks Sama Mall- Sulaibikhat",
+    "restaurantSlug":"starbucks-sama-mall-sulibikhat",
+    "branchUrl":"\/kuwait\/starbucks-sama-mall-sulibikhat",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647240,
+    "name":"Starbucks The Lake Mall DT",
+    "restaurantSlug":"starbucks-the-lake-mall-dt",
+    "branchUrl":"\/kuwait\/starbucks-the-lake-mall-dt",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647230,
+    "name":"Starbucks Trolley Fintas",
+    "restaurantSlug":"starbucks-trolley-fintas",
+    "branchUrl":"\/kuwait\/starbucks-trolley-fintas",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647229,
+    "name":"Starbucks Trolley Masael",
+    "restaurantSlug":"starbucks-trolley-masael",
+    "branchUrl":"\/kuwait\/starbucks-trolley-masael",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647232,
+    "name":"Starbucks, Abdullah Al-Mubarak Co-Op",
+    "restaurantSlug":"starbucks-abdullah-al-mubarak-co-op",
+    "branchUrl":"\/kuwait\/starbucks-abdullah-al-mubarak-co-op",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647263,
+    "name":"Starbucks, Adeliya Co-Op",
+    "restaurantSlug":"starbucks-rawda-coop",
+    "branchUrl":"\/kuwait\/starbucks-rawda-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647290,
+    "name":"Starbucks, Al Andalous Mall- Hawally",
+    "restaurantSlug":"starbucksmohalab-center-hawally",
+    "branchUrl":"\/kuwait\/starbucksmohalab-center-hawally",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":673256,
+    "name":"Starbucks, Al Arjan, Sabah Al-Salem",
+    "restaurantSlug":"starbucks-al-arjan",
+    "branchUrl":"\/kuwait\/starbucks-al-arjan",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647231,
+    "name":"Starbucks, Al Bidaa",
+    "restaurantSlug":"starbucks-al-bidaa",
+    "branchUrl":"\/kuwait\/starbucks-al-bidaa",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647219,
+    "name":"Starbucks, Al Kout",
+    "restaurantSlug":"starbucks-al-kout",
+    "branchUrl":"\/kuwait\/starbucks-al-kout",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647221,
+    "name":"Starbucks, Al Messilla Khalifa Resort",
+    "restaurantSlug":"starbucks-al-messilla-khalifa-resort",
+    "branchUrl":"\/kuwait\/starbucks-al-messilla-khalifa-resort",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":656573,
+    "name":"Starbucks, Al Nasser Sporting Club,Ardhiya",
+    "restaurantSlug":"starbucks-al-nasser-sporting-club",
+    "branchUrl":"\/kuwait\/starbucks-al-nasser-sporting-club",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":655163,
+    "name":"Starbucks, Al Omooma, Reggai",
+    "restaurantSlug":"starbucks-al-omooma",
+    "branchUrl":"\/kuwait\/starbucks-al-omooma",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647289,
+    "name":"Starbucks, Al Plaza",
+    "restaurantSlug":"starbucksal-plaza-hawally",
+    "branchUrl":"\/kuwait\/starbucksal-plaza-hawally",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647270,
+    "name":"Starbucks, AL-RUMAITHIYA PARK",
+    "restaurantSlug":"starbucks-rumathiya-park",
+    "branchUrl":"\/kuwait\/starbucks-rumathiya-park",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647228,
+    "name":"Starbucks, Al-Surra - Rai",
+    "restaurantSlug":"starbucks-al-surra",
+    "branchUrl":"\/kuwait\/starbucks-al-surra",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647242,
+    "name":"Starbucks, Andalous Co-operative",
+    "restaurantSlug":"starbucks-andalous-co-operative",
+    "branchUrl":"\/kuwait\/starbucks-andalous-co-operative",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647281,
+    "name":"Starbucks, Awtad Mall Jahra",
+    "restaurantSlug":"starbucksjahra-gate",
+    "branchUrl":"\/kuwait\/starbucksjahra-gate",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647220,
+    "name":"Starbucks, Baitak Tower",
+    "restaurantSlug":"starbucks-baitak-tower",
+    "branchUrl":"\/kuwait\/starbucks-baitak-tower",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":669291,
+    "name":"Starbucks, Corniche Club Kiosk",
+    "restaurantSlug":"starbucks-kuwait-equine-hospital-dt-wafra",
+    "branchUrl":"\/kuwait\/starbucks-kuwait-equine-hospital-dt-wafra",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647243,
+    "name":"Starbucks, Daiya Cooperative",
+    "restaurantSlug":"starbucks-daiya-cooperative",
+    "branchUrl":"\/kuwait\/starbucks-daiya-cooperative",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647247,
+    "name":"Starbucks, Dar Al Awadi",
+    "restaurantSlug":"starbucks-dar-al-awadi",
+    "branchUrl":"\/kuwait\/starbucks-dar-al-awadi",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647244,
+    "name":"Starbucks, Dasmah Coop",
+    "restaurantSlug":"starbucks-dasmah-coop",
+    "branchUrl":"\/kuwait\/starbucks-dasmah-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":685981,
+    "name":"Starbucks, Dhaher",
+    "restaurantSlug":"starbucks-dahar-coop",
+    "branchUrl":"\/kuwait\/starbucks-dahar-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647246,
+    "name":"Starbucks, Dhajeej DT",
+    "restaurantSlug":"starbucks-dajeej-dt",
+    "branchUrl":"\/kuwait\/starbucks-dajeej-dt",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":666895,
+    "name":"Starbucks, Dhaman Hospital",
+    "restaurantSlug":"starbucks-dhaman-hospital",
+    "branchUrl":"\/kuwait\/starbucks-dhaman-hospital",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647222,
+    "name":"Starbucks, Divonne - Abu Hasaniya",
+    "restaurantSlug":"starbucks-divonne",
+    "branchUrl":"\/kuwait\/starbucks-divonne",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647251,
+    "name":"Starbucks, Fahaheel Trolley",
+    "restaurantSlug":"starbucks-fahaheel-trolley",
+    "branchUrl":"\/kuwait\/starbucks-fahaheel-trolley",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647250,
+    "name":"Starbucks, Farwaniya Complex",
+    "restaurantSlug":"starbucks-farwaniya-complex",
+    "branchUrl":"\/kuwait\/starbucks-farwaniya-complex",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647248,
+    "name":"Starbucks, Farwaniya Coop",
+    "restaurantSlug":"starbucks-farwaniya-coop",
+    "branchUrl":"\/kuwait\/starbucks-farwaniya-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647224,
+    "name":"Starbucks, Hilton - Mangaf",
+    "restaurantSlug":"starbucks-hilton--mangaf",
+    "branchUrl":"\/kuwait\/starbucks-hilton--mangaf",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647253,
+    "name":"Starbucks, International Hospital Salmiya GF",
+    "restaurantSlug":"starbucks-international-hospital-salmiya-gf",
+    "branchUrl":"\/kuwait\/starbucks-international-hospital-salmiya-gf",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647249,
+    "name":"Starbucks, Jabriya 1",
+    "restaurantSlug":"starbucks-jabriya-1",
+    "branchUrl":"\/kuwait\/starbucks-jabriya-1",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647256,
+    "name":"Starbucks, Jabriya Land",
+    "restaurantSlug":"starbucks-jabriya-land",
+    "branchUrl":"\/kuwait\/starbucks-jabriya-land",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647291,
+    "name":"Starbucks, Jahra Gate",
+    "restaurantSlug":"starbucksfahed-al-saleem",
+    "branchUrl":"\/kuwait\/starbucksfahed-al-saleem",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647267,
+    "name":"Starbucks, Kaifan Co-op",
+    "restaurantSlug":"starbucks-kuwait-sporting-club",
+    "branchUrl":"\/kuwait\/starbucks-kuwait-sporting-club",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647258,
+    "name":"Starbucks, Karizma Villa",
+    "restaurantSlug":"starbucks-karizma-villa",
+    "branchUrl":"\/kuwait\/starbucks-karizma-villa",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647259,
+    "name":"Starbucks, Khaldiya Coop",
+    "restaurantSlug":"starbucks-khaldiya-coop",
+    "branchUrl":"\/kuwait\/starbucks-khaldiya-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647226,
+    "name":"Starbucks, Mahboula Land (Sidra)",
+    "restaurantSlug":"starbucks-mahboula-landsidra",
+    "branchUrl":"\/kuwait\/starbucks-mahboula-landsidra",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647236,
+    "name":"Starbucks, Mangaf Coop",
+    "restaurantSlug":"starbucks-mangaf-coop",
+    "branchUrl":"\/kuwait\/starbucks-mangaf-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647261,
+    "name":"Starbucks, Marouj Sahara",
+    "restaurantSlug":"starbucks-marouj-sahara",
+    "branchUrl":"\/kuwait\/starbucks-marouj-sahara",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647254,
+    "name":"Starbucks, Mishref Co-Op",
+    "restaurantSlug":"starbucks-mishref-co-op",
+    "branchUrl":"\/kuwait\/starbucks-mishref-co-op",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":676986,
+    "name":"Starbucks, Mishrif Park",
+    "restaurantSlug":"starbucks-mishrif-park",
+    "branchUrl":"\/kuwait\/starbucks-mishrif-park",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647293,
+    "name":"Starbucks, Mubarakiya",
+    "restaurantSlug":"starbucks-sulayl-al",
+    "branchUrl":"\/kuwait\/starbucks-sulayl-al",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647260,
+    "name":"Starbucks, National Guard",
+    "restaurantSlug":"starbucks-national-guard",
+    "branchUrl":"\/kuwait\/starbucks-national-guard",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647296,
+    "name":"Starbucks, Norma Complex - Ground Floor",
+    "restaurantSlug":"starbucks-norma-complex--ground-floor",
+    "branchUrl":"\/kuwait\/starbucks-norma-complex--ground-floor",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647255,
+    "name":"Starbucks, North Salmiya",
+    "restaurantSlug":"starbucks-north-salmiya",
+    "branchUrl":"\/kuwait\/starbucks-north-salmiya",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647277,
+    "name":"Starbucks, North West Sulaibikhat Coop",
+    "restaurantSlug":"starbucks-sulaibikhat",
+    "branchUrl":"\/kuwait\/starbucks-sulaibikhat",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":657625,
+    "name":"Starbucks, Qadsiya Co-op",
+    "restaurantSlug":"starbucks-qadsiya-co-op",
+    "branchUrl":"\/kuwait\/starbucks-qadsiya-co-op",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":700138,
+    "name":"Starbucks, Qairawan Park",
+    "restaurantSlug":"starbucks-new-chain",
+    "branchUrl":"\/kuwait\/starbucks-new-chain",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647269,
+    "name":"Starbucks, Rehab Co-Op",
+    "restaurantSlug":"starbucks-rehab-co-op",
+    "branchUrl":"\/kuwait\/starbucks-rehab-co-op",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647238,
+    "name":"Starbucks, Riqqa Park",
+    "restaurantSlug":"starbucks-riqqa-park",
+    "branchUrl":"\/kuwait\/starbucks-riqqa-park",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647262,
+    "name":"Starbucks, Rumaithiya Coop",
+    "restaurantSlug":"starbucks-rumaithiya-coop",
+    "branchUrl":"\/kuwait\/starbucks-rumaithiya-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647225,
+    "name":"Starbucks, Sabah Al Ahmad City",
+    "restaurantSlug":"starbucks-kipco-tower",
+    "branchUrl":"\/kuwait\/starbucks-kipco-tower",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":666118,
+    "name":"Starbucks, Sabah Al Ahmad Hospital Urology",
+    "restaurantSlug":"starbucks-saba-al-ahmad-hospital-urology-center",
+    "branchUrl":"\/kuwait\/starbucks-saba-al-ahmad-hospital-urology-center",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647271,
+    "name":"Starbucks, Salwa Coop",
+    "restaurantSlug":"starbucks-salwa-coop",
+    "branchUrl":"\/kuwait\/starbucks-salwa-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647257,
+    "name":"Starbucks, Shamiya Co-Operative",
+    "restaurantSlug":"starbucks-shamiya-co-operative",
+    "branchUrl":"\/kuwait\/starbucks-shamiya-co-operative",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647274,
+    "name":"Starbucks, Sheikha Complex",
+    "restaurantSlug":"starbucks-sheikha-complex",
+    "branchUrl":"\/kuwait\/starbucks-sheikha-complex",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647265,
+    "name":"Starbucks, Shuhada Co-Op",
+    "restaurantSlug":"starbucks-shuhada-coop",
+    "branchUrl":"\/kuwait\/starbucks-shuhada-coop",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647282,
+    "name":"Starbucks, Siddiq",
+    "restaurantSlug":"starbucks-trolley-sadeeq",
+    "branchUrl":"\/kuwait\/starbucks-trolley-sadeeq",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647268,
+    "name":"Starbucks, Slayil Mall",
+    "restaurantSlug":"starbucks-slayil-mall",
+    "branchUrl":"\/kuwait\/starbucks-slayil-mall",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647272,
+    "name":"Starbucks, STA Kuwait Hospital",
+    "restaurantSlug":"starbucks-sta-kuwait-hospital-activity",
+    "branchUrl":"\/kuwait\/starbucks-sta-kuwait-hospital-activity",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647215,
+    "name":"Starbucks, Starbucks Arabia Mall",
+    "restaurantSlug":"starbucks-arabia-mall",
+    "branchUrl":"\/kuwait\/starbucks-arabia-mall",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647241,
+    "name":"Starbucks, The Venue",
+    "restaurantSlug":"starbucks-the-venue",
+    "branchUrl":"\/kuwait\/starbucks-the-venue",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647276,
+    "name":"Starbucks, Trolley Al Reggi Oula",
+    "restaurantSlug":"starbucks-trolley-al-reggi-oula",
+    "branchUrl":"\/kuwait\/starbucks-trolley-al-reggi-oula",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":673254,
+    "name":"Starbucks, Trolley Doha KNPC- Jahra Area",
+    "restaurantSlug":"starbucks-trolley-doha-knpc",
+    "branchUrl":"\/kuwait\/starbucks-trolley-doha-knpc",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647278,
+    "name":"Starbucks, Trolley Jaber Sport City",
+    "restaurantSlug":"starbucks-trolley-jaber-sport-city-knpc",
+    "branchUrl":"\/kuwait\/starbucks-trolley-jaber-sport-city-knpc",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647279,
+    "name":"Starbucks, Trolley Mansoriya",
+    "restaurantSlug":"starbucks-trolley-mansoriya",
+    "branchUrl":"\/kuwait\/starbucks-trolley-mansoriya",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647234,
+    "name":"Starbucks, Trolley Salmiya",
+    "restaurantSlug":"starbucks-trolley-salmiya",
+    "branchUrl":"\/kuwait\/starbucks-trolley-salmiya",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647283,
+    "name":"Starbucks, Trolley Shuhada",
+    "restaurantSlug":"starbucks-trolley-shuhada",
+    "branchUrl":"\/kuwait\/starbucks-trolley-shuhada",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647280,
+    "name":"Starbucks, Trolley Waha Jahra",
+    "restaurantSlug":"starbucks-trolley-waha-jahra",
+    "branchUrl":"\/kuwait\/starbucks-trolley-waha-jahra",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647285,
+    "name":"Starbucks, Trolley- Ghazali Store",
+    "restaurantSlug":"starbucks-trolley-ghazali-store",
+    "branchUrl":"\/kuwait\/starbucks-trolley-ghazali-store",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":698669,
+    "name":"Starbucks, Yarmouk Coop",
+    "restaurantSlug":"starbucks-yarmouk",
+    "branchUrl":"\/kuwait\/starbucks-yarmouk",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647295,
+    "name":"Starbucks, Zahra Co-operative",
+    "restaurantSlug":"starbucks-zahra-co-operative",
+    "branchUrl":"\/kuwait\/starbucks-zahra-co-operative",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647288,
+    "name":"Starbucks,Sama Mall-Khaitan",
+    "restaurantSlug":"starbuckssama-mall-khaitan",
+    "branchUrl":"\/kuwait\/starbuckssama-mall-khaitan",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Starbucks",
+    "id":647284,
+    "name":"Starbucks,Twin Tower",
+    "restaurantSlug":"starbuckstwin-tower",
+    "branchUrl":"\/kuwait\/starbuckstwin-tower",
+    "grouping_reason":"current_group; noise_words_rule; prefix_high; separator_rule",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"SunShine",
+    "id":652674,
+    "name":"SunShine",
+    "restaurantSlug":"sunshine",
+    "branchUrl":"\/kuwait\/sunshine",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"SunShine",
+    "id":667476,
+    "name":"Sunshine",
+    "restaurantSlug":"sunshine-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/sunshine-dh-kitchen-ardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Sushi Club",
+    "id":34,
+    "name":"Sushi Club",
+    "restaurantSlug":"sushi-club",
+    "branchUrl":"\/kuwait\/sushi-club",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Sushi Club",
+    "id":646814,
+    "name":"Sushi Express",
+    "restaurantSlug":"sushi-express",
+    "branchUrl":"\/kuwait\/sushi-express",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Sushi Club",
+    "id":25516,
+    "name":"Sushi House",
+    "restaurantSlug":"sushi-house",
+    "branchUrl":"\/kuwait\/sushi-house",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Sushi Club",
+    "id":12424,
+    "name":"Sushi time",
+    "restaurantSlug":"sushi-time",
+    "branchUrl":"\/kuwait\/sushi-time",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Swaikhat",
+    "id":643939,
+    "name":"Swaikhat",
+    "restaurantSlug":"swaikhat",
+    "branchUrl":"\/kuwait\/swaikhat",
+    "grouping_reason":"prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Swaikhat",
+    "id":637292,
+    "name":"Swaikhat Alsharq",
+    "restaurantSlug":"swaikhat-alsharq",
+    "branchUrl":"\/kuwait\/swaikhat-alsharq",
+    "grouping_reason":"prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Swaikhat",
+    "id":630817,
+    "name":"Swaikhat Boali",
+    "restaurantSlug":"swaikhat-boali",
+    "branchUrl":"\/kuwait\/swaikhat-boali",
+    "grouping_reason":"prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Swaikhat",
+    "id":679366,
+    "name":"Swaikhat Bohamood",
+    "restaurantSlug":"swaikhat-bohamood-679366",
+    "branchUrl":"\/kuwait\/swaikhat-bohamood-679366",
+    "grouping_reason":"prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Swaikhat",
+    "id":651367,
+    "name":"Swaikhat Buadnan",
+    "restaurantSlug":"buadnan",
+    "branchUrl":"\/kuwait\/buadnan",
+    "grouping_reason":"prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Swaikhat",
+    "id":642471,
+    "name":"Swaikhat Lumi",
+    "restaurantSlug":"swaikhat-lumi",
+    "branchUrl":"\/kuwait\/swaikhat-lumi",
+    "grouping_reason":"prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Swaikhat",
+    "id":690053,
+    "name":"Swaikhat Reggae",
+    "restaurantSlug":"swaikhat-reggae",
+    "branchUrl":"\/kuwait\/swaikhat-reggae",
+    "grouping_reason":"prefix_high; prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Sweet Factory",
+    "id":674601,
+    "name":"Sweet Factory",
+    "restaurantSlug":"sweet-factory-salmiya",
+    "branchUrl":"\/kuwait\/sweet-factory-salmiya",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Sweet Factory",
+    "id":635620,
+    "name":"Sweet Shop",
+    "restaurantSlug":"sweet-shop",
+    "branchUrl":"\/kuwait\/sweet-shop",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Sweet Factory",
+    "id":21589,
+    "name":"Sweet Store",
+    "restaurantSlug":"sweet-store",
+    "branchUrl":"\/kuwait\/sweet-store",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Texas RoadHouse",
+    "id":15417,
+    "name":"Texas RoadHouse",
+    "restaurantSlug":"texas-roadhouse",
+    "branchUrl":"\/kuwait\/texas-roadhouse",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Texas RoadHouse",
+    "id":634156,
+    "name":"Texas RoadHouse, Sidra Mahboula",
+    "restaurantSlug":"texas-roadhouse-mahboula",
+    "branchUrl":"\/kuwait\/texas-roadhouse-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"TFB",
+    "id":655722,
+    "name":"TFB",
+    "restaurantSlug":"tfb",
+    "branchUrl":"\/kuwait\/tfb",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"TFB",
+    "id":670916,
+    "name":"TFB",
+    "restaurantSlug":"tfb-dh-kitchenardiya",
+    "branchUrl":"\/kuwait\/tfb-dh-kitchenardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Brooklyn Creamery",
+    "id":660521,
+    "name":"The Brooklyn Creamery",
+    "restaurantSlug":"the-brooklyn-creamery-dh-kitchen-fnaitees",
+    "branchUrl":"\/kuwait\/the-brooklyn-creamery-dh-kitchen-fnaitees",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Brooklyn Creamery",
+    "id":664378,
+    "name":"The Brooklyn Creamery",
+    "restaurantSlug":"the-brooklyn-creamery",
+    "branchUrl":"\/kuwait\/the-brooklyn-creamery",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Brooklyn Creamery",
+    "id":667227,
+    "name":"The Brooklyn Creamery",
+    "restaurantSlug":"the-brooklyn-creamery-qibla",
+    "branchUrl":"\/kuwait\/the-brooklyn-creamery-qibla",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Cheesecake Factory",
+    "id":634457,
+    "name":"The Cheesecake Factory,  Avenues Rai",
+    "restaurantSlug":"the-cheesecake-factory-rai-avenues",
+    "branchUrl":"\/kuwait\/the-cheesecake-factory-rai-avenues",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Cheesecake Factory",
+    "id":634154,
+    "name":"The Cheesecake Factory, Bneid Al Qar",
+    "restaurantSlug":"the-cheesecake-factory-bnaid-al-qar",
+    "branchUrl":"\/kuwait\/the-cheesecake-factory-bnaid-al-qar",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Cheesecake Factory",
+    "id":634155,
+    "name":"The Cheesecake Factory, Mahboula",
+    "restaurantSlug":"the-cheesecake-factory-mahboula",
+    "branchUrl":"\/kuwait\/the-cheesecake-factory-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Corn Club",
+    "id":672992,
+    "name":"The Corn Club",
+    "restaurantSlug":"the-corn-club-qortuba",
+    "branchUrl":"\/kuwait\/the-corn-club-qortuba",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Corn Club",
+    "id":678898,
+    "name":"The Corn Club",
+    "restaurantSlug":"the-corn-club-dh-kitchen-jahar",
+    "branchUrl":"\/kuwait\/the-corn-club-dh-kitchen-jahar",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Early Bird",
+    "id":12356,
+    "name":"The Early Bird",
+    "restaurantSlug":"the-early-bird",
+    "branchUrl":"\/kuwait\/the-early-bird",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Early Bird",
+    "id":688961,
+    "name":"The Early Bird",
+    "restaurantSlug":"the-early-bird-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/the-early-bird-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Good Good People",
+    "id":683494,
+    "name":"The Good Good People",
+    "restaurantSlug":"the-good-good-people",
+    "branchUrl":"\/kuwait\/the-good-good-people",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Good Good People",
+    "id":683943,
+    "name":"The Good Good People",
+    "restaurantSlug":"the-good-good-peopledh-kitchen-ardhiya",
+    "branchUrl":"\/kuwait\/the-good-good-peopledh-kitchen-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"The Noodle Club",
+    "id":25755,
+    "name":"The Noodle Club",
+    "restaurantSlug":"the-noodle-club-ardiya",
+    "branchUrl":"\/kuwait\/the-noodle-club-ardiya",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"The Noodle Club",
+    "id":675735,
+    "name":"The Noodle Station",
+    "restaurantSlug":"the-noodle-station",
+    "branchUrl":"\/kuwait\/the-noodle-station",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"The Sandwich",
+    "id":15073,
+    "name":"The sandwich, ardiya",
+    "restaurantSlug":"the-sandwich",
+    "branchUrl":"\/kuwait\/the-sandwich",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Thinnies",
+    "id":611008,
+    "name":"Thinnies",
+    "restaurantSlug":"thinnies",
+    "branchUrl":"\/kuwait\/thinnies",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Thinnies",
+    "id":643353,
+    "name":"Thinnies",
+    "restaurantSlug":"thinnies-burgers-restaurant",
+    "branchUrl":"\/kuwait\/thinnies-burgers-restaurant",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Tiger Tiger",
+    "id":21942,
+    "name":"Tiger Tiger, Hawally",
+    "restaurantSlug":"tiger-tiger",
+    "branchUrl":"\/kuwait\/tiger-tiger",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"TOKYO",
+    "id":678340,
+    "name":"TOKYO",
+    "restaurantSlug":"tokyo",
+    "branchUrl":"\/kuwait\/tokyo",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"TOKYO",
+    "id":630091,
+    "name":"Tokyo House",
+    "restaurantSlug":"tokyo-house",
+    "branchUrl":"\/kuwait\/tokyo-house",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Toot Beirut Juice",
+    "id":693514,
+    "name":"Toot Beirut Juice",
+    "restaurantSlug":"toot-beirut-juice-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/toot-beirut-juice-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Toot Beirut Juice",
+    "id":696834,
+    "name":"Toot Beirut Juice",
+    "restaurantSlug":"toot-beirut-juice",
+    "branchUrl":"\/kuwait\/toot-beirut-juice",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Top Shop",
+    "id":610744,
+    "name":"Top Shop",
+    "restaurantSlug":"top-shop",
+    "branchUrl":"\/kuwait\/top-shop",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Top Shop",
+    "id":603835,
+    "name":"Top Store",
+    "restaurantSlug":"top-store",
+    "branchUrl":"\/kuwait\/top-store",
+    "grouping_reason":"noise_words_rule",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Torta",
+    "id":692105,
+    "name":"Torta",
+    "restaurantSlug":"torta",
+    "branchUrl":"\/kuwait\/torta",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Torta",
+    "id":692833,
+    "name":"Torta",
+    "restaurantSlug":"torta-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/torta-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Treek",
+    "id":641041,
+    "name":"Treek",
+    "restaurantSlug":"treek",
+    "branchUrl":"\/kuwait\/treek",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Treek",
+    "id":666580,
+    "name":"Treek",
+    "restaurantSlug":"treekdh-kitchenardiya",
+    "branchUrl":"\/kuwait\/treekdh-kitchenardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Triangle",
+    "id":164,
+    "name":"Triangle",
+    "restaurantSlug":"triangle",
+    "branchUrl":"\/kuwait\/triangle",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Triangle",
+    "id":663325,
+    "name":"Triangle",
+    "restaurantSlug":"triangle-dh-kitchen-ardiya",
+    "branchUrl":"\/kuwait\/triangle-dh-kitchen-ardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Turkish House",
+    "id":601316,
+    "name":"Turkish House",
+    "restaurantSlug":"turkish-house",
+    "branchUrl":"\/kuwait\/turkish-house",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Turkish House",
+    "id":635374,
+    "name":"Turkish House",
+    "restaurantSlug":"turkishhouse",
+    "branchUrl":"\/kuwait\/turkishhouse",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"VINE",
+    "id":673158,
+    "name":"VINE",
+    "restaurantSlug":"vine",
+    "branchUrl":"\/kuwait\/vine",
+    "grouping_reason":"prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"VINE",
+    "id":697878,
+    "name":"VINE PRO",
+    "restaurantSlug":"vine-pro-salmiya-tgo",
+    "branchUrl":"\/kuwait\/vine-pro-salmiya-tgo",
+    "grouping_reason":"prefix_medium",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"VITAMIN",
+    "id":657924,
+    "name":"Vitamin",
+    "restaurantSlug":"vitamin",
+    "branchUrl":"\/kuwait\/vitamin",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"VITAMIN",
+    "id":696854,
+    "name":"VITAMIN",
+    "restaurantSlug":"httpswwwtalabatcomkuwaitvitamiin",
+    "branchUrl":"\/kuwait\/httpswwwtalabatcomkuwaitvitamiin",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Vol 1",
+    "id":702823,
+    "name":"Vol 1",
+    "restaurantSlug":"vol-1-sharq",
+    "branchUrl":"\/kuwait\/vol-1-sharq",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Volcano Sushi",
+    "id":647963,
+    "name":"Volcano Sushi",
+    "restaurantSlug":"volcano-sushi",
+    "branchUrl":"\/kuwait\/volcano-sushi",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Volcano Sushi",
+    "id":696892,
+    "name":"Volcano Sushi",
+    "restaurantSlug":"volcano-sushi-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/volcano-sushi-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Wagta",
+    "id":666669,
+    "name":"Wagta",
+    "restaurantSlug":"wagta",
+    "branchUrl":"\/kuwait\/wagta",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Wagta",
+    "id":682136,
+    "name":"Wagta Sandwich",
+    "restaurantSlug":"wagta",
+    "branchUrl":"\/kuwait\/wagta",
+    "grouping_reason":"branchname_high",
+    "Unnamed: 6":null,
+    "validation":null
+  },
+  {
+    "Grouping label":"Wendy's",
+    "id":10624,
+    "name":"Wendy's, Al Salmiya, Marina mall",
+    "restaurantSlug":"wendys-tgo",
+    "branchUrl":"\/kuwait\/wendys-tgo",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Wonder Sushi",
+    "id":677481,
+    "name":"Wonder Sushi",
+    "restaurantSlug":"wonder-sushi",
+    "branchUrl":"\/kuwait\/wonder-sushi",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Wonder Sushi",
+    "id":696917,
+    "name":"Wonder sushi",
+    "restaurantSlug":"wonder-sushi-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/wonder-sushi-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Wooden Bakery",
+    "id":656757,
+    "name":"Wooden Bakery",
+    "restaurantSlug":"wooden-bakery",
+    "branchUrl":"\/kuwait\/wooden-bakery",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Wooden Bakery",
+    "id":664434,
+    "name":"Wooden Bakery",
+    "restaurantSlug":"wooden-bakery-main",
+    "branchUrl":"\/kuwait\/wooden-bakery-main",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Yuzu",
+    "id":673244,
+    "name":"Yuzu",
+    "restaurantSlug":"yuzu",
+    "branchUrl":"\/kuwait\/yuzu",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Yuzu",
+    "id":689361,
+    "name":"Yuzu",
+    "restaurantSlug":"yuzu-gowagon",
+    "branchUrl":"\/kuwait\/yuzu-gowagon",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"F"
+  },
+  {
+    "Grouping label":"Zaatar W Zeit",
+    "id":30,
+    "name":"Zaatar W Zeit",
+    "restaurantSlug":"zaatar-w-zeit",
+    "branchUrl":"\/kuwait\/zaatar-w-zeit",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Zaatar W Zeit",
+    "id":668725,
+    "name":"Zaatar W Zeit",
+    "restaurantSlug":"zaatar-w-zeitdh-kitchenardiya",
+    "branchUrl":"\/kuwait\/zaatar-w-zeitdh-kitchenardiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Zaatar W Zeit",
+    "id":675701,
+    "name":"Zaatar W Zeit",
+    "restaurantSlug":"zaatar-w-zeitdh-kitchenjahra",
+    "branchUrl":"\/kuwait\/zaatar-w-zeitdh-kitchenjahra",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"Zaatar W Zeit",
+    "id":695427,
+    "name":"Zaatar w Zeit",
+    "restaurantSlug":"zaatar-w-zeit-dh-kitchen-mahboula",
+    "branchUrl":"\/kuwait\/zaatar-w-zeit-dh-kitchen-mahboula",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"ZEN",
+    "id":680541,
+    "name":"ZEN",
+    "restaurantSlug":"zen",
+    "branchUrl":"\/kuwait\/zen",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  },
+  {
+    "Grouping label":"ZEN",
+    "id":693463,
+    "name":"ZEN",
+    "restaurantSlug":"zen-restaurant-dh-kitchen-ardhiya",
+    "branchUrl":"\/kuwait\/zen-restaurant-dh-kitchen-ardhiya",
+    "grouping_reason":"current_group",
+    "Unnamed: 6":null,
+    "validation":"T"
+  }
+]

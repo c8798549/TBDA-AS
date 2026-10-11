@@ -11,6 +11,22 @@ R2_PREFIX = os.environ.get(
     "merged-restaurant-info/year=2025/month=09/day=17/"
 )
 
+# ---------------- grouping decisions (from the manual review) ----------------
+# ملف المراجعة اللي فيه عمود validation: T = دمج، F = ميتدمجش، فاضي = من غير تغيير
+DECISIONS_FILE = os.environ.get("GROUPING_DECISIONS", "restaurant_grouping_review.json")
+
+# false = كل النتايج على التجميع القديم (لحد ما المدير يوافق)
+# true  = كل النتايج على التجميع المراجَع
+USE_REVIEWED_GROUPING = os.environ.get(
+    "USE_REVIEWED_GROUPING", "false"
+).strip().lower() in ("1", "true", "yes")
+
+# true = الـ F في مجموعة حالية (متجمعة بنفس الاسم) بتفصل الـ ids
+APPLY_SPLITS = True
+
+# أسباب بتدل إن المجموعة اقتراح جديد (مش تجميع حالي)
+PROPOSAL_RULES = ("prefix", "branchname", "noise", "separator", "same_text")
+
 # ---------------- output files ----------------
 SUMMARY_FILE = "market_insights.json"
 RESTAURANTS_FILE = "unique_restaurants.json"
@@ -26,11 +42,13 @@ CUISINE_FILE = "cuisine_distribution.json"
 CITY_FILE = "restaurants_by_city.json"
 AREA_BRANCHES_FILE = "branches_by_area.json"
 DENSITY_FILE = "restaurant_density_by_area.json"
+COMPARISON_FILE = "grouping_comparison.json"
 
 SAMPLES = 5                  # عدد الأمثلة اللي بتتطبع في اللوج
 CUISINE_SAMPLES = 10         # عدد الـ cuisines اللي بتتطبع في اللوج
 AREA_SAMPLES = 10            # عدد المدن/المناطق اللي بتتطبع في اللوج
 MULTI_LOCATION_PRINT = 20    # أقصى عدد فروع بتتطبع في الحالات الغريبة
+COMPARISON_PRINT = 10        # عدد حالات المقارنة اللي بتتطبع
 
 s3 = boto3.client(
     "s3",
@@ -164,6 +182,88 @@ def location_line(bid, info):
     )
 
 
+def load_decisions(path):
+    """
+    يقرا ملف المراجعة:
+      T = الـ ids دي تتدمج في مطعم واحد
+      F = ميتدمجش (ولو المجموعة حالية من غير اقتراح، الـ ids بتتفصل)
+      فاضي = من غير تغيير
+    بيرجع: (ids تتفصل، قايمة مجموعات ids تتدمج، الملف موجود؟)
+    """
+    if not os.path.exists(path):
+        print(f"No decisions file at {path}: reviewed grouping = old grouping")
+        return set(), [], False
+
+    with open(path, encoding="utf-8") as f:
+        rows = json.load(f)
+    if isinstance(rows, dict):
+        rows = rows.get("records", [])
+
+    labels = defaultdict(list)
+    for r in rows:
+        labels[r.get("Grouping label")].append(r)
+
+    merges, separate = [], set()
+    for _label, rs in labels.items():
+        has_proposal = any(
+            p in str(r.get("grouping_reason")) for r in rs for p in PROPOSAL_RULES
+        )
+        yes = [
+            str(r["id"]) for r in rs
+            if (r.get("validation") or "").strip().upper() == "T"
+        ]
+        no = [
+            str(r["id"]) for r in rs
+            if (r.get("validation") or "").strip().upper() == "F"
+        ]
+
+        if len(yes) > 1:
+            merges.append(yes)
+
+        # F في مجموعة حالية (من غير اقتراح): نفصل الـ ids
+        if APPLY_SPLITS and no and not has_proposal and len(rs) > 1:
+            separate.update(no)
+
+    return separate, merges, True
+
+
+def logo_link(logo_sets):
+    """هل المجموعات دي مربوطة ببعض بلوجو مشترك؟"""
+    if not any(logo_sets):
+        return "no_logo_data", None
+
+    n = len(logo_sets)
+    p = list(range(n))
+
+    def f(x):
+        while p[x] != x:
+            p[x] = p[p[x]]
+            x = p[x]
+        return x
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if logo_sets[i] & logo_sets[j]:
+                ri, rj = f(i), f(j)
+                if ri != rj:
+                    p[rj] = ri
+
+    comps = len({f(i) for i in range(n)})
+    return ("linked_by_logo" if comps == 1 else "not_linked_by_logo"), comps
+
+
+def logo_disjoint(logo_sets):
+    """هل الأجزاء اللي اتفصلت ليها لوجوهات مختلفة؟"""
+    if not all(logo_sets):
+        return "no_logo_data"
+
+    for i in range(len(logo_sets)):
+        for j in range(i + 1, len(logo_sets)):
+            if logo_sets[i] & logo_sets[j]:
+                return "share_a_logo"
+    return "different_logos"
+
+
 # ============================================================
 # MAIN
 # ============================================================
@@ -209,6 +309,9 @@ def main():
     # (branchId, area, city) اللي ظهروا مع بعض في نفس السجل
     branch_loc_triples = set()
 
+    # لوجو المطعم (دليل للمقارنة بين التجميعين)
+    id_to_logos = defaultdict(set)
+
     total_records = 0
 
     # ----------------------------------------------------
@@ -226,6 +329,7 @@ def main():
             cuisine_str = clean(r.get("cuisineString"))
             city = norm_code(r.get("shopCity"))
             area = norm_code(r.get("shopArea"))
+            logo = clean(r.get("logo"))
 
             # restaurants
             if _id:
@@ -236,6 +340,8 @@ def main():
             if _id and name:
                 id_to_names[_id][name] += 1
                 name_to_ids[name].add(_id)
+            if _id and logo:
+                id_to_logos[_id].add(logo)
 
             # branches
             if b_id:
@@ -318,49 +424,215 @@ def main():
     ]
 
     # ----------------------------------------------------
-    # group restaurants
+    # group restaurants: التجميع القديم + التجميع المراجَع
     #   القاعدة 1: الجزء الأول من الاسم (قبل أول فاصلة)
     #   القاعدة 2: أي أسماء ظهرت مع نفس الـ id تتدمج (id = المطعم)
+    #   المراجَع: + قرارات ملف المراجعة (T تتدمج، F بتتفصل)
     # ----------------------------------------------------
-    brand_to_names = defaultdict(set)
-    brand_to_ids = defaultdict(set)
-    brand_variants = defaultdict(Counter)
+    def build_components(separate, merges):
+        def key_for(name, rid):
+            k = brand_key(name)
+            if k and rid in separate:
+                return f"{k}#{rid}"       # الـ id دا مطعم لوحده
+            return k
 
-    for name in sorted(names):      # sorted عشان النتيجة تبقى ثابتة
-        k = brand_key(name)
-        if not k:
-            continue
-        brand_to_names[k].add(name)
-        brand_variants[k][first_segment(name)] += 1
-        brand_to_ids[k].update(name_to_ids[name])
+        b_names = defaultdict(set)
+        b_ids = defaultdict(set)
+        b_variants = defaultdict(Counter)
+        counted = set()
 
-    # union-find: ندمج المفاتيح اللي ظهرت تحت نفس الـ id
-    parent = {k: k for k in brand_to_names}
+        for name in sorted(names):        # sorted عشان النتيجة تبقى ثابتة
+            for rid in sorted(name_to_ids[name], key=sort_key):
+                k = key_for(name, rid)
+                if not k:
+                    continue
+                b_names[k].add(name)
+                b_ids[k].add(rid)
+                if (k, name) not in counted:
+                    counted.add((k, name))
+                    b_variants[k][first_segment(name)] += 1
 
-    def find(x):
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
+        parent = {k: k for k in b_names}
 
-    def union(a, b):
-        ra, rb = find(a), find(b)
-        if ra == rb:
-            return
-        if rb < ra:
-            ra, rb = rb, ra
-        parent[rb] = ra
+        def find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
 
-    for rid, counter in id_to_names.items():
-        keys = [brand_key(n) for n in counter]
-        keys = [k for k in keys if k]
-        for other in keys[1:]:
-            union(keys[0], other)
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra == rb:
+                return
+            if rb < ra:
+                ra, rb = rb, ra
+            parent[rb] = ra
 
-    components = defaultdict(list)
-    for k in brand_to_names:
-        components[find(k)].append(k)
+        # نفس الـ id بأسماء مختلفة يتدمج
+        for rid, counter in id_to_names.items():
+            ks = [key_for(n, rid) for n in counter]
+            ks = [k for k in ks if k]
+            for other in ks[1:]:
+                union(ks[0], other)
 
+        # قرارات المراجعة: الـ ids اللي T تتدمج
+        not_found = 0
+        for ids_list in merges:
+            anchor = None
+            for rid in ids_list:
+                ks = [key_for(n, rid) for n in id_to_names.get(rid, ())]
+                ks = [k for k in ks if k in parent]
+                if not ks:
+                    not_found += 1
+                    continue
+                if anchor is None:
+                    anchor = ks[0]
+                for k in ks:
+                    union(anchor, k)
+
+        comps = defaultdict(list)
+        for k in b_names:
+            comps[find(k)].append(k)
+
+        return {
+            "brand_to_names": b_names,
+            "brand_to_ids": b_ids,
+            "brand_variants": b_variants,
+            "components": comps,
+            "not_found": not_found,
+        }
+
+    separate_ids, manual_merges, decisions_found = load_decisions(DECISIONS_FILE)
+
+    old_g = build_components(set(), [])
+    new_g = build_components(separate_ids, manual_merges)
+
+    if USE_REVIEWED_GROUPING and not decisions_found:
+        print("WARNING: USE_REVIEWED_GROUPING is on but no decisions file was "
+              "found, so the old grouping is used.")
+
+    active = new_g if USE_REVIEWED_GROUPING else old_g
+    grouping_used = "reviewed" if USE_REVIEWED_GROUPING else "old"
+    print(f"Grouping used for all outputs: {grouping_used} "
+          f"(old = {len(old_g['components'])} restaurants, "
+          f"reviewed = {len(new_g['components'])} restaurants)")
+
+    brand_to_names = active["brand_to_names"]
+    brand_to_ids = active["brand_to_ids"]
+    brand_variants = active["brand_variants"]
+    components = active["components"]
+
+    # ----------------------------------------------------
+    # مقارنة التجميع القديم بالمراجَع (للمدير)
+    # ----------------------------------------------------
+    def comp_display(g, root):
+        variants = Counter()
+        for k in g["components"][root]:
+            variants.update(g["brand_variants"][k])
+        return sorted(
+            variants.items(), key=lambda x: (-x[1], len(x[0]), x[0])
+        )[0][0]
+
+    def id_root_map(g):
+        m = {}
+        for root, ks in g["components"].items():
+            for k in ks:
+                for rid in g["brand_to_ids"][k]:
+                    m[rid] = root
+        return m
+
+    def logos_of(rids):
+        s = set()
+        for rid in rids:
+            s |= id_to_logos.get(rid, set())
+        return s
+
+    old_root = id_root_map(old_g)
+    new_root = id_root_map(new_g)
+
+    new_members = defaultdict(set)
+    for rid, nr in new_root.items():
+        new_members[nr].add(rid)
+
+    old_members = defaultdict(set)
+    for rid, orr in old_root.items():
+        old_members[orr].add(rid)
+
+    merged_entries = []
+    for nr in sorted(new_members):
+        rids = new_members[nr]
+        olds = sorted({old_root[r] for r in rids if r in old_root})
+        if len(olds) > 1:
+            logo_sets = [logos_of(old_members[o]) for o in olds]
+            evidence, comps_n = logo_link(logo_sets)
+            merged_entries.append({
+                "restaurant": comp_display(new_g, nr),
+                "old_groups_merged": len(olds),
+                "ids": len(rids),
+                "old_groups": [
+                    {
+                        "restaurant": comp_display(old_g, o),
+                        "ids": sorted(old_members[o], key=sort_key),
+                    }
+                    for o in olds
+                ],
+                "logo_evidence": evidence,
+                "logo_components": comps_n,
+            })
+
+    merged_entries.sort(
+        key=lambda e: (-e["old_groups_merged"], e["restaurant"].lower())
+    )
+
+    separated_entries = []
+    for orr in sorted(old_members):
+        rids = old_members[orr]
+        news = sorted({new_root[r] for r in rids if r in new_root})
+        if len(news) > 1:
+            parts = [
+                sorted(
+                    (r for r in rids if new_root.get(r) == nr), key=sort_key
+                )
+                for nr in news
+            ]
+            separated_entries.append({
+                "restaurant": comp_display(old_g, orr),
+                "ids": sorted(rids, key=sort_key),
+                "split_into": [
+                    {"restaurant": comp_display(new_g, nr), "ids": part}
+                    for nr, part in zip(news, parts)
+                ],
+                "logo_evidence": logo_disjoint(
+                    [logos_of(part) for part in parts]
+                ),
+            })
+
+    separated_entries.sort(key=lambda e: e["restaurant"].lower())
+
+    merges_removed = sum(e["old_groups_merged"] - 1 for e in merged_entries)
+    splits_added = sum(len(e["split_into"]) - 1 for e in separated_entries)
+
+    logo_merge_counts = Counter(e["logo_evidence"] for e in merged_entries)
+    logo_split_counts = Counter(e["logo_evidence"] for e in separated_entries)
+
+    comparison_file = {
+        "note": (
+            "Differences between the old grouping and the reviewed grouping "
+            "(built from the manual review file). logo_evidence is an extra "
+            "hint only: linked_by_logo / different_logos support the "
+            "decision; not_linked_by_logo / share_a_logo contradict it; "
+            "different URLs of the same logo can look different."
+        ),
+        "grouping_used_for_all_outputs": grouping_used,
+        "restaurants_old_grouping": len(old_g["components"]),
+        "restaurants_reviewed_grouping": len(new_g["components"]),
+        "merged_by_review": merged_entries,
+        "separated_by_review": separated_entries,
+    }
+
+    # ----------------------------------------------------
+    # build restaurants (the active grouping)
+    # ----------------------------------------------------
     grouped = {}            # restaurants after grouping
     branches_grouped = {}   # branches per restaurant after grouping
     rep_ids = {}            # restaurant (display) -> representative id
@@ -386,14 +658,6 @@ def main():
             comp_ids |= brand_to_ids[k]
             variants.update(brand_variants[k])
 
-        # اسم العرض: الأكتر تكرارًا، ولو تعادل الأقصر
-        display = sorted(
-            variants.items(), key=lambda x: (-x[1], len(x[0]), x[0])
-        )[0][0]
-
-        if display in grouped:
-            display = f"{display} ({root})"
-
         # id تمثيلي للمطعم = أقل id من ids المطعم
         candidates = sorted(comp_ids, key=sort_key)
         rep_id = next(
@@ -402,9 +666,17 @@ def main():
         if rep_id is None:
             rep_id = candidates[0] if candidates else f"no_id:{root}"
         used_rep_ids.add(rep_id)
+
+        # اسم العرض: الأكتر تكرارًا، ولو تعادل الأقصر
+        display = sorted(
+            variants.items(), key=lambda x: (-x[1], len(x[0]), x[0])
+        )[0][0]
+
+        if display in grouped:
+            display = f"{display} (id {rep_id})"
         rep_ids[display] = rep_id
 
-        # فروع المطعم (بعد التجميع): branchId -> Counter(branchName)
+        # فروع المطعم: branchId -> Counter(branchName)
         brand_branches = {}
         cuisines = set()
         for rid in comp_ids:
@@ -464,7 +736,7 @@ def main():
     # المطاعم اللي اتجمع فيها أكتر من اسم
     merged = {b: g for b, g in grouped.items() if g["unique_names"] > 1}
 
-    # المطاعم اللي اتدمجت بسبب إن نفس الـ id ظهر بأسماء مختلفة
+    # المطاعم اللي اتدمجت لأن فيها أكتر من مفتاح (نفس الـ id أو قرار مراجعة)
     merged_by_id = {
         b: {
             "unique_ids": g["unique_ids"],
@@ -807,9 +1079,41 @@ def main():
             "unique_name_case_insensitive": len(names_lower),
         },
         "Number of restaurants after grouping": {
+            "grouping_used_for_all_outputs": grouping_used,
             "unique_restaurants_after_grouping": len(grouped),
             "restaurants_with_multiple_names": len(merged),
-            "restaurants_merged_by_shared_id": len(merged_by_id),
+            "restaurants_with_several_name_keys": len(merged_by_id),
+        },
+        "Grouping: old vs reviewed": {
+            "decisions_file_found": decisions_found,
+            "restaurants_old_grouping": len(old_g["components"]),
+            "restaurants_reviewed_grouping": len(new_g["components"]),
+            "difference_reviewed_minus_old": (
+                len(new_g["components"]) - len(old_g["components"])
+            ),
+            "old_groups_merged_by_review": merges_removed,
+            "extra_restaurants_from_splits": splits_added,
+            "review_merge_decisions": len(manual_merges),
+            "review_separated_ids": len(separate_ids),
+            "review_ids_not_found_in_data": new_g["not_found"],
+            "merges_linked_by_logo": logo_merge_counts.get(
+                "linked_by_logo", 0
+            ),
+            "merges_not_linked_by_logo": logo_merge_counts.get(
+                "not_linked_by_logo", 0
+            ),
+            "merges_without_logo_data": logo_merge_counts.get(
+                "no_logo_data", 0
+            ),
+            "splits_with_different_logos": logo_split_counts.get(
+                "different_logos", 0
+            ),
+            "splits_sharing_a_logo": logo_split_counts.get(
+                "share_a_logo", 0
+            ),
+            "splits_without_logo_data": logo_split_counts.get(
+                "no_logo_data", 0
+            ),
         },
         "Number of branches": {
             "unique_branch_id": len(branch_ids),
@@ -908,6 +1212,7 @@ def main():
     save_json(CITY_FILE, city_distribution)
     save_json(AREA_BRANCHES_FILE, area_branches_distribution)
     save_json(DENSITY_FILE, density_distribution)
+    save_json(COMPARISON_FILE, comparison_file)
 
     # ----------------------------------------------------
     # SAMPLES (التفاصيل الكاملة في الملفات)
@@ -915,6 +1220,28 @@ def main():
     print("=" * 70)
     print(f"SAMPLES (first {SAMPLES} only, full details are in the files)")
     print("=" * 70)
+
+    print_block(
+        "Grouping: merges the review would apply",
+        len(merged_entries),
+        [
+            f"{e['restaurant']}: merges {e['old_groups_merged']} old groups "
+            f"({e['ids']} ids) | logo: {e['logo_evidence']}"
+            for e in merged_entries[:COMPARISON_PRINT]
+        ],
+        COMPARISON_FILE,
+    )
+
+    print_block(
+        "Grouping: ids the review would separate",
+        len(separated_entries),
+        [
+            f"{e['restaurant']}: split into {len(e['split_into'])} "
+            f"({len(e['ids'])} ids) | logo: {e['logo_evidence']}"
+            for e in separated_entries[:COMPARISON_PRINT]
+        ],
+        COMPARISON_FILE,
+    )
 
     print_block(
         "Unique restaurants (id | name)",
@@ -1134,7 +1461,7 @@ def main():
         DUPLICATES_FILE,
     )
 
-    # restaurants merged because the same id has different names
+    # restaurants with several name keys (same id with different names)
     top_by_id = sorted(
         merged_by_id.items(),
         key=lambda x: -len(x[1]["name_variants"]),
@@ -1180,6 +1507,7 @@ def main():
     print("SAVED FILES")
     print("=" * 70)
     print(f"{SUMMARY_FILE:<32}: summary numbers")
+    print(f"{COMPARISON_FILE:<32}: old vs reviewed grouping (for validation)")
     print(f"{RESTAURANTS_FILE:<32}: {len(unique_restaurants)} {{id, name}}")
     print(f"{RESTAURANTS_GROUPED_FILE:<32}: {len(grouped)} restaurants after grouping")
     print(f"{BRANCHES_FILE:<32}: {len(unique_branches)} {{branchId, branchName}}")
@@ -1192,7 +1520,7 @@ def main():
     print(f"{DENSITY_FILE:<32}: restaurant density per area (top / bottom)")
     print(f"{DUPLICATES_FILE:<32}: multiple-mapping lists + odd locations")
     print(f"{MULTI_NAMES_FILE:<32}: {len(merged)} restaurants with multiple names")
-    print(f"{MERGED_BY_ID_FILE:<32}: {len(merged_by_id)} restaurants merged by shared id")
+    print(f"{MERGED_BY_ID_FILE:<32}: {len(merged_by_id)} restaurants with several name keys")
 
 
 if __name__ == "__main__":
