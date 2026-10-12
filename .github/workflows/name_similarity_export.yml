@@ -44,7 +44,7 @@ jobs:
         with:
           name: name-similarity-review
           path: |
-            name_similarity_review.csv
-            name_similarity_review.json
+            restaurant_grouping_review.csv
+            restaurant_grouping_review.json
           if-no-files-found: warn
           retention-days: 14
