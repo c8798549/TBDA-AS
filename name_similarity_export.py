@@ -5,11 +5,10 @@ import json
 import unicodedata
 from itertools import combinations
 from collections import defaultdict
-from difflib import SequenceMatcher
 
 import boto3
 import pandas as pd
-from rapidfuzz import fuzz, process
+from rapidfuzz import fuzz
 
 
 # ============================================================
@@ -24,165 +23,180 @@ R2_PREFIX = os.environ.get(
 CSV_FILE = "restaurant_grouping_review.csv"
 JSON_FILE = "restaurant_grouping_review.json"
 
+EXPECTED_RECORD_COUNT = 4391
+
 FUZZY_THRESHOLD = 70
 REORDERED_THRESHOLD = 75
 MIN_PREFIX_LENGTH = 4
 
-# Set to True only if you want to compare records sharing the same ID.
-# False skips those pairs because they may represent the same source entity.
+# True = compare records even if they have the same ID.
 COMPARE_SAME_ID = True
-
-OUTPUT_FIELDS = [
-    "id",
-    "name",
-    "restaurantSlug",
-    "branchId",
-    "branchName",
-    "branchSlug",
-    "branchUrl",
-    "cuisineString",
-    "shopCity",
-]
 
 
 # ============================================================
-# NORMALIZATION
+# TEXT NORMALIZATION
 # ============================================================
 
 def clean_text(value):
-    """Normalize Unicode, lowercase, and trim whitespace."""
     if value is None:
         return ""
+
     value = unicodedata.normalize("NFKC", str(value))
     return value.casefold().strip()
 
 
-def remove_separators(value):
-    """
-    Remove spaces and punctuation.
-    Yuzu House, Yuzu-House and YuzuHouse become yuzuhouse.
-    """
-    value = clean_text(value)
-    return "".join(ch for ch in value if ch.isalnum())
-
-
 def normalize_separators(value):
-    """
-    Treat punctuation and separators as spaces.
-    Pizza-House and Pizza House become pizza house.
-    """
+    """Replace punctuation and separators with spaces."""
     value = clean_text(value)
     value = re.sub(r"[^\w]+", " ", value, flags=re.UNICODE)
     return " ".join(value.split())
 
 
-def tokens(value):
-    value = normalize_separators(value)
-    return value.split() if value else []
+def remove_separators(value):
+    """Remove spaces and punctuation."""
+    return "".join(
+        ch for ch in clean_text(value)
+        if ch.isalnum()
+    )
 
 
-def get_reasons(name_a, name_b):
-    """Return every applicable name-based candidate reason."""
-    reasons = []
+def get_tokens(value):
+    normalized = normalize_separators(value)
+    return normalized.split() if normalized else []
+
+
+# ============================================================
+# NAME MATCHING RULES
+# ============================================================
+
+def get_name_reasons(name_a, name_b):
+    """
+    Return all applicable candidate reasons and their scores.
+
+    No grouping or merging happens here.
+    """
     raw_a = "" if name_a is None else str(name_a).strip()
     raw_b = "" if name_b is None else str(name_b).strip()
+
+    if not raw_a or not raw_b:
+        return [], {}
 
     a = clean_text(raw_a)
     b = clean_text(raw_b)
 
-    if not a or not b:
-        return reasons, {}
+    sep_a = normalize_separators(a)
+    sep_b = normalize_separators(b)
 
     compact_a = remove_separators(a)
     compact_b = remove_separators(b)
 
-    separated_a = normalize_separators(a)
-    separated_b = normalize_separators(b)
+    tokens_a = get_tokens(a)
+    tokens_b = get_tokens(b)
 
-    # Exact match after normalization:
-    # this is the only reason for identical names, including exact raw names.
-    if compact_a == compact_b:
-        if raw_a == raw_b:
-            reasons.append("same_text")
-        elif a == b:
-            reasons.append("case_insensitive")
-        else:
-            reasons.append("same_text")
+    reasons = []
+    scores = {
+        "name_similarity": None,
+        "reordered_similarity": None,
+    }
 
-    # Separator variation, e.g. Pizza-House vs Pizza House.
+    # 1. Exactly identical original names.
+    # This is the only reason for an exact raw-name match.
+    if raw_a == raw_b:
+        return ["same_text"], scores
+
+    # 2. Case-only difference.
+    if a == b:
+        reasons.append("case_insensitive")
+
+    # 3. Separator/punctuation/spacing difference.
+    # Examples: Pizza-House / Pizza House, Yuzu! / Yuzu
     if (
-        separated_a
-        and separated_a == separated_b
+        compact_a == compact_b
         and a != b
-        and "same_text" not in reasons
+    ):
+        reasons.append("separator")
+
+    # Also recognize separator normalization when the compact
+    # comparison is not sufficient for a particular Unicode case.
+    if (
+        sep_a
+        and sep_a == sep_b
+        and a != b
+        and "separator" not in reasons
         and "case_insensitive" not in reasons
     ):
         reasons.append("separator")
 
-    # Same words, different order.
-    token_a = tokens(a)
-    token_b = tokens(b)
-
+    # 4. Exact reordered words.
     if (
-        len(token_a) > 1
-        and len(token_b) > 1
-        and sorted(token_a) == sorted(token_b)
-        and token_a != token_b
+        len(tokens_a) > 1
+        and len(tokens_b) > 1
+        and sorted(tokens_a) == sorted(tokens_b)
+        and tokens_a != tokens_b
     ):
         reasons.append("reordered")
 
-    # Prefix candidate.
-    # This is a suggestion only, not a grouping decision.
-    if separated_a and separated_b and separated_a != separated_b:
-        shorter, longer = sorted(
-            [separated_a, separated_b],
-            key=len
-        )
+    # 5. Prefix candidates.
+    if sep_a and sep_b and sep_a != sep_b:
+        shorter, longer = sorted([sep_a, sep_b], key=len)
+
         if (
             len(shorter) >= MIN_PREFIX_LENGTH
             and longer.startswith(shorter)
         ):
             reasons.append("prefix")
 
-    # Fuzzy spelling similarity.
-    # Do not apply fuzzy matching to names already covered by exact rules.
-    score = fuzz.ratio(separated_a, separated_b) if separated_a and separated_b else 0
+    # 6. Fuzzy spelling similarity.
+    if sep_a and sep_b and sep_a != sep_b:
+        similarity = fuzz.ratio(sep_a, sep_b)
+        scores["name_similarity"] = round(similarity, 2)
 
+        if similarity >= FUZZY_THRESHOLD:
+            reasons.append("fuzzy")
+
+    # 7. Approximate reordered words.
     if (
-        score >= FUZZY_THRESHOLD
-        and separated_a != separated_b
-        and "reordered" not in reasons
+        len(tokens_a) > 1
+        and len(tokens_b) > 1
     ):
-        reasons.append("fuzzy")
+        sorted_a = " ".join(sorted(tokens_a))
+        sorted_b = " ".join(sorted(tokens_b))
 
-    # Similarity after sorting words, to find approximate reordered names.
-    reordered_score = 0
-    if token_a and token_b and sorted(token_a) != sorted(token_b):
-        sorted_a = " ".join(sorted(token_a))
-        sorted_b = " ".join(sorted(token_b))
-        reordered_score = fuzz.ratio(sorted_a, sorted_b)
+        reordered_similarity = fuzz.ratio(sorted_a, sorted_b)
+        scores["reordered_similarity"] = round(
+            reordered_similarity, 2
+        )
 
         if (
-            reordered_score >= REORDERED_THRESHOLD
-            and len(token_a) > 1
-            and len(token_b) > 1
+            reordered_similarity >= REORDERED_THRESHOLD
+            and tokens_a != tokens_b
             and "reordered" not in reasons
         ):
             reasons.append("reordered")
-
-    scores = {
-        "name_similarity": round(score, 2),
-        "reordered_similarity": round(reordered_score, 2),
-    }
 
     return reasons, scores
 
 
 # ============================================================
-# READ RECORDS FROM R2
+# READ ORIGINAL RECORDS FROM R2
 # ============================================================
 
 def get_r2_client():
+    required = [
+        "CF_R2_ENDPOINT_URL",
+        "CF_R2_ACCESS_KEY_ID",
+        "CF_R2_SECRET_ACCESS_KEY",
+        "CF_R2_BUCKET_NAME",
+    ]
+
+    missing = [key for key in required if not os.environ.get(key)]
+
+    if missing:
+        raise RuntimeError(
+            "Missing required environment variables: "
+            + ", ".join(missing)
+        )
+
     return boto3.client(
         "s3",
         endpoint_url=os.environ["CF_R2_ENDPOINT_URL"],
@@ -192,34 +206,56 @@ def get_r2_client():
     )
 
 
-def extract_records(obj, source_file):
+def extract_records(obj, source_file, path="$"):
     """
-    Extract restaurant records from a JSON document.
-    Once a restaurant-like record is found, do not recurse into its fields.
+    Extract restaurant-like records recursively.
+
+    Each extracted record retains all its original fields.
+    No records are deduplicated or grouped.
     """
-    found = []
+    records = []
 
     if isinstance(obj, dict):
         has_name = obj.get("name") is not None
+
         has_identifier = any(
-            obj.get(key) is not None
-            for key in ("id", "restaurantSlug", "branchId", "branchName")
+            obj.get(field) is not None
+            for field in (
+                "id",
+                "restaurantSlug",
+                "branchId",
+                "branchName",
+            )
         )
 
         if has_name and has_identifier:
-            record = dict(obj)
-            record["_source_file"] = source_file
-            found.append(record)
-            return found
+            records.append({
+                "data": dict(obj),
+                "source_file": source_file,
+                "source_path": path,
+            })
+            return records
 
-        for value in obj.values():
-            found.extend(extract_records(value, source_file))
+        for key, value in obj.items():
+            records.extend(
+                extract_records(
+                    value,
+                    source_file,
+                    f"{path}.{key}",
+                )
+            )
 
     elif isinstance(obj, list):
-        for item in obj:
-            found.extend(extract_records(item, source_file))
+        for index, item in enumerate(obj):
+            records.extend(
+                extract_records(
+                    item,
+                    source_file,
+                    f"{path}[{index}]",
+                )
+            )
 
-    return found
+    return records
 
 
 def load_records():
@@ -227,29 +263,63 @@ def load_records():
     bucket = os.environ["CF_R2_BUCKET_NAME"]
 
     records = []
+    json_files = 0
+    invalid_files = []
+
     paginator = client.get_paginator("list_objects_v2")
 
-    for page in paginator.paginate(Bucket=bucket, Prefix=R2_PREFIX):
+    for page in paginator.paginate(
+        Bucket=bucket,
+        Prefix=R2_PREFIX,
+    ):
         for item in page.get("Contents", []):
             key = item["Key"]
 
             if not key.lower().endswith(".json"):
                 continue
 
-            response = client.get_object(Bucket=bucket, Key=key)
-            content = response["Body"].read().decode("utf-8")
+            json_files += 1
+
+            response = client.get_object(
+                Bucket=bucket,
+                Key=key,
+            )
 
             try:
+                content = response["Body"].read().decode("utf-8-sig")
                 data = json.loads(content)
-            except json.JSONDecodeError as exc:
-                print(f"Skipping invalid JSON: {key} ({exc})")
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                invalid_files.append({
+                    "file": key,
+                    "error": str(exc),
+                })
                 continue
 
             records.extend(extract_records(data, key))
 
-    # Keep every extracted source record. Do not group by ID or name.
+    print(f"JSON files found: {json_files}")
+    print(f"Invalid JSON files: {len(invalid_files)}")
+    print(f"Extracted source records: {len(records)}")
+
+    if invalid_files:
+        for item in invalid_files:
+            print(f"Invalid file: {item['file']} - {item['error']}")
+
+        raise RuntimeError(
+            "Some JSON files could not be read. "
+            "Fix or inspect them before exporting."
+        )
+
+    if len(records) != EXPECTED_RECORD_COUNT:
+        raise RuntimeError(
+            f"Expected {EXPECTED_RECORD_COUNT} records, "
+            f"but extracted {len(records)}. "
+            "Export stopped to prevent using an incomplete or "
+            "unexpected record set. Verify the prefix and JSON schema."
+        )
+
     for index, record in enumerate(records):
-        record["_record_index"] = index
+        record["record_index"] = index
 
     return records
 
@@ -258,14 +328,10 @@ def load_records():
 # PAIRWISE CANDIDATE DISCOVERY
 # ============================================================
 
-def get_pair_key(i, j):
-    return (min(i, j), max(i, j))
-
-
 def discover_candidates(records):
     """
-    Find possible pairs without merging records, assigning groups,
-    or changing the original records.
+    Return possible record pairs with all applicable reasons.
+    Does not merge records or assign final groups.
     """
     candidates = {}
 
@@ -273,72 +339,70 @@ def discover_candidates(records):
         if i == j:
             return
 
-        a = records[i]
-        b = records[j]
+        record_a = records[i]["data"]
+        record_b = records[j]["data"]
 
         if not COMPARE_SAME_ID:
-            id_a = a.get("id")
-            id_b = b.get("id")
-            if id_a is not None and id_b is not None and str(id_a) == str(id_b):
+            id_a = record_a.get("id")
+            id_b = record_b.get("id")
+
+            if (
+                id_a is not None
+                and id_b is not None
+                and str(id_a) == str(id_b)
+            ):
                 return
 
-        key = get_pair_key(i, j)
+        pair_key = (min(i, j), max(i, j))
 
-        if key not in candidates:
-            candidates[key] = {
-                "record_a_index": key[0],
-                "record_b_index": key[1],
+        if pair_key not in candidates:
+            candidates[pair_key] = {
                 "reasons": set(),
                 "name_similarity": None,
                 "reordered_similarity": None,
-                "branchname_match": False,
             }
 
-        candidate = candidates[key]
+        candidate = candidates[pair_key]
         candidate["reasons"].add(reason)
 
         if score is not None:
-            if reason == "fuzzy":
-                old = candidate["name_similarity"]
-                candidate["name_similarity"] = (
-                    score if old is None else max(old, score)
-                )
-            elif reason == "reordered":
-                old = candidate["reordered_similarity"]
-                candidate["reordered_similarity"] = (
-                    score if old is None else max(old, score)
-                )
+            score_field = (
+                "reordered_similarity"
+                if reason == "reordered"
+                else "name_similarity"
+            )
+
+            previous = candidate[score_field]
+
+            if previous is None or score > previous:
+                candidate[score_field] = score
 
     # --------------------------------------------------------
-    # A. Compare unique names, then expand matching name pairs
+    # A. Compare distinct raw names.
+    # Identical-name records are handled separately below.
     # --------------------------------------------------------
 
     name_to_indices = defaultdict(list)
 
-    for i, record in enumerate(records):
-        name = str(record.get("name") or "").strip()
-        if name:
-            name_to_indices[name].append(i)
+    for index, record in enumerate(records):
+        name = record["data"].get("name")
 
-    unique_names = list(name_to_indices.keys())
+        if name is not None and str(name).strip():
+            name_to_indices[str(name).strip()].append(index)
 
-    print(f"Source records: {len(records)}")
+    unique_names = list(name_to_indices)
+
     print(f"Unique raw names: {len(unique_names)}")
-    print("Checking name pairs...")
+    print("Comparing unique name pairs...")
 
-    # Use RapidFuzz's fast C++ implementation for candidate discovery.
-    # Compare every unique-name pair so there is no first-letter blocking.
     for name_a, name_b in combinations(unique_names, 2):
-        reasons, scores = get_reasons(name_a, name_b)
+        reasons, scores = get_name_reasons(name_a, name_b)
 
         if not reasons:
             continue
 
-        indices_a = name_to_indices[name_a]
-        indices_b = name_to_indices[name_b]
-
-        for i in indices_a:
-            for j in indices_b:
+        for i in name_to_indices[name_a]:
+            for j in name_to_indices[name_b]:
                 for reason in reasons:
                     score = None
 
@@ -349,69 +413,73 @@ def discover_candidates(records):
 
                     add_candidate(i, j, reason, score)
 
-    # Identical raw names also need pairs between records with that name.
+    # --------------------------------------------------------
+    # B. Identical raw names.
+    # Each distinct pair of records is retained.
+    # --------------------------------------------------------
+
     for name, indices in name_to_indices.items():
         for i, j in combinations(indices, 2):
             add_candidate(i, j, "same_text")
 
     # --------------------------------------------------------
-    # B. Branch-name candidates
-    # A branchName matching another record's name is evidence
-    # for manual review, not proof that they should be merged.
+    # C. BranchName matches another record's name.
+    # Matching is case-insensitive and separator-normalized.
+    # Check both directions naturally by checking every record.
     # --------------------------------------------------------
 
     normalized_name_index = defaultdict(list)
 
-    for i, record in enumerate(records):
-        name_key = normalize_separators(record.get("name"))
+    for index, record in enumerate(records):
+        name_key = normalize_separators(
+            record["data"].get("name")
+        )
+
         if name_key:
-            normalized_name_index[name_key].append(i)
+            normalized_name_index[name_key].append(index)
 
     for i, record in enumerate(records):
-        branch_name = record.get("branchName")
+        branch_name = record["data"].get("branchName")
         branch_key = normalize_separators(branch_name)
 
         if not branch_key:
             continue
 
-        matching_indices = normalized_name_index.get(branch_key, [])
-
-        for j in matching_indices:
-            if i == j:
-                continue
-
-            add_candidate(i, j, "branchname")
+        for j in normalized_name_index.get(branch_key, []):
+            if i != j:
+                add_candidate(i, j, "branchname")
 
     # --------------------------------------------------------
-    # C. Convert candidates to output rows
+    # D. Build output.
+    # Keep every original field from both records.
     # --------------------------------------------------------
 
     rows = []
 
     for (i, j), candidate in candidates.items():
-        a = records[i]
-        b = records[j]
+        record_a = records[i]
+        record_b = records[j]
 
-        row = {
+        rows.append({
             "record_a_index": i,
             "record_b_index": j,
-            "match_reasons": " | ".join(sorted(candidate["reasons"])),
+            "match_reasons": " | ".join(
+                sorted(candidate["reasons"])
+            ),
             "name_similarity": candidate["name_similarity"],
             "reordered_similarity": candidate["reordered_similarity"],
-            "source_file_a": a.get("_source_file"),
-            "source_file_b": b.get("_source_file"),
-        }
-
-        for field in OUTPUT_FIELDS:
-            row[f"a_{field}"] = a.get(field)
-            row[f"b_{field}"] = b.get(field)
-
-        rows.append(row)
+            "source_file_a": record_a["source_file"],
+            "source_file_b": record_b["source_file"],
+            "source_path_a": record_a["source_path"],
+            "source_path_b": record_b["source_path"],
+            "record_a": record_a["data"],
+            "record_b": record_b["data"],
+        })
 
     rows.sort(
         key=lambda row: (
-            row["a_name"] or "",
-            row["b_name"] or "",
+            str(row["record_a"].get("name") or "").casefold(),
+            str(row["record_b"].get("name") or "").casefold(),
             row["record_a_index"],
             row["record_b_index"],
         )
@@ -425,35 +493,58 @@ def discover_candidates(records):
 # ============================================================
 
 def export_results(rows):
-    df = pd.DataFrame(rows)
-
-    if df.empty:
-        # Create empty files with a predictable schema.
-        columns = [
-            "record_a_index",
-            "record_b_index",
-            "match_reasons",
-            "name_similarity",
-            "reordered_similarity",
-            "source_file_a",
-            "source_file_b",
-        ]
-
-        for field in OUTPUT_FIELDS:
-            columns.extend([f"a_{field}", f"b_{field}"])
-
-        df = pd.DataFrame(columns=columns)
-
-    df.to_csv(CSV_FILE, index=False, encoding="utf-8-sig")
-
-    with open(JSON_FILE, "w", encoding="utf-8") as f:
+    # JSON keeps the original records nested and intact.
+    with open(JSON_FILE, "w", encoding="utf-8") as file:
         json.dump(
             rows,
-            f,
+            file,
             ensure_ascii=False,
             indent=2,
             default=str,
         )
+
+    # CSV has all original fields from both records.
+    # Dynamic columns prevent dropping unknown attributes.
+    all_fields = set()
+
+    for row in rows:
+        all_fields.update(row["record_a"].keys())
+        all_fields.update(row["record_b"].keys())
+
+    metadata_fields = [
+        "record_a_index",
+        "record_b_index",
+        "match_reasons",
+        "name_similarity",
+        "reordered_similarity",
+        "source_file_a",
+        "source_file_b",
+        "source_path_a",
+        "source_path_b",
+    ]
+
+    columns = list(metadata_fields)
+
+    for field in sorted(all_fields):
+        columns.append(f"a_{field}")
+        columns.append(f"b_{field}")
+
+    csv_rows = []
+
+    for row in rows:
+        flat_row = {
+            key: row.get(key)
+            for key in metadata_fields
+        }
+
+        for field in all_fields:
+            flat_row[f"a_{field}"] = row["record_a"].get(field)
+            flat_row[f"b_{field}"] = row["record_b"].get(field)
+
+        csv_rows.append(flat_row)
+
+    df = pd.DataFrame(csv_rows, columns=columns)
+    df.to_csv(CSV_FILE, index=False, encoding="utf-8-sig")
 
     print(f"Candidate pairs: {len(rows)}")
     print(f"CSV saved: {CSV_FILE}")
@@ -467,10 +558,11 @@ def export_results(rows):
 def main():
     records = load_records()
 
-    print(f"Loaded source records: {len(records)}")
+    print(f"Validated source record count: {len(records)}")
+    print("No grouping or merging will be performed.")
 
-    rows = discover_candidates(records)
-    export_results(rows)
+    candidates = discover_candidates(records)
+    export_results(candidates)
 
 
 if __name__ == "__main__":
