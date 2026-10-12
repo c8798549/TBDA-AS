@@ -133,6 +133,7 @@ def load_records(key: str) -> List[Dict[str, Any]]:
 
 
 def read_all_records() -> List[Dict[str, Any]]:
+    """Read all records from R2, then dedupe by `id` keeping the first."""
     paginator = s3.get_paginator("list_objects_v2")
     keys: List[str] = []
 
@@ -144,7 +145,7 @@ def read_all_records() -> List[Dict[str, Any]]:
     keys.sort()
     print(f"📁 JSON files found: {len(keys)}")
 
-    records: List[Dict[str, Any]] = []
+    raw_records: List[Dict[str, Any]] = []
 
     for n, key in enumerate(keys, 1):
         try:
@@ -156,15 +157,62 @@ def read_all_records() -> List[Dict[str, Any]]:
         print(f"[{n}/{len(keys)}] {key} -> {len(file_records)} records")
 
         for rec in file_records:
-            records.append({
-                "record_index": len(records),
+            raw_records.append({
+                "record_index": len(raw_records),
                 "source_file": key,
                 "data": rec,
             })
 
-    print(f"🧮 Total records loaded: {len(records)}")
-    return records
+    print(f"🧮 Total raw records: {len(raw_records)}")
 
+    # ============================================================
+    # DEDUP BY ID
+    # ============================================================
+    seen_ids: Set[str] = set()
+    deduped: List[Dict[str, Any]] = []
+    duplicate_count = 0
+    no_id_count = 0
+    duplicate_id_counts: Dict[str, int] = defaultdict(int)
+
+    for item in raw_records:
+        rid = item["data"].get("id")
+
+        # Records without an id can't be deduped — keep them
+        if rid in (None, ""):
+            no_id_count += 1
+            deduped.append(item)
+            continue
+
+        rid_str = str(rid)
+
+        if rid_str in seen_ids:
+            duplicate_count += 1
+            duplicate_id_counts[rid_str] += 1
+            continue
+
+        seen_ids.add(rid_str)
+        deduped.append(item)
+
+    print(f"\n🔁 Duplicates removed (by id): {duplicate_count}")
+    print(f"❓ Records without id          : {no_id_count}")
+    print(f"✅ Unique ids                  : {len(seen_ids)}")
+    print(f"✅ Records after dedup         : {len(deduped)}")
+
+    # Report the top duplicated ids
+    if duplicate_id_counts:
+        print("\n🔝 Top 10 most duplicated ids:")
+        for rid, cnt in sorted(
+            duplicate_id_counts.items(),
+            key=lambda x: x[1],
+            reverse=True,
+        )[:10]:
+            print(f"   id={rid} -> appeared {cnt + 1} times")
+
+    # Re-index after dedup
+    for new_idx, item in enumerate(deduped):
+        item["record_index"] = new_idx
+
+    return deduped
 
 # ============================================================
 # PAIR ACCUMULATOR
