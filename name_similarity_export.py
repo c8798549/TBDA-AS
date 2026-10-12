@@ -30,7 +30,7 @@ MIN_PREFIX_LENGTH = 4
 
 # Set to True only if you want to compare records sharing the same ID.
 # False skips those pairs because they may represent the same source entity.
-COMPARE_SAME_ID = False
+COMPARE_SAME_ID = True
 
 OUTPUT_FIELDS = [
     "id",
