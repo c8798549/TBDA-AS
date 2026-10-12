@@ -1,4 +1,3 @@
-```yaml
 name: Name Similarity Export
 
 on:
@@ -52,4 +51,3 @@ jobs:
             name_similarity_review.json
           if-no-files-found: warn
           retention-days: 14
-```
