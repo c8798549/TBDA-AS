@@ -55,4 +55,6 @@ jobs:
             restaurant_grouping_review.csv
             restaurant_grouping_review.json
             name_audit_log.txt
+            name_similarity_review.csv
+            name_similarity_review.json
           if-no-files-found: warn

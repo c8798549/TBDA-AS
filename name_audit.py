@@ -1030,126 +1030,198 @@ def main():
     # RESTAURANT GROUPING REVIEW EXPORT
     # ============================================================
 
-    GROUPING_CSV_FILE = "restaurant_grouping_review.csv"
-    GROUPING_JSON_FILE = "restaurant_grouping_review.json"
+    SIM_FUZZY_MIN = 0.75        # أقل تشابه إملائي للإدراج ( recall عالي للمراجعة )
+    SIM_REORDER_MIN = 0.75      # تشابه بعد ترتيب الكلمات أبجديًا
+    SIM_MAX_LEN_DIFF = 0.35     # أقصى فرق طول نسبي بين اسمين بنقارنهم
+    SIM_BLOCK_PREFIX = 3        # بنقارن جوه بلوكات أول 3 حروف
 
-    # Join current groups when any proposed rule suggests merging them.
-    review_parent = list(range(total_groups))
+    SIM_CSV_FILE = "name_similarity_review.csv"
+    SIM_JSON_FILE = "name_similarity_review.json"
 
-    def review_find(x):
-        while review_parent[x] != x:
-            review_parent[x] = review_parent[review_parent[x]]
-            x = review_parent[x]
+    # ---------- 1) بناء الـ edges من كل إشارات التشابه ----------
+    sim_edges = set()
+
+    def _add_edge(a, b, reason):
+        if a != b:
+            sim_edges.add((min(a, b), max(a, b), reason))
+
+    # (أ) نفس النص من غير مسافات/علامات
+    for s, gis in squash_map.items():
+        gis = sorted(gis)
+        for other in gis[1:]:
+            _add_edge(gis[0], other, "same_text")
+
+    # (ب) نفس الجزء الأول بعد معاملة " - " والأقواس زي الفاصلة
+    for k, gis in alt_map.items():
+        gis = sorted(gis)
+        for other in gis[1:]:
+            _add_edge(gis[0], other, "separator")
+
+    # (ج) تشابه إملائي + تشابه بعد إعادة ترتيب الكلمات
+    blocks3 = defaultdict(list)
+    for gi, g in enumerate(groups):
+        m = g["main_squash"]
+        if m:
+            blocks3[m[:SIM_BLOCK_PREFIX]].append(gi)
+
+    total_pairs_checked = 0
+    skipped_len = 0
+    for blk, members in blocks3.items():
+        for x in range(len(members)):
+            a = groups[members[x]]
+            for y in range(x + 1, len(members)):
+                b = groups[members[y]]
+                sa, sb = a["main_squash"], b["main_squash"]
+                if sa == sb:
+                    continue
+                if abs(len(sa) - len(sb)) > SIM_MAX_LEN_DIFF * max(len(sa), len(sb)):
+                    skipped_len += 1
+                    continue
+                total_pairs_checked += 1
+                sm = difflib.SequenceMatcher(None, sa, sb)
+                if sm.real_quick_ratio() >= SIM_FUZZY_MIN:
+                    r = sm.ratio()
+                    if r >= SIM_FUZZY_MIN:
+                        _add_edge(members[x], members[y], f"fuzzy:{r:.2f}")
+                        continue
+                # إعادة ترتيب الكلمات ("Wok N Go Sushi" ~ "Sushi Wok N Go")
+                ta = "".join(sorted(tokens(a["main_key"])))
+                tb = "".join(sorted(tokens(b["main_key"])))
+                if ta and tb and ta != tb:
+                    r2 = difflib.SequenceMatcher(None, ta, tb).ratio()
+                    if r2 >= SIM_REORDER_MIN:
+                        _add_edge(members[x], members[y], f"reordered:{r2:.2f}")
+
+    # (د) علاقات البادئة — كل الـ confidences (high/medium/low)
+    for e in prefix_entries:
+        _add_edge(e["_k"], e["_h"], f"prefix:{e['confidence']}")
+
+    # (هـ) دليل branchName — كل الـ confidences
+    for e in bn_entries:
+        _add_edge(e["_k"], e["_h"], f"branchname:{e['confidence']}")
+
+    # ---------- 2) connected components ----------
+    sim_parent = list(range(total_groups))
+
+    def sim_find(x):
+        while sim_parent[x] != x:
+            sim_parent[x] = sim_parent[sim_parent[x]]
+            x = sim_parent[x]
         return x
 
-    def review_union(a, b):
-        ra = review_find(a)
-        rb = review_find(b)
-
+    for a, b, _reason in sim_edges:
+        ra, rb = sim_find(a), sim_find(b)
         if ra != rb:
-            review_parent[rb] = ra
+            sim_parent[max(ra, rb)] = min(ra, rb)
 
-    # Keep track of which rules involve each current group.
-    group_rule_reasons = defaultdict(set)
+    # نجمع الأسباب بعد ما الـ unions تخلص (على الـ roots النهائية)
+    sim_reasons = defaultdict(set)
+    for a, b, reason in sim_edges:
+        sim_reasons[sim_find(a)].add(reason.split(":")[0])
+        sim_reasons[sim_find(b)].add(reason.split(":")[0])
 
-    for rule_name, pairs in rules.items():
-        for a, b in pairs:
-            review_union(a, b)
-            group_rule_reasons[a].add(rule_name)
-            group_rule_reasons[b].add(rule_name)
-
-    # Build connected components after applying all candidate rules
-    # together. These are proposed groups, not actual data merges.
-    review_components = defaultdict(list)
-
+    sim_components = defaultdict(list)
     for gi in range(total_groups):
-        review_components[review_find(gi)].append(gi)
+        sim_components[sim_find(gi)].append(gi)
 
-    review_labels = {}
-    review_reasons = {}
-    included_roots = set()
+    # ---------- 3) تصدير المكونات اللي فيها أكتر من مطعم ----------
+    sim_rows = []
+    n_flagged_groups = 0
 
-    def has_current_grouping(g):
-        # A current group is meaningful if it contains multiple IDs,
-        # multiple names, or multiple brand keys.
-        return (
-            len(g["ids"]) > 1
-            or len(g["names"]) > 1
-            or len(g["keys"]) > 1
-        )
+    for root, member_indices in sim_components.items():
+        if len(member_indices) < 2:
+            continue
+        n_flagged_groups += len(member_indices)
 
-    for root, member_indices in review_components.items():
-        members = [groups[gi] for gi in member_indices]
-
-        # Pick the largest current group as the proposed display label.
-        head = sorted(
-            members,
-            key=lambda g: (
-                -len(g["ids"]),
-                -len(g["names"]),
-                g["display"].lower(),
+        members = sorted(
+            member_indices,
+            key=lambda gi: (
+                -len(groups[gi]["ids"]), -len(groups[gi]["names"]),
+                groups[gi]["display"].lower(),
             ),
-        )[0]
-
-        reasons = set()
-
-        for gi in member_indices:
-            if has_current_grouping(groups[gi]):
-                reasons.add("current_group")
-
-            reasons.update(group_rule_reasons.get(gi, set()))
-
-        # Exclude singletons with no existing or proposed grouping.
-        is_proposed_group = len(member_indices) > 1
-        has_existing_group = any(
-            has_current_grouping(groups[gi])
-            for gi in member_indices
         )
+        head = groups[members[0]]
+        label = head["display"]
+        reasons = sorted(sim_reasons.get(root, set()))
+        other_displays = [groups[gi]["display"] for gi in members[1:]]
 
-        if not is_proposed_group and not has_existing_group:
+        # تصدير من restaurant_rows عشان نحافظ على id/name/slug/branchUrl الحقيقي
+        member_keys = set()
+        for gi in members:
+            for k in groups[gi]["keys"]:
+                member_keys.add(k)
+
+        for record in restaurant_rows:
+            name = record.get("name")
+            if not name:
+                continue
+            if brand_key(name) in member_keys:
+                sim_rows.append({
+                    "Grouping label": label,
+                    "id": record.get("id"),
+                    "name": name,
+                    "restaurantSlug": record.get("restaurantSlug"),
+                    "branchUrl": record.get("branchUrl"),
+                    "similarity_reason": "; ".join(reasons),
+                    "other_restaurants_in_group": " | ".join(other_displays),
+                })
+
+    # إزالة التكرار (نفس الـ id جوه نفس المجموعة)
+    _seen = set()
+    sim_rows_dedup = []
+    for row in sim_rows:
+        key = (row["Grouping label"], clean(row.get("id")) or "",
+            clean(row.get("name")) or "", clean(row.get("branchUrl")) or "")
+        if key in _seen:
             continue
+        _seen.add(key)
+        sim_rows_dedup.append(row)
 
-        included_roots.add(root)
-        review_labels[root] = head["display"]
-        review_reasons[root] = sorted(reasons)
-
-    # Map every original record back to its current group.
-    grouping_review_rows = []
-
-    for record in restaurant_rows:
-        name = record.get("name")
-
-        if not name:
-            continue
-
-        brand = brand_key(name)
-        gi = key_to_group.get(brand)
-
-        if gi is None:
-            continue
-
-        root = review_find(gi)
-
-        if root not in included_roots:
-            continue
-
-        grouping_review_rows.append({
-            "Grouping label": review_labels[root],
-            "id": record.get("id"),
-            "name": record.get("name"),
-            "restaurantSlug": record.get("restaurantSlug"),
-            "branchUrl": record.get("branchUrl"),
-            "grouping_reason": "; ".join(review_reasons[root]),
-        })
-
-    # Stable ordering for easier review in Excel.
-    grouping_review_rows.sort(
-        key=lambda row: (
-            str(row["Grouping label"] or "").lower(),
-            str(row["name"] or "").lower(),
-            str(row["id"] or ""),
+    sim_rows_dedup.sort(
+        key=lambda r: (
+            str(r["Grouping label"] or "").lower(),
+            str(r["name"] or "").lower(),
+            str(r["id"] or ""),
         )
     )
+
+    csv_columns = [
+        "Grouping label", "id", "name", "restaurantSlug", "branchUrl",
+        "similarity_reason", "other_restaurants_in_group",
+    ]
+    with open(SIM_CSV_FILE, "w", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=csv_columns)
+        writer.writeheader()
+        writer.writerows(sim_rows_dedup)
+
+    save_json(SIM_JSON_FILE, {
+        "note": (
+            "كل الأسماء اللي بينها أي إشارة تشابه (إملائي / ترتيب كلمات / "
+            "فواصل / بادئة / branchName). مُصدّرة للمراجعة اليدوية — "
+            "مش متطبقة على الداتا."
+        ),
+        "thresholds": {
+            "fuzzy_min": SIM_FUZZY_MIN,
+            "reorder_min": SIM_REORDER_MIN,
+            "max_len_diff": SIM_MAX_LEN_DIFF,
+            "block_prefix": SIM_BLOCK_PREFIX,
+        },
+        "pairs_checked": total_pairs_checked,
+        "pairs_skipped_length_diff": skipped_len,
+        "edges": len(sim_edges),
+        "groups_flagged": n_flagged_groups,
+        "groups_clean": total_groups - n_flagged_groups,
+        "records_exported": len(sim_rows_dedup),
+        "records": sim_rows_dedup,
+    })
+
+    # ---------- 4) تغطية كل الأسماء (مفيش اسم ماتشيكش) ----------
+    print(f"[similarity-graph] edges={len(sim_edges)} pairs_checked={total_pairs_checked}")
+    print(f"[similarity-graph] groups flagged={n_flagged_groups} / {total_groups} "
+        f"(clean={total_groups - n_flagged_groups})")
+    print(f"[similarity-graph] rows exported={len(sim_rows_dedup)}")
+    print(f"-> {SIM_CSV_FILE}")
+    print(f"-> {SIM_JSON_FILE}")
 
     # ============================================================
     # REMOVE DUPLICATES
