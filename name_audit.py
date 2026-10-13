@@ -1,11 +1,11 @@
 import os
 import re
+import csv
 import json
+import bisect
 import difflib
 import unicodedata
 from collections import defaultdict, Counter
-from itertools import combinations
-import csv
 
 import boto3
 
@@ -13,55 +13,60 @@ R2_PREFIX = os.environ.get(
     "R2_PREFIX",
     "merged-restaurant-info/year=2025/month=09/day=17/"
 )
-# بحث اختياري بالاسم (مفصول بفواصل). لو فاضي مفيش بحث.
-SEARCH_TERMS = os.environ.get("AUDIT_SEARCH", "")
 
 # ---------------- output files ----------------
-SUMMARY_FILE = "name_audit.json"
-PATTERNS_FILE = "name_audit_name_patterns.json"
-FIRST_TOKEN_FILE = "name_audit_first_token_clusters.json"
-PREFIX_FILE = "name_audit_prefix_candidates.json"
-BRANCHNAME_FILE = "name_audit_branchname_evidence.json"
-SIMILAR_FILE = "name_audit_similar_names.json"
-SUSPICIOUS_FILE = "name_audit_suspicious_merges.json"
-RULE_MERGES_FILE = "name_audit_rule_merges.json"
-SEARCH_FILE = "name_audit_search.json"
+OVERVIEW_FILE = "name_review_files_overview.json"
+UNIQUE_FILE = "name_review_unique_restaurants.json"
+CANDIDATES_JSON_FILE = "name_review_candidates.json"
+CANDIDATES_CSV_FILE = "name_review_candidates.csv"
+SUMMARY_FILE = "name_review_summary.json"
+
+# أعمدة ملف المراجعة (غيّريها من هنا لو عايزة)
+# candidate_id = رقم المجموعة (بيجمع الصفوف اللي ممكن تكون نفس المطعم)
+COLUMNS = [
+    "candidate_id",
+    "id",
+    "name",
+    "restaurantSlug",
+    "branchUrl",
+    "branchName",
+    "grouping_reason",
+    "shopCity",
+    "logo",
+    "strength",
+    "validation",
+]
 
 # ---------------- thresholds (عدّليهم من هنا) ----------------
-EST_MIN_NAMES = 2                # مطعم "مؤكد": اسمين على الأقل
-EST_MIN_BRANCHES = 3             # أو 3 فروع على الأقل
-MIN_HEAD_LEN = 4                 # أقل طول (حروف) لاسم الأصل في قاعدة البادئة
-HIGH_MIN_JACCARD = 0.5           # تشابه الأنواع لثقة high
-MED_MIN_JACCARD = 0.3            # تشابه الأنواع لثقة medium
-HIGH_MAX_TAIL_TOKENS = 6         # أقصى عدد كلمات بعد اسم الأصل لثقة high
-SQUASH_MIN_JACCARD = 0.3         # تشابه الأنواع لاعتبار "نفس النص" ثقة high
-FUZZY_MIN_RATIO = 0.88           # أقل تشابه إملائي
-MAX_BLOCK_SIZE = 600             # أكبر بلوك بنقارن جواه
-SUSPICIOUS_MAX_RATIO = 0.6       # دمج مشبوه لو التشابه أقل من كده
-MIXED_MIN_IDS = 5                # أقل ids لفحص الأنواع المختلطة
-MIXED_MAX_AVG_JACCARD = 0.3      # متوسط تشابه أقل من كده = أنواع مختلطة
-MIXED_MAX_IDS_COMPARED = 40      # أقصى ids بنقارنهم في المجموعة
+MIN_HEAD_CHARS = 3            # أقل عدد حروف لاسم بنقارن بيه البداية
+MIN_SUBSTRING_LEN = 5         # أقل عدد حروف لاسم نبحث عنه جوه اسم تاني
+CHAIN_MIN_NAMES = 5           # اسم ظاهر بـ 5 أسماء أو أكتر = سلسلة (مفيش حد لحجمها)
+CLUSTER_MAX_ENTRIES = 40      # أكبر حجم لمجموعة متوسطة/ضعيفة (الأكبر بيتسجل في الـ summary)
+FUZZY_MIN_RATIO = 0.85        # أقل تشابه إملائي
+FUZZY_MIN_LEN = 4             # أقل طول للاسم (من غير مسافات) في التشابه الإملائي
+TOKEN_JACCARD_MIN = 0.5       # أقل تشابه كلمات
+TOKEN_MAX_POSTINGS = 40       # كلمة موجودة في أكتر من كده اسم بنتجاهلها في تشابه الكلمات
+SLUG_PREFIX_MIN_LEN = 5       # أقل طول لـ slug بيبدأ بيه slug تاني
+ACRONYM_MIN_LEN = 2           # أقل وأكبر طول للاختصار (KFM)
+ACRONYM_MAX_LEN = 6
+IMAGE_MAX_IDS = 15            # صورة (لوجو/hero) مشتركة بين أكتر من كده ids...
+IMAGE_MAX_DISTINCT_NAMES = 12  # ... وبأسماء مختلفة أكتر من كده = غالبًا صورة افتراضية
+SAMPLE_BRANCH_NAMES = 3       # كام branchName بيتكتبوا جنب كل مطعم
 
-MIN_FIRST_TOKEN_LEN = 3          # أقل طول للكلمة الأولى في التجمعات
-GENERIC_MIN_GROUPS = 25          # كلمة أولى بتبدأ أكتر من كده = عامة
-NOISE_CHECK_MIN_GROUPS = 3       # أقل مطاعم لتسجيل كلمة آخر الاسم في التقرير
-NOISE_MIN_GROUPS = 8             # كلمة زوايد: في 8 مطاعم أو أكتر
-NOISE_MAX_TOP_CUISINE_SHARE = 0.5  # وأكتر نوع فيهم أقل من 50%
-BN_HIGH_MIN_BRANCHES = 2         # دليل branchName: ثقة high لو فرعين أو أكتر
-BN_HIGH_MIN_SHARE = 0.5          # أو نصف فروع المطعم
+# كلمات مش بنحسبها كاسم مميز (بداية/كلمة مشتركة)
+STOP_WORDS = {"al", "el", "the", "a", "an", "of", "and", "by", "at", "in"}
 
-SAMPLES = 5                      # عدد الأمثلة المطبوعة
+# كلمات بتتشال في طريقة "نفس الاسم من غير كلمات عامة" (غيّريها براحتك)
+GENERIC_WORDS = STOP_WORDS | {
+    "restaurant", "restaurants", "cafe", "coffee", "kitchen", "express",
+    "station", "co", "company", "store", "shop", "tgo", "tmp", "dh", "dhk",
+    "dt", "drive", "thru", "branch",
+}
+
+SAMPLES = 5
 TOP_N_PRINT = 10
-TOP_TOKENS = 25                  # عدد الكلمات الأكتر تكرارًا في الطباعة
-BIG_GROUPS = 20
-MAX_MEMBERS_SAVED = 25           # أقصى عدد مطاعم بتتحفظ جوه التجمع الواحد
-MAX_CLUSTERS_SAVED = 300         # أقصى عدد تجمعات بتتحفظ لكل قاعدة
-MAX_FIRST_TOKEN_SAVED = 500
-SEARCH_PRINT_MAX = 15
 
-CONF_RANK = {"high": 0, "medium": 1, "low": 2}
-
-SEP_RE = re.compile(r"\s*(?:,|\(|\s[-–—]\s)\s*")
+STRENGTH_RANK = {"strong": 0, "medium": 1, "weak": 2}
 
 s3 = boto3.client(
     "s3",
@@ -72,6 +77,15 @@ s3 = boto3.client(
 BUCKET = os.environ["CF_R2_BUCKET_NAME"]
 
 APOSTROPHES = re.compile(r"[\'`´‘’ʼ′ʻ]")
+ARABIC_MARKS = re.compile(r"[\u064B-\u065F\u0670\u0640]")
+ARABIC_MAP = str.maketrans({
+    "أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ى": "ي", "ة": "ه",
+    "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
+    "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9",
+})
+
+# الفاصل: فاصلة، أو " - " (بمسافات)، أو قوس، أو | ، أو " / "
+SEP_RE = re.compile(r"\s*(?:,|\(|\||\s/\s|\s[-–—]\s)\s*")
 
 
 # ============================================================
@@ -122,34 +136,17 @@ def sort_key(value):
 
 
 def normalize_text(text):
+    """unicode + حروف عربي موحدة + حذف الـ apostrophe + مسافات + lowercase."""
     text = unicodedata.normalize("NFKC", text)
+    text = ARABIC_MARKS.sub("", text)
+    text = text.translate(ARABIC_MAP)
     text = APOSTROPHES.sub("", text)
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
-def first_segment(name):
-    return name.split(",")[0].strip()
-
-
-def brand_key(name):
-    """نفس مفتاح التجميع بتاع market_insights (قبل أول فاصلة)."""
-    return normalize_text(first_segment(name))
-
-
-def alt_first_part(name):
-    """الجزء الأول قبل فاصلة أو ' - ' أو قوس."""
-    return SEP_RE.split(name, maxsplit=1)[0].strip()
-
-
-def alt_brand_key(name):
-    return normalize_text(alt_first_part(name))
-
-
 def tokens(text):
     """كلمات النص (حروف وأرقام بس) بحروف صغيرة."""
-    text = unicodedata.normalize("NFKC", text)
-    text = APOSTROPHES.sub("", text)
-    return re.findall(r"[^\W_]+", text.lower())
+    return re.findall(r"[^\W_]+", normalize_text(text))
 
 
 def squash(text):
@@ -157,10 +154,56 @@ def squash(text):
     return "".join(tokens(text))
 
 
-def jaccard(a, b):
-    if not a or not b:
-        return 0.0
-    return len(a & b) / len(a | b)
+def name_part(name):
+    """الجزء الأول من الاسم قبل , أو ' - ' أو قوس (دا اسم المطعم)."""
+    part = SEP_RE.split(name, maxsplit=1)[0].strip()
+    return part or name.strip()
+
+
+def phonetic_key(squashed):
+    """مفتاح "بيتنطق زي بعض": بيوحّد التهجئة (sh/kh/ph، حروف مكررة، حروف العلة)."""
+    s = re.sub(r"(.)\1+", r"\1", squashed)
+    for a, b in (
+        ("ph", "f"), ("kh", "k"), ("gh", "g"), ("th", "t"), ("sh", "s"),
+        ("ck", "k"), ("ou", "u"), ("oo", "u"), ("ee", "i"), ("ei", "i"),
+        ("ey", "i"), ("ai", "i"), ("aa", "a"), ("ae", "a"),
+    ):
+        s = s.replace(a, b)
+    s = s.translate(str.maketrans({
+        "q": "k", "c": "k", "z": "s", "y": "i", "e": "i", "o": "u", "x": "k",
+    }))
+    s = re.sub(r"(.)\1+", r"\1", s)
+    return s.rstrip("h")
+
+
+def normalize_url(url):
+    if not url:
+        return None
+    u = str(url).strip().lower()
+    u = re.sub(r"[?#].*$", "", u)
+    return u.rstrip("/") or None
+
+
+def top_of(counter):
+    if not counter:
+        return None
+    return counter.most_common(1)[0][0]
+
+
+def find_sub(seq, sub):
+    """أول مكان بتظهر فيه sub جوه seq (tuples)، أو -1."""
+    n, m = len(seq), len(sub)
+    if m == 0 or m > n:
+        return -1
+    for i in range(n - m + 1):
+        if seq[i:i + m] == sub:
+            return i
+    return -1
+
+
+def save_json(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 
 def short_list(values, n=5):
@@ -170,30 +213,13 @@ def short_list(values, n=5):
     return str(values[:n])[:-1] + f", ... +{len(values) - n} more]"
 
 
-def save_json(path, data):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-
-def strip_internal(entries):
-    """يشيل الحقول الداخلية (اللي بتبدأ بـ _) قبل الحفظ."""
-    return [
-        {k: v for k, v in e.items() if not k.startswith("_")}
-        for e in entries
-    ]
-
-
-def print_block(title, total, lines, filename=None):
+def print_block(title, total, lines, filename):
     print(f"\n{title} ({total})")
-
     for line in lines:
         print(f"  {line}")
-
     if total > len(lines):
         print(f"  ... and {total - len(lines)} more")
-
-    if filename:
-        print(f"  -> full details: {filename}")
+    print(f"  -> full details: {filename}")
 
 
 # ============================================================
@@ -201,1495 +227,801 @@ def print_block(title, total, lines, filename=None):
 # ============================================================
 
 def main():
-    # ----------------------------------------------------
-    # list files
-    # ----------------------------------------------------
-    files = []
+    # ====================================================
+    # الخطوة 1: اقرا كل الـ files وشوف كام record في كل واحد
+    # ====================================================
+    keys = []
     for page in s3.get_paginator("list_objects_v2").paginate(
         Bucket=BUCKET, Prefix=R2_PREFIX
     ):
         for obj in page.get("Contents", []):
             if obj["Key"].lower().endswith(".json"):
-                files.append(obj["Key"])
-    files.sort()
-    print(f"Files found: {len(files)}")
+                keys.append(obj["Key"])
+    keys.sort()
+    print(f"Files found: {len(keys)}")
 
-    # ----------------------------------------------------
-    # containers
-    # ----------------------------------------------------
-    names = set()
-    id_to_names = defaultdict(Counter)
-    name_to_ids = defaultdict(set)
-    id_to_branch_ids = defaultdict(set)
-    branch_city = defaultdict(set)
-    id_to_cuisines = defaultdict(set)
-    id_to_slug = defaultdict(dict)      
-    id_to_urls = defaultdict(set)      
+    # بيانات كل id (بعد ما نشيل التكرار)
+    all_ids = set()
+    id_names = defaultdict(Counter)
+    id_slugs = defaultdict(Counter)
+    id_logos = defaultdict(Counter)
+    id_heroes = defaultdict(Counter)
+    id_urls = {}
+    id_cities = defaultdict(set)
+    id_branch_names = defaultdict(Counter)
+    id_branch_ids = defaultdict(set)
+    branch_to_ids = defaultdict(set)
+    bname_to_ids = defaultdict(set)
+    id_branch_keys = defaultdict(lambda: defaultdict(set))
+    branch_key_example = {}
 
-    # id -> {brand key من branchName -> {branchIds}}
-    id_branch_brands = defaultdict(lambda: defaultdict(set))
-    bk_example = {}                      # مثال branchName لكل brand key
-
+    files_overview = []
     total_records = 0
-    restaurant_rows = []
+    records_with_id = 0
+    records_without_id = 0
+    records_without_name = 0
+    all_names = set()
 
-    # ----------------------------------------------------
-    # process files
-    # ----------------------------------------------------
-    for i, key in enumerate(files, start=1):
+    for i, key in enumerate(keys, start=1):
         records = load_records(key)
-        total_records += len(records)
+        n = len(records)
+        total_records += n
+
+        file_ids = set()
+        file_with_id = 0
 
         for r in records:
             _id = clean(r.get("id"))
+            if not _id:
+                records_without_id += 1
+                continue
+
             name = clean(r.get("name"))
-            b_id = clean(r.get("branchId"))
-            b_name = clean(r.get("branchName"))
-            cuisine_str = clean(r.get("cuisineString"))
-            city = norm_code(r.get("shopCity"))
+            records_with_id += 1
+            file_with_id += 1
+            file_ids.add(_id)
+            all_ids.add(_id)
 
             if name:
-                names.add(name)
-            if _id and name:
-                id_to_names[_id][name] += 1
-                name_to_ids[name].add(_id)
-            if _id and b_id:
-                id_to_branch_ids[_id].add(b_id)
-            if b_id and city:
-                branch_city[b_id].add(city)
-            if _id and cuisine_str:
-                for part in cuisine_str.split(","):
-                    p = re.sub(r"\s+", " ", part).strip().lower()
-                    if p:
-                        id_to_cuisines[_id].add(p)
-            if _id and b_id and b_name:
-                bk = brand_key(b_name)
+                id_names[_id][name] += 1
+                all_names.add(name)
+            else:
+                records_without_name += 1
+
+            slug = clean(r.get("restaurantSlug"))
+            if slug:
+                id_slugs[_id][slug] += 1
+            logo = clean(r.get("logo"))
+            if logo:
+                id_logos[_id][logo] += 1
+            hero = clean(r.get("heroImage"))
+            if hero:
+                id_heroes[_id][hero] += 1
+            url = clean(r.get("branchUrl"))
+            if url and _id not in id_urls:
+                id_urls[_id] = url
+            city = norm_code(r.get("shopCity"))
+            if city:
+                id_cities[_id].add(city)
+
+            b_id = clean(r.get("branchId"))
+            b_name = clean(r.get("branchName"))
+            if b_id:
+                branch_to_ids[b_id].add(_id)
+                id_branch_ids[_id].add(b_id)
+            if b_name:
+                id_branch_names[_id][b_name] += 1
+                nb = normalize_text(b_name)
+                if nb:
+                    bname_to_ids[nb].add(_id)
+                bk = normalize_text(name_part(b_name))
                 if bk:
-                    id_branch_brands[_id][bk].add(b_id)
-                    bk_example.setdefault(bk, b_name)
-            # if _id:
-            #         slug = clean(r.get("restaurantSlug"))
-            #         if slug and "slug" not in id_to_slug[_id]:
-            #             id_to_slug[_id]["slug"] = slug
-            #         url = clean(r.get("branchUrl"))
-            #         if url:
-            #             id_to_urls[_id].add(url)
+                    id_branch_keys[_id][bk].add(b_id or b_name)
+                    branch_key_example.setdefault(bk, b_name)
 
-            restaurant_rows.append({
-                    "id": clean(r.get("id")),
-                    "name": name,
-                    "restaurantSlug": clean(r.get("restaurantSlug")),
-                    "branchUrl": clean(r.get("branchUrl")),
-                })
+        files_overview.append({
+            "file": key,
+            "records": n,
+            "records_with_id": file_with_id,
+            "unique_ids_in_file": len(file_ids),
+        })
+        print(f"[{i}/{len(keys)}] {key} -> {n} records, "
+              f"{len(file_ids)} unique ids")
 
-        print(f"[{i}/{len(files)}] {key} -> {len(records)} records")
+    # ====================================================
+    # الخطوة 2 و 3: المجموع، وشيل التكرار (unique id)
+    # ====================================================
+    counts = [f["records"] for f in files_overview]
+    pairs_unique = sum(len(c) for c in id_names.values())
+    ids_with_names = sorted(id_names, key=sort_key)
 
-    
+    overview = {
+        "step_1_files_read": len(keys),
+        "records_per_file_min": min(counts) if counts else 0,
+        "records_per_file_max": max(counts) if counts else 0,
+        "records_per_file_avg": round(sum(counts) / len(counts), 1)
+        if counts else 0,
+        "step_2_total_records_all_files": total_records,
+        "records_with_id": records_with_id,
+        "records_without_id": records_without_id,
+        "records_without_name": records_without_name,
+        "step_3_unique_ids": len(all_ids),
+        "duplicate_records_removed": records_with_id - len(all_ids),
+        "unique_ids_with_a_name": len(id_names),
+        "unique_id_name_pairs": pairs_unique,
+        "unique_names": len(all_names),
+        "unique_names_case_insensitive": len({n.lower() for n in all_names}),
+        "ids_with_more_than_one_name": sum(
+            1 for c in id_names.values() if len(c) > 1
+        ),
+        "files": files_overview,
+    }
+    save_json(OVERVIEW_FILE, overview)
 
-    # ----------------------------------------------------
-    # التجميع الحالي (نفس قواعد market_insights)
-    #   1) الجزء الأول من الاسم قبل أول فاصلة
-    #   2) أي أسماء ظهرت مع نفس الـ id تتدمج
-    # ----------------------------------------------------
-    brand_to_names = defaultdict(set)
-    brand_to_ids = defaultdict(set)
-    brand_variants = defaultdict(Counter)
+    save_json(UNIQUE_FILE, [
+        {
+            "id": rid,
+            "name": top_of(id_names[rid]),
+            "names": sorted(id_names[rid]),
+            "restaurantSlug": top_of(id_slugs.get(rid)),
+            "branchUrl": id_urls.get(rid),
+            "shopCity": ",".join(sorted(id_cities.get(rid, ()), key=sort_key)),
+            "logo": top_of(id_logos.get(rid)),
+        }
+        for rid in sorted(all_ids, key=sort_key)
+    ])
 
-    for name in sorted(names):
-        k = brand_key(name)
-        if not k:
-            continue
-        brand_to_names[k].add(name)
-        brand_variants[k][first_segment(name)] += 1
-        brand_to_ids[k].update(name_to_ids[name])
+    print("\n" + "=" * 70)
+    print("STEPS 1-3: FILES, RECORDS, UNIQUE IDS")
+    print("=" * 70)
+    print(f"files read                         : {len(keys)}")
+    print(f"records per file (min / avg / max) : "
+          f"{overview['records_per_file_min']} / "
+          f"{overview['records_per_file_avg']} / "
+          f"{overview['records_per_file_max']}")
+    print(f"total records (all files together) : {total_records}")
+    print(f"records without id                 : {records_without_id}")
+    print(f"records without name               : {records_without_name}")
+    print(f"unique ids (after removing dups)   : {len(all_ids)}")
+    print(f"duplicate records removed          : "
+          f"{overview['duplicate_records_removed']}")
+    print(f"unique (id, name) pairs            : {pairs_unique}")
+    print(f"unique names                       : {len(all_names)}")
+    print(f"ids with more than one name        : "
+          f"{overview['ids_with_more_than_one_name']}")
 
-    parent = {k: k for k in brand_to_names}
+    # ====================================================
+    # الخطوة 4: كل الأسماء اللي ممكن تكون متشابهة (من غير grouping)
+    # ====================================================
+    entries = []
+    for rid in ids_with_names:
+        slug = top_of(id_slugs.get(rid))
+        logo = top_of(id_logos.get(rid))
+        branch_samples = " | ".join(
+            b for b, _c in id_branch_names.get(rid, Counter()).most_common(
+                SAMPLE_BRANCH_NAMES
+            )
+        )
+        cities = ",".join(sorted(id_cities.get(rid, ()), key=sort_key))
+        for name in sorted(id_names[rid]):
+            part = name_part(name)
+            toks = tuple(tokens(part)) or tuple(tokens(name))
+            entries.append({
+                "id": rid,
+                "name": name,
+                "part": part,
+                "npart": normalize_text(part),
+                "nfull": normalize_text(name),
+                "sq_part": squash(part) or squash(name),
+                "sq_full": squash(name),
+                "tokens": toks,
+                "ftokens": tuple(tokens(name)),
+                "slug": slug.lower() if slug else None,
+                "slug_raw": slug,
+                "url": id_urls.get(rid),
+                "logo": logo,
+                "branch_name": branch_samples,
+                "city": cities,
+            })
 
-    def find(x):
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
+    by_id = defaultdict(list)
+    by_name = defaultdict(list)
+    by_lower = defaultdict(list)
+    by_sq_full = defaultdict(list)
+    by_npart = defaultdict(list)
+    by_sq_part = defaultdict(list)
+    by_tokens = defaultdict(list)
 
-    def union(a, b):
-        ra, rb = find(a), find(b)
-        if ra == rb:
+    for i, e in enumerate(entries):
+        by_id[e["id"]].append(i)
+        by_name[e["name"]].append(i)
+        by_lower[e["name"].lower().strip()].append(i)
+        if e["sq_full"]:
+            by_sq_full[e["sq_full"]].append(i)
+        by_npart[e["npart"]].append(i)
+        if e["sq_part"]:
+            by_sq_part[e["sq_part"]].append(i)
+        by_tokens[e["tokens"]].append(i)
+
+    def distinct_ids(idxs):
+        return len({entries[i]["id"] for i in idxs})
+
+    def distinct_names(idxs):
+        return len({entries[i]["name"] for i in idxs})
+
+    def brand_names_count(tok_tuple):
+        """كام اسم مختلف اسمه بالظبط الكلمات دي (سلسلة؟)."""
+        return distinct_names(by_tokens.get(tok_tuple, ()))
+
+    clusters = {}
+    oversized = []
+    generic_skipped = []
+
+    def add(method, strength, idxs, label=None, note="",
+            need_two_ids=True, exempt=False):
+        idxs = frozenset(idxs)
+        if len(idxs) < 2:
             return
-        if rb < ra:
-            ra, rb = rb, ra
-        parent[rb] = ra
+        if need_two_ids and distinct_ids(idxs) < 2:
+            return
+        if (strength != "strong" and not exempt
+                and len(idxs) > CLUSTER_MAX_ENTRIES):
+            oversized.append({
+                "method": method, "label": label, "entries": len(idxs),
+                "ids": distinct_ids(idxs),
+            })
+            return
+        c = clusters.setdefault(idxs, {"methods": {}})
+        m = c["methods"].setdefault(
+            method, {"strength": strength, "notes": []}
+        )
+        if note and note not in m["notes"]:
+            m["notes"].append(note)
 
-    for rid, counter in id_to_names.items():
-        ks = [brand_key(n) for n in counter]
-        ks = [k for k in ks if k]
-        for other in ks[1:]:
-            union(ks[0], other)
+    # ---- 1) نفس الـ id بأسماء مختلفة ----
+    for rid, idxs in by_id.items():
+        if len(idxs) >= 2:
+            add("same id, different names", "strong", idxs,
+                need_two_ids=False)
 
-    components = defaultdict(list)
-    for k in brand_to_names:
-        components[find(k)].append(k)
+    # ---- 2) نفس الاسم بالظبط بـ ids مختلفة ----
+    for _name, idxs in by_name.items():
+        add("same name, different ids", "strong", idxs)
 
-    groups = []
-    key_to_group = {}
+    # ---- 3) نفس الاسم مع اختلاف lower / upper case ----
+    for _k, idxs in by_lower.items():
+        if distinct_names(idxs) >= 2:
+            add("lower/upper case difference", "strong", idxs,
+                need_two_ids=False)
 
-    for root in sorted(components):
-        keys = sorted(components[root])
+    # ---- 4) نفس الحروف لو شيلنا المسافات والعلامات ----
+    for _k, idxs in by_sq_full.items():
+        if len({entries[i]["nfull"] for i in idxs}) >= 2:
+            add("same letters without spaces/punctuation", "strong", idxs,
+                need_two_ids=False)
 
-        g_names, g_ids = set(), set()
-        variants = Counter()
-        key_ids = {}
-        for k in keys:
-            g_names |= brand_to_names[k]
-            g_ids |= brand_to_ids[k]
-            variants.update(brand_variants[k])
-            key_ids[k] = set(brand_to_ids[k])
+    # ---- 5) نفس اسم المطعم قبل , أو - أو القوس ----
+    for _k, idxs in by_npart.items():
+        add("same restaurant name before , / - / (", "strong", idxs)
 
-        top_variant = sorted(
-            variants.items(), key=lambda x: (-x[1], len(x[0]), x[0])
+    # ---- 6) نفس اسم المطعم من غير مسافات وعلامات ----
+    for _k, idxs in by_sq_part.items():
+        if len({entries[i]["npart"] for i in idxs}) >= 2:
+            add("same restaurant name without spaces/punctuation", "strong",
+                idxs, need_two_ids=False)
+
+    # ---- 7) اسم جوه اسم تاني / بيبدأ بيه ----
+    sq_items = sorted(by_sq_part.items(), key=lambda kv: (len(kv[0]), kv[0]))
+    sq_keys = [k for k, _ in sq_items]
+    sq_lens = [len(k) for k in sq_keys]
+
+    spec = {
+        "prefix_words": (
+            "name starts with another restaurant's name (whole words)",
+            "medium"),
+        "inside_words": (
+            "name is inside another name (whole words)", "medium"),
+        "prefix_letters": (
+            "name starts with another name's letters (inside a word)", "weak"),
+        "inside_letters": (
+            "name is inside another name (letters only)", "weak"),
+    }
+
+    for a_key, a_idxs in sq_items:
+        if len(a_key) < MIN_SUBSTRING_LEN:
+            continue
+
+        tok_a = entries[a_idxs[0]]["tokens"]
+        start = bisect.bisect_right(sq_lens, len(a_key))
+
+        if all(t in GENERIC_WORDS for t in tok_a):
+            hits_n = sum(
+                1 for b_pos in range(start, len(sq_keys))
+                if a_key in sq_keys[b_pos]
+            )
+            if hits_n:
+                generic_skipped.append({
+                    "word": " ".join(tok_a), "kind": "name inside names",
+                    "names_containing_it": hits_n,
+                })
+            continue
+
+        cats = {k: [] for k in spec}
+        for b_pos in range(start, len(sq_keys)):
+            b_key = sq_keys[b_pos]
+            if a_key not in b_key:
+                continue
+            tok_b = entries[sq_items[b_pos][1][0]]["tokens"]
+            pos = find_sub(tok_b, tok_a)
+            if pos == 0:
+                cats["prefix_words"].append(b_pos)
+            elif pos > 0:
+                cats["inside_words"].append(b_pos)
+            elif b_key.startswith(a_key):
+                cats["prefix_letters"].append(b_pos)
+            else:
+                cats["inside_letters"].append(b_pos)
+
+        is_chain = distinct_names(a_idxs) >= CHAIN_MIN_NAMES
+        label = entries[a_idxs[0]]["part"]
+
+        for cat, b_positions in cats.items():
+            if not b_positions:
+                continue
+            members = list(a_idxs)
+            for b_pos in b_positions:
+                members.extend(sq_items[b_pos][1])
+            method, strength = spec[cat]
+            add(method, strength, members, label=label,
+                note=f"name: {label}", exempt=is_chain)
+
+    # ---- 8) مطاعم بتبدأ بنفس الكلمات ----
+    for n_words, strength in ((1, "weak"), (2, "medium"), (3, "medium")):
+        groups = defaultdict(list)
+        for i, e in enumerate(entries):
+            if len(e["tokens"]) >= n_words:
+                groups[e["tokens"][:n_words]].append(i)
+
+        for head, idxs in groups.items():
+            if len(idxs) < 2:
+                continue
+            if (all(t in GENERIC_WORDS for t in head)
+                    or len("".join(head)) < MIN_HEAD_CHARS):
+                if n_words == 1:
+                    generic_skipped.append({
+                        "word": " ".join(head),
+                        "kind": "shared first word",
+                        "names_containing_it": len(idxs),
+                    })
+                continue
+            add(f"share the first {n_words} word(s)", strength, idxs,
+                label=" ".join(head),
+                exempt=brand_names_count(head) >= CHAIN_MIN_NAMES)
+
+    # ---- 9) نفس الكلمات بترتيب مختلف ----
+    groups = defaultdict(list)
+    for i, e in enumerate(entries):
+        if len(e["tokens"]) >= 2:
+            groups[tuple(sorted(e["tokens"]))].append(i)
+    for _k, idxs in groups.items():
+        if len({entries[i]["npart"] for i in idxs}) >= 2:
+            add("same words in a different order", "medium", idxs)
+
+    # ---- 10) نفس الاسم من غير الكلمات العامة (Al / TGO / Cafe / أرقام) ----
+    groups = defaultdict(list)
+    for i, e in enumerate(entries):
+        stripped = tuple(
+            t for t in e["tokens"] if t not in GENERIC_WORDS and not t.isdigit()
+        )
+        if stripped and len("".join(stripped)) >= MIN_HEAD_CHARS:
+            groups[stripped].append(i)
+    for stripped, idxs in groups.items():
+        if len({entries[i]["npart"] for i in idxs}) >= 2:
+            add("same name after removing generic words / numbers", "medium",
+                idxs, note="name: " + " ".join(stripped),
+                exempt=brand_names_count(stripped) >= CHAIN_MIN_NAMES)
+
+    # ---- 11) أسماء بتشترك في معظم الكلمات ----
+    token_sets = []
+    postings = defaultdict(set)
+    for i, e in enumerate(entries):
+        ts = {t for t in e["tokens"]
+              if t not in GENERIC_WORDS and len(t) >= 3 and not t.isdigit()}
+        token_sets.append(ts)
+        for t in ts:
+            postings[t].add(i)
+
+    seen_pairs = set()
+    for _t, idxs in postings.items():
+        if len(idxs) < 2 or len(idxs) > TOKEN_MAX_POSTINGS:
+            continue
+        idxs = sorted(idxs)
+        for x in range(len(idxs)):
+            for y in range(x + 1, len(idxs)):
+                a, b = idxs[x], idxs[y]
+                if (a, b) in seen_pairs:
+                    continue
+                seen_pairs.add((a, b))
+                if entries[a]["npart"] == entries[b]["npart"]:
+                    continue
+                inter = token_sets[a] & token_sets[b]
+                union = token_sets[a] | token_sets[b]
+                if union and len(inter) / len(union) >= TOKEN_JACCARD_MIN:
+                    add("share most of the words", "medium", (a, b),
+                        note="shared: " + " ".join(sorted(inter)))
+
+    # ---- 12) تشابه إملائي ----
+    sm = difflib.SequenceMatcher(None)
+    n_keys = len(sq_keys)
+    fuzzy_pairs = 0
+    for i, a_key in enumerate(sq_keys):
+        if len(a_key) < FUZZY_MIN_LEN:
+            continue
+        sm.set_seq2(a_key)
+        max_len = int(len(a_key) / FUZZY_MIN_RATIO) + 1
+        j = i + 1
+        while j < n_keys and sq_lens[j] <= max_len:
+            b_key = sq_keys[j]
+            sm.set_seq1(b_key)
+            if (sm.real_quick_ratio() >= FUZZY_MIN_RATIO
+                    and sm.quick_ratio() >= FUZZY_MIN_RATIO):
+                ratio = sm.ratio()
+                if ratio >= FUZZY_MIN_RATIO:
+                    fuzzy_pairs += 1
+                    add("similar spelling", "medium",
+                        sq_items[i][1] + sq_items[j][1],
+                        note=f"similarity {ratio:.2f}")
+            j += 1
+
+    # ---- 13) بيتنطقوا زي بعض (Shubak / Shubbak / Zwara / Zwarah) ----
+    groups = defaultdict(list)
+    for key_sq, idxs in sq_items:
+        pk = phonetic_key(key_sq)
+        if len(pk) >= FUZZY_MIN_LEN - 1:
+            groups[pk].extend(idxs)
+    for pk, idxs in groups.items():
+        if len({entries[i]["sq_part"] for i in idxs}) >= 2:
+            add("sounds similar (spelling variants)", "medium", idxs,
+                note="key: " + pk)
+
+    # ---- 14) اختصار (KFM = Kuwait Flour Mills) ----
+    acronyms = defaultdict(set)
+    for i, e in enumerate(entries):
+        toks = [t for t in e["ftokens"] if t not in STOP_WORDS]
+        for ln in range(ACRONYM_MIN_LEN, min(ACRONYM_MAX_LEN, len(toks)) + 1):
+            acronyms["".join(t[0] for t in toks[:ln])].add(i)
+    for sq_key, idxs in by_sq_part.items():
+        if ACRONYM_MIN_LEN <= len(sq_key) <= ACRONYM_MAX_LEN \
+                and sq_key in acronyms:
+            if len(entries[idxs[0]]["tokens"]) != 1:
+                continue
+            others = [i for i in acronyms[sq_key] if i not in idxs]
+            add("abbreviation of another name", "medium",
+                list(idxs) + others, note=f"abbreviation: {sq_key}")
+
+    # ---- 15) نفس الـ restaurantSlug ----
+    slug_groups = defaultdict(list)
+    for i, e in enumerate(entries):
+        if e["slug"]:
+            slug_groups[e["slug"]].append(i)
+
+    for slug, idxs in slug_groups.items():
+        add("same restaurantSlug", "strong", idxs, note="slug: " + slug)
+
+    root_groups = defaultdict(list)
+    for slug, idxs in slug_groups.items():
+        root = re.sub(r"[-_\d]+$", "", slug)
+        if root:
+            root_groups[root].extend(idxs)
+    for root, idxs in root_groups.items():
+        if len({entries[i]["slug"] for i in idxs}) >= 2:
+            add("same restaurantSlug after removing trailing numbers",
+                "medium", idxs, note="slug: " + root)
+
+    slug_sorted = sorted(slug_groups)
+    for pos, a in enumerate(slug_sorted):
+        if len(a) < SLUG_PREFIX_MIN_LEN:
+            continue
+        members = list(slug_groups[a])
+        found = False
+        j = pos + 1
+        while j < len(slug_sorted) and slug_sorted[j].startswith(a):
+            members.extend(slug_groups[slug_sorted[j]])
+            found = True
+            j += 1
+        if found:
+            add("restaurantSlug starts with another slug", "weak", members,
+                note="slug: " + a)
+
+    # ---- 16 و 17) نفس اللوجو / نفس صورة الـ hero ----
+    placeholder_images = []
+
+    def image_method(per_id, method):
+        groups_img = defaultdict(set)
+        for rid in ids_with_names:
+            for img in per_id.get(rid, ()):
+                u = normalize_url(img)
+                if u:
+                    groups_img[u].add(rid)
+        for u, rids in groups_img.items():
+            if len(rids) < 2:
+                continue
+            idxs = [i for rid in rids for i in by_id[rid]]
+            names_n = len({entries[i]["npart"] for i in idxs})
+            if len(rids) > IMAGE_MAX_IDS and names_n > IMAGE_MAX_DISTINCT_NAMES:
+                placeholder_images.append({
+                    "kind": method, "image": u, "ids": len(rids),
+                    "distinct_names": names_n,
+                })
+                continue
+            add(method, "strong", idxs, note=u)
+
+    image_method(id_logos, "same logo")
+    image_method(id_heroes, "same hero image")
+
+    # ---- 18) نفس الـ branchId ظهر تحت أكتر من id ----
+    for bid, rids in branch_to_ids.items():
+        rids = {r for r in rids if r in by_id}
+        if len(rids) >= 2:
+            idxs = [i for rid in rids for i in by_id[rid]]
+            add("share the same branchId", "strong", idxs,
+                note=f"branchId: {bid}")
+
+    # ---- 19) نفس الـ branchName عند أكتر من id ----
+    for nb, rids in bname_to_ids.items():
+        rids = {r for r in rids if r in by_id}
+        if len(rids) >= 2:
+            idxs = [i for rid in rids for i in by_id[rid]]
+            add("same branchName", "medium", idxs, note=f"branchName: {nb}")
+
+    # ---- 20) branchName بتاع فروعه هو اسم مطعم تاني ----
+    for rid, keys_map in id_branch_keys.items():
+        if rid not in by_id:
+            continue
+        own = {entries[i]["npart"] for i in by_id[rid]}
+        own_sq = {entries[i]["sq_part"] for i in by_id[rid]}
+        for bk, bids in keys_map.items():
+            if bk in own or squash(bk) in own_sq:
+                continue
+            others = list(by_npart.get(bk, ()))
+            if not others:
+                others = list(by_sq_part.get(squash(bk), ()))
+            others = [i for i in others if entries[i]["id"] != rid]
+            if others:
+                add("branchName of its branches is another restaurant's name",
+                    "medium", list(by_id[rid]) + others,
+                    note=f"branchName e.g. '{branch_key_example.get(bk)}' "
+                         f"({len(bids)} branches)",
+                    exempt=True)
+
+    # ====================================================
+    # ترتيب المجموعات وكتابة الملف
+    # ====================================================
+    final = []
+    for idxs, c in clusters.items():
+        strength = min(
+            (m["strength"] for m in c["methods"].values()),
+            key=lambda s: STRENGTH_RANK[s],
+        )
+        parts = Counter(entries[i]["part"] for i in idxs)
+        label = sorted(
+            parts.items(), key=lambda x: (-x[1], len(x[0]), x[0])
         )[0][0]
 
-        bids, cuisines, cities = set(), set(), set()
-        branch_brands = defaultdict(set)
-        for rid in g_ids:
-            bids.update(id_to_branch_ids.get(rid, ()))
-            cuisines.update(id_to_cuisines.get(rid, ()))
-            for bk, bset in id_branch_brands.get(rid, {}).items():
-                branch_brands[bk] |= bset
-        for bid in bids:
-            cities.update(branch_city.get(bid, ()))
-
-        key_cuisines = {}
-        for k, kids in key_ids.items():
-            cs = set()
-            for rid in kids:
-                cs.update(id_to_cuisines.get(rid, ()))
-            key_cuisines[k] = cs
-
-        gi = len(groups)
-        for k in keys:
-            key_to_group[k] = gi
-
-        groups.append({
-            "root": root,
-            "display": top_variant,
-            "main_key": brand_key(top_variant),
-            "main_squash": squash(top_variant),
-            "keys": keys,
-            "names": g_names,
-            "ids": g_ids,
-            "branches": bids,
-            "cuisines": cuisines,
-            "cities": cities,
-            "variants": variants,
-            "key_ids": key_ids,
-            "key_cuisines": key_cuisines,
-            "branch_brands": branch_brands,
-        })
-
-    total_groups = len(groups)
-
-    def established(g):
-        return (
-            len(g["names"]) >= EST_MIN_NAMES
-            or len(g["branches"]) >= EST_MIN_BRANCHES
+        method_items = sorted(
+            c["methods"].items(),
+            key=lambda kv: (STRENGTH_RANK[kv[1]["strength"]], kv[0]),
+        )
+        reason = "; ".join(
+            m + (f" [{' | '.join(v['notes'][:2])}]" if v["notes"] else "")
+            for m, v in method_items
         )
 
-    def no_comma(g):
-        return all("," not in n for n in g["names"])
-
-    def brief(g):
-        return {
-            "restaurant": g["display"],
-            "names": len(g["names"]),
-            "ids": len(g["ids"]),
-            "branches": len(g["branches"]),
-            "sample_names": sorted(g["names"])[:3],
-        }
-
-    # ====================================================
-    # أدوات التجميع والمحاكاة
-    # ====================================================
-    def clusters_from_pairs(pairs):
-        p = list(range(total_groups))
-
-        def f(x):
-            while p[x] != x:
-                p[x] = p[p[x]]
-                x = p[x]
-            return x
-
-        touched = set()
-        for a, b in pairs:
-            ra, rb = f(a), f(b)
-            touched.add(a)
-            touched.add(b)
-            if ra != rb:
-                p[rb] = ra
-
-        comp = defaultdict(list)
-        for i in touched:
-            comp[f(i)].append(i)
-        return [sorted(v) for v in comp.values() if len(v) > 1]
-
-    def count_after(pairs):
-        removed = sum(len(c) - 1 for c in clusters_from_pairs(pairs))
-        return total_groups - removed
-
-    def pairs_from_map(mapping):
-        pairs = []
-        for _k, gis in mapping.items():
-            gis = sorted(gis)
-            for other in gis[1:]:
-                pairs.append((gis[0], other))
-        return pairs
-
-    def cluster_entry(members):
-        ms = sorted(
-            members,
-            key=lambda gi: (
-                -len(groups[gi]["names"]), -len(groups[gi]["ids"]),
-                groups[gi]["display"].lower(),
+        final.append({
+            "idxs": sorted(
+                idxs, key=lambda i: (entries[i]["name"].lower(),
+                                     sort_key(entries[i]["id"]))
             ),
-        )
-        head = groups[ms[0]]
-        sims = [
-            jaccard(head["cuisines"], groups[gi]["cuisines"])
-            for gi in ms[1:]
-        ]
-        all_branches = set()
-        for gi in ms:
-            all_branches |= groups[gi]["branches"]
-        return {
-            "restaurants_merged": len(ms),
-            "result_name": head["display"],
-            "total_names": sum(len(groups[gi]["names"]) for gi in ms),
-            "total_ids": sum(len(groups[gi]["ids"]) for gi in ms),
-            "total_branches": len(all_branches),
-            "min_cuisine_similarity_to_largest": (
-                round(min(sims), 2) if sims else None
-            ),
-            "members": [brief(groups[gi]) for gi in ms[:MAX_MEMBERS_SAVED]],
-        }
-
-    def rule_report(pairs):
-        clusters = clusters_from_pairs(pairs)
-        entries = [cluster_entry(c) for c in clusters]
-        entries.sort(
-            key=lambda e: (-e["restaurants_merged"], e["result_name"].lower())
-        )
-        removed = sum(len(c) - 1 for c in clusters)
-        return {
-            "clusters_count": len(entries),
-            "restaurants_removed": removed,
-            "restaurants_after_rule": total_groups - removed,
-            "clusters": entries[:MAX_CLUSTERS_SAVED],
-        }
-
-    # ====================================================
-    # 1) تحليل شكل الأسماء
-    # ====================================================
-    all_names = sorted(names)
-    names_with_comma = sum(1 for n in all_names if "," in n)
-    names_without_comma = len(all_names) - names_with_comma
-    names_with_dash = sum(1 for n in all_names if " - " in n)
-    names_with_paren = sum(1 for n in all_names if "(" in n or ")" in n)
-    names_with_digits = sum(
-        1 for n in all_names if any(ch.isdigit() for ch in n)
-    )
-    names_non_ascii = sum(
-        1 for n in all_names if re.search(r"[^\x00-\x7F]", n)
-    )
-    names_all_caps = sum(1 for n in all_names if n.isupper())
-    names_double_space = sum(1 for n in all_names if "  " in n)
-    names_end_punct = sum(1 for n in all_names if n[-1] in "!.,-:;")
-    names_very_short = sum(1 for n in all_names if len(squash(n)) <= 2)
-
-    lower_map = defaultdict(set)
-    for n in all_names:
-        lower_map[n.lower()].add(n)
-    names_case_variants = sum(1 for v in lower_map.values() if len(v) > 1)
-
-    segments_dist = Counter(min(len(n.split(",")), 5) for n in all_names)
-
-    groups_merged_by_id = sum(1 for g in groups if len(g["keys"]) > 1)
-    groups_single_name = sum(1 for g in groups if len(g["names"]) == 1)
-    groups_no_comma = sum(1 for g in groups if no_comma(g))
-    groups_established = sum(1 for g in groups if established(g))
-
-    big_groups = [
-        {
-            **brief(g),
-            "keys": len(g["keys"]),
-            "name_variants": sorted(g["variants"].keys())[:10],
-        }
-        for g in sorted(
-            groups, key=lambda g: (-len(g["ids"]), g["display"].lower())
-        )[:BIG_GROUPS]
-    ]
-
-    # ====================================================
-    # 2) كلمات الزوايد (من الداتا)
-    # ====================================================
-    tail_groups = defaultdict(set)
-    for gi, g in enumerate(groups):
-        for n in g["names"]:
-            t = tokens(alt_first_part(n))
-            if len(t) >= 2:
-                tail_groups[t[-1]].add(gi)
-
-    noise_info = []
-    noise_set = set()
-    for tok, gis in tail_groups.items():
-        if len(gis) < NOISE_CHECK_MIN_GROUPS:
-            continue
-        cuisine_counter = Counter()
-        for gi in gis:
-            cuisine_counter.update(groups[gi]["cuisines"])
-        top_c, top_n = (
-            cuisine_counter.most_common(1)[0]
-            if cuisine_counter else (None, 0)
-        )
-        share = top_n / len(gis)
-        is_noise = (
-            len(gis) >= NOISE_MIN_GROUPS
-            and share < NOISE_MAX_TOP_CUISINE_SHARE
-        )
-        if is_noise:
-            noise_set.add(tok)
-        noise_info.append({
-            "word": tok,
-            "restaurants_ending_with_it": len(gis),
-            "top_cuisine": top_c,
-            "top_cuisine_share": round(share, 2),
-            "treated_as_noise": is_noise,
+            "label": label,
+            "strength": strength,
+            "methods": [m for m, _ in method_items],
+            "method_strengths": {m: v["strength"] for m, v in method_items},
+            "reason": reason,
+            "ids": distinct_ids(idxs),
         })
 
-    noise_info.sort(
-        key=lambda x: (-x["restaurants_ending_with_it"], x["word"])
-    )
-    noise_words_found = sum(1 for x in noise_info if x["treated_as_noise"])
+    final.sort(key=lambda f: (
+        STRENGTH_RANK[f["strength"]], -len(f["methods"]),
+        f["label"].lower(), f["idxs"][0],
+    ))
 
-    patterns_file = {
-        "unique_names": len(all_names),
-        "names_with_comma": names_with_comma,
-        "names_without_comma": names_without_comma,
-        "names_with_dash_separator": names_with_dash,
-        "names_with_parentheses": names_with_paren,
-        "names_with_digits": names_with_digits,
-        "names_with_non_ascii_characters": names_non_ascii,
-        "names_all_caps": names_all_caps,
-        "names_with_double_spaces": names_double_space,
-        "names_ending_with_punctuation": names_end_punct,
-        "names_very_short": names_very_short,
-        "names_differing_only_by_letter_case": names_case_variants,
-        "comma_segments_distribution": {
-            (f"{k}+" if k == 5 else str(k)): v
-            for k, v in sorted(segments_dist.items())
-        },
-        "last_words_of_restaurant_part": noise_info[:300],
-        "largest_groups_by_ids": big_groups,
-    }
-
-    # ====================================================
-    # 3) تجمعات الكلمة الأولى
-    # ====================================================
-    first_tok_groups = defaultdict(set)
-    for gi, g in enumerate(groups):
-        for k in g["keys"]:
-            t = tokens(k)
-            if t and len(t[0]) >= MIN_FIRST_TOKEN_LEN:
-                first_tok_groups[t[0]].add(gi)
-
-    first_token_entries = []
-    for tok, gis in first_tok_groups.items():
-        if len(gis) < 2:
-            continue
-        ms = sorted(
-            gis,
-            key=lambda gi: (
-                -len(groups[gi]["names"]), -len(groups[gi]["ids"]), gi
-            ),
-        )
-        head = groups[ms[0]]
-        sims = [
-            jaccard(head["cuisines"], groups[gi]["cuisines"])
-            for gi in ms[1:]
-        ]
-        first_token_entries.append({
-            "first_word": tok,
-            "restaurants_starting_with_it": len(ms),
-            "generic_word": len(ms) > GENERIC_MIN_GROUPS,
-            "largest": head["display"],
-            "total_ids": sum(len(groups[gi]["ids"]) for gi in ms),
-            "avg_cuisine_similarity_to_largest": round(
-                sum(sims) / len(sims), 2
-            ),
-            "members": [brief(groups[gi]) for gi in ms[:MAX_MEMBERS_SAVED]],
-            "_groups": ms,
-        })
-
-    first_token_entries.sort(
-        key=lambda e: (
-            e["generic_word"], -e["restaurants_starting_with_it"],
-            e["first_word"],
-        )
-    )
-
-    ft_generic = sum(1 for e in first_token_entries if e["generic_word"])
-    ft_non_generic = [e for e in first_token_entries if not e["generic_word"]]
-    ft_groups_involved = len(
-        {gi for e in ft_non_generic for gi in e["_groups"]}
-    )
-
-    first_token_file = {
-        "note": (
-            "Every first word that starts more than one restaurant. "
-            "generic_word = starts more than "
-            f"{GENERIC_MIN_GROUPS} restaurants (probably not a brand)."
-        ),
-        "first_words_total": len(first_token_entries),
-        "generic_first_words": ft_generic,
-        "clusters": strip_internal(first_token_entries)[:MAX_FIRST_TOKEN_SAVED],
-    }
-
-    # ====================================================
-    # 4) قاعدة البادئة
-    # ====================================================
-    head_index = defaultdict(list)
-    for gi, g in enumerate(groups):
-        if not established(g):
-            continue
-        for key in g["keys"]:
-            t = tuple(tokens(key))
-            if t and len("".join(t)) >= MIN_HEAD_LEN:
-                if gi not in head_index[t]:
-                    head_index[t].append(gi)
-
-    prefix_entries = []
-    for ki, g in enumerate(groups):
-        best = None
-        for key in g["keys"]:
-            toks = tokens(key)
-            for L in range(len(toks) - 1, 0, -1):
-                heads = [
-                    h for h in head_index.get(tuple(toks[:L]), ())
-                    if h != ki
-                ]
-                if heads:
-                    if best is None or L > best[0]:
-                        best = (L, toks, heads)
-                    break
-
-        if best is None:
-            continue
-
-        L, toks, heads = best
-        hi = max(heads, key=lambda h: (len(groups[h]["names"]), -h))
-        h = groups[hi]
-
-        cj = round(jaccard(g["cuisines"], h["cuisines"]), 2)
-        shared_cities = len(g["cities"] & h["cities"])
-        tail = toks[L:]
-        nc = no_comma(g)
-
-        if (
-            not established(g)
-            and nc
-            and cj >= HIGH_MIN_JACCARD
-            and shared_cities >= 1
-            and len(tail) <= HIGH_MAX_TAIL_TOKENS
-        ):
-            conf = "high"
-        elif not established(g) and cj >= MED_MIN_JACCARD:
-            conf = "medium"
-        else:
-            conf = "low"
-
-        prefix_entries.append({
-            "confidence": conf,
-            "restaurant": g["display"],
-            "names": sorted(g["names"])[:5],
-            "ids": len(g["ids"]),
-            "branches": len(g["branches"]),
-            "would_merge_into": h["display"],
-            "head_names": len(h["names"]),
-            "head_ids": len(h["ids"]),
-            "head_branches": len(h["branches"]),
-            "head_sample_names": sorted(h["names"])[:3],
-            "matched_prefix": " ".join(toks[:L]),
-            "tail": " ".join(tail),
-            "all_names_without_comma": nc,
-            "restaurant_is_established": established(g),
-            "cuisine_similarity": cj,
-            "shared_cities": shared_cities,
-            "_k": ki,
-            "_h": hi,
-        })
-
-    prefix_entries.sort(
-        key=lambda e: (
-            CONF_RANK[e["confidence"]], -e["head_names"],
-            e["restaurant"].lower(),
-        )
-    )
-
-    prefix_by_conf = Counter(e["confidence"] for e in prefix_entries)
-    prefix_high_pairs = [
-        (e["_k"], e["_h"]) for e in prefix_entries
-        if e["confidence"] == "high"
-    ]
-    prefix_med_pairs = [
-        (e["_k"], e["_h"]) for e in prefix_entries
-        if e["confidence"] == "medium"
-    ]
-
-    # ====================================================
-    # 5) دليل branchName
-    # ====================================================
-    bn_acc = defaultdict(lambda: {"bids": set(), "bks": Counter()})
-    for gi, g in enumerate(groups):
-        for bk, bset in g["branch_brands"].items():
-            hi = key_to_group.get(bk)
-            if hi is None or hi == gi:
-                continue
-            acc = bn_acc[(gi, hi)]
-            acc["bids"] |= bset
-            acc["bks"][bk] += len(bset)
-
-    bn_entries = []
-    for (gi, hi), acc in bn_acc.items():
-        g, h = groups[gi], groups[hi]
-        ev = len(acc["bids"])
-        share = ev / max(1, len(g["branches"]))
-        conf = (
-            "high"
-            if ev >= BN_HIGH_MIN_BRANCHES or share >= BN_HIGH_MIN_SHARE
-            else "medium"
-        )
-        bk = acc["bks"].most_common(1)[0][0]
-        bn_entries.append({
-            "confidence": conf,
-            "restaurant": g["display"],
-            "would_merge_into": h["display"],
-            "evidence_branches": ev,
-            "share_of_restaurant_branches": round(share, 2),
-            "branch_name_brand_matched": bk,
-            "sample_branch_name": bk_example.get(bk),
-            "sample_names": sorted(g["names"])[:3],
-            "head_sample_names": sorted(h["names"])[:3],
-            "cuisine_similarity": round(
-                jaccard(g["cuisines"], h["cuisines"]), 2
-            ),
-            "shared_cities": len(g["cities"] & h["cities"]),
-            "_k": gi,
-            "_h": hi,
-        })
-
-    bn_entries.sort(
-        key=lambda e: (
-            CONF_RANK[e["confidence"]], -e["evidence_branches"],
-            e["restaurant"].lower(),
-        )
-    )
-    bn_by_conf = Counter(e["confidence"] for e in bn_entries)
-    bn_high_pairs = [
-        (e["_k"], e["_h"]) for e in bn_entries if e["confidence"] == "high"
-    ]
-    bn_med_pairs = [
-        (e["_k"], e["_h"]) for e in bn_entries if e["confidence"] == "medium"
-    ]
-
-    # ====================================================
-    # 6) قاعدة الفواصل (" - " والأقواس) + الزوايد
-    # ====================================================
-    alt_map = defaultdict(set)
-    stripped_map = defaultdict(set)
-    for gi, g in enumerate(groups):
-        for n in g["names"]:
-            ak = alt_brand_key(n)
-            if not ak:
-                continue
-            alt_map[ak].add(gi)
-
-            t = tokens(ak)
-            while len(t) > 1 and t[-1] in noise_set:
-                t.pop()
-            if t:
-                stripped_map[" ".join(t)].add(gi)
-
-    separator_pairs = pairs_from_map(
-        {k: v for k, v in alt_map.items() if len(v) > 1}
-    )
-    noise_pairs = pairs_from_map(
-        {k: v for k, v in stripped_map.items() if len(v) > 1}
-    )
-
-    # ====================================================
-    # 7) نفس النص + تشابه إملائي
-    # ====================================================
-    squash_map = defaultdict(set)
-    for gi, g in enumerate(groups):
-        for key in g["keys"]:
-            s = squash(key)
-            if s:
-                squash_map[s].add(gi)
-
-    squash_entries = []
-    squash_high_pairs = []
-    for s, gis in sorted(squash_map.items()):
-        if len(gis) < 2:
-            continue
-        ordered = sorted(
-            gis, key=lambda gi: (-len(groups[gi]["names"]), gi)
-        )
-        first = groups[ordered[0]]
-        min_j = min(
-            jaccard(first["cuisines"], groups[gi]["cuisines"])
-            for gi in ordered[1:]
-        )
-        conf = "high" if min_j >= SQUASH_MIN_JACCARD else "low"
-
-        squash_entries.append({
-            "confidence": conf,
-            "same_text_without_spaces": s,
-            "groups": [brief(groups[gi]) for gi in ordered],
-            "min_cuisine_similarity": round(min_j, 2),
-        })
-        if conf == "high":
-            for gi in ordered[1:]:
-                squash_high_pairs.append((gi, ordered[0]))
-
-    squash_entries.sort(
-        key=lambda e: (CONF_RANK[e["confidence"]], e["same_text_without_spaces"])
-    )
-
-    blocks = defaultdict(list)
-    for gi, g in enumerate(groups):
-        m = g["main_squash"]
-        if m:
-            blocks[m[:4]].append(gi)
-
-    similar_entries = []
-    skipped_blocks = 0
-    for blk, members in blocks.items():
-        if len(members) > MAX_BLOCK_SIZE:
-            skipped_blocks += 1
-            continue
-        for x in range(len(members)):
-            a = groups[members[x]]
-            for y in range(x + 1, len(members)):
-                b = groups[members[y]]
-                sa, sb = a["main_squash"], b["main_squash"]
-                if sa == sb:
-                    continue
-                if abs(len(sa) - len(sb)) > 0.25 * max(len(sa), len(sb)):
-                    continue
-                sm = difflib.SequenceMatcher(None, sa, sb)
-                if (
-                    sm.real_quick_ratio() < FUZZY_MIN_RATIO
-                    or sm.quick_ratio() < FUZZY_MIN_RATIO
-                ):
-                    continue
-                ratio = sm.ratio()
-                if ratio < FUZZY_MIN_RATIO:
-                    continue
-                similar_entries.append({
-                    "similarity": round(ratio, 3),
-                    "restaurant_a": brief(a),
-                    "restaurant_b": brief(b),
-                    "cuisine_similarity": round(
-                        jaccard(a["cuisines"], b["cuisines"]), 2
-                    ),
-                    "shared_cities": len(a["cities"] & b["cities"]),
-                })
-
-    similar_entries.sort(
-        key=lambda e: (
-            -e["similarity"], e["restaurant_a"]["restaurant"].lower()
-        )
-    )
-
-    similar_file = {
-        "thresholds": {
-            "min_similarity": FUZZY_MIN_RATIO,
-            "compared_within_groups_sharing_first_4_letters": True,
-        },
-        "blocks_skipped_too_big": skipped_blocks,
-        "same_text_without_spaces": squash_entries,
-        "similar_spelling_pairs": similar_entries,
-    }
-
-    # ====================================================
-    # 8) دمج ممكن يكون غلط
-    # ====================================================
-    susp_by_id = []
-    for g in groups:
-        if len(g["keys"]) < 2:
-            continue
-
-        main = g["main_key"]
-        if main not in g["key_cuisines"]:
-            main = g["keys"][0]
-        main_tokens = tokens(main)
-        main_sq = squash(main)
-
-        worst = None
-        for k in g["keys"]:
-            if k == main:
-                continue
-            k_tokens = tokens(k)
-            n = min(len(main_tokens), len(k_tokens))
-            if n and main_tokens[:n] == k_tokens[:n]:
-                continue    # واحد بيبدأ بالتاني: دمج منطقي
-            ratio = difflib.SequenceMatcher(None, main_sq, squash(k)).ratio()
-            if worst is None or ratio < worst[0]:
-                worst = (ratio, k)
-
-        if worst and worst[0] < SUSPICIOUS_MAX_RATIO:
-            other = worst[1]
-            susp_by_id.append({
-                "restaurant": g["display"],
-                "similarity": round(worst[0], 2),
-                "keys_merged": g["keys"],
-                "most_different_pair": [main, other],
-                "cuisine_similarity_of_pair": round(jaccard(
-                    g["key_cuisines"].get(main, set()),
-                    g["key_cuisines"].get(other, set()),
-                ), 2),
-                "shared_ids": sorted(
-                    g["key_ids"].get(main, set())
-                    & g["key_ids"].get(other, set()),
-                    key=sort_key,
-                )[:5],
-                "sample_names": sorted(g["names"])[:6],
-                "ids": len(g["ids"]),
+    rows = []
+    for n, f in enumerate(final, start=1):
+        f["candidate_id"] = f"C{n:04d}"
+        for i in f["idxs"]:
+            e = entries[i]
+            rows.append({
+                "candidate_id": f["candidate_id"],
+                "id": e["id"],
+                "name": e["name"],
+                "restaurantSlug": e["slug_raw"],
+                "branchUrl": e["url"],
+                "branchName": e["branch_name"],
+                "grouping_reason": f["reason"],
+                "shopCity": e["city"],
+                "logo": e["logo"],
+                "strength": f["strength"],
+                "validation": "",
             })
 
-    susp_by_id.sort(key=lambda e: (e["similarity"], e["restaurant"].lower()))
-
-    susp_mixed = []
-    for g in groups:
-        ids_with = [
-            rid for rid in sorted(g["ids"], key=sort_key)
-            if id_to_cuisines.get(rid)
-        ][:MIXED_MAX_IDS_COMPARED]
-
-        if len(g["ids"]) < MIXED_MIN_IDS or len(ids_with) < 2:
-            continue
-
-        sims = [
-            jaccard(id_to_cuisines[a], id_to_cuisines[b])
-            for a, b in combinations(ids_with, 2)
-        ]
-        avg = sum(sims) / len(sims)
-
-        if avg < MIXED_MAX_AVG_JACCARD:
-            top = Counter()
-            for rid in ids_with:
-                top.update(id_to_cuisines[rid])
-            susp_mixed.append({
-                "restaurant": g["display"],
-                "ids": len(g["ids"]),
-                "avg_cuisine_similarity_between_ids": round(avg, 2),
-                "top_cuisines": [
-                    {"cuisine": c, "ids": n} for c, n in top.most_common(5)
-                ],
-                "sample_names": sorted(g["names"])[:6],
-            })
-
-    susp_mixed.sort(
-        key=lambda e: (
-            e["avg_cuisine_similarity_between_ids"], e["restaurant"].lower()
-        )
-    )
-
-    suspicious_file = {
-        "thresholds": {
-            "max_name_similarity": SUSPICIOUS_MAX_RATIO,
-            "mixed_min_ids": MIXED_MIN_IDS,
-            "mixed_max_avg_similarity": MIXED_MAX_AVG_JACCARD,
-        },
-        "merged_by_shared_id_with_dissimilar_names": susp_by_id,
-        "groups_with_mixed_cuisines": susp_mixed,
-    }
-
-    # ====================================================
-    # التجمعات الناتجة من كل قاعدة + المحاكاة
-    # ====================================================
-    rules = {
-        "same_text_high": squash_high_pairs,
-        "prefix_high": prefix_high_pairs,
-        "prefix_medium": prefix_med_pairs,
-        "branchname_high": bn_high_pairs,
-        "branchname_medium": bn_med_pairs,
-        "separator_rule": separator_pairs,
-        "noise_words_rule": noise_pairs,
-    }
-    
-    # ============================================================
-    # RESTAURANT GROUPING REVIEW EXPORT
-    # ============================================================
-
-    SIM_FUZZY_MIN = 0.75        # أقل تشابه إملائي للإدراج ( recall عالي للمراجعة )
-    SIM_REORDER_MIN = 0.75      # تشابه بعد ترتيب الكلمات أبجديًا
-    SIM_MAX_LEN_DIFF = 0.35     # أقصى فرق طول نسبي بين اسمين بنقارنهم
-    SIM_BLOCK_PREFIX = 3        # بنقارن جوه بلوكات أول 3 حروف
-
-    SIM_CSV_FILE = "name_similarity_review.csv"
-    SIM_JSON_FILE = "name_similarity_review.json"
-
-    # ---------- 1) بناء الـ edges من كل إشارات التشابه ----------
-    sim_edges = set()
-
-    def _add_edge(a, b, reason):
-        if a != b:
-            sim_edges.add((min(a, b), max(a, b), reason))
-
-    # (أ) نفس النص من غير مسافات/علامات
-    for s, gis in squash_map.items():
-        gis = sorted(gis)
-        for other in gis[1:]:
-            _add_edge(gis[0], other, "same_text")
-
-    # (ب) نفس الجزء الأول بعد معاملة " - " والأقواس زي الفاصلة
-    for k, gis in alt_map.items():
-        gis = sorted(gis)
-        for other in gis[1:]:
-            _add_edge(gis[0], other, "separator")
-
-    # (ج) تشابه إملائي + تشابه بعد إعادة ترتيب الكلمات
-    blocks3 = defaultdict(list)
-    for gi, g in enumerate(groups):
-        m = g["main_squash"]
-        if m:
-            blocks3[m[:SIM_BLOCK_PREFIX]].append(gi)
-
-    total_pairs_checked = 0
-    skipped_len = 0
-    for blk, members in blocks3.items():
-        for x in range(len(members)):
-            a = groups[members[x]]
-            for y in range(x + 1, len(members)):
-                b = groups[members[y]]
-                sa, sb = a["main_squash"], b["main_squash"]
-                if sa == sb:
-                    continue
-                if abs(len(sa) - len(sb)) > SIM_MAX_LEN_DIFF * max(len(sa), len(sb)):
-                    skipped_len += 1
-                    continue
-                total_pairs_checked += 1
-                sm = difflib.SequenceMatcher(None, sa, sb)
-                if sm.real_quick_ratio() >= SIM_FUZZY_MIN:
-                    r = sm.ratio()
-                    if r >= SIM_FUZZY_MIN:
-                        _add_edge(members[x], members[y], f"fuzzy:{r:.2f}")
-                        continue
-                # إعادة ترتيب الكلمات ("Wok N Go Sushi" ~ "Sushi Wok N Go")
-                ta = "".join(sorted(tokens(a["main_key"])))
-                tb = "".join(sorted(tokens(b["main_key"])))
-                if ta and tb and ta != tb:
-                    r2 = difflib.SequenceMatcher(None, ta, tb).ratio()
-                    if r2 >= SIM_REORDER_MIN:
-                        _add_edge(members[x], members[y], f"reordered:{r2:.2f}")
-
-    # (د) علاقات البادئة — كل الـ confidences (high/medium/low)
-    for e in prefix_entries:
-        _add_edge(e["_k"], e["_h"], f"prefix:{e['confidence']}")
-
-    # (هـ) دليل branchName — كل الـ confidences
-    for e in bn_entries:
-        _add_edge(e["_k"], e["_h"], f"branchname:{e['confidence']}")
-
-    # ---------- 2) connected components ----------
-    sim_parent = list(range(total_groups))
-
-    def sim_find(x):
-        while sim_parent[x] != x:
-            sim_parent[x] = sim_parent[sim_parent[x]]
-            x = sim_parent[x]
-        return x
-
-    for a, b, _reason in sim_edges:
-        ra, rb = sim_find(a), sim_find(b)
-        if ra != rb:
-            sim_parent[max(ra, rb)] = min(ra, rb)
-
-    # نجمع الأسباب بعد ما الـ unions تخلص (على الـ roots النهائية)
-    sim_reasons = defaultdict(set)
-    for a, b, reason in sim_edges:
-        sim_reasons[sim_find(a)].add(reason.split(":")[0])
-        sim_reasons[sim_find(b)].add(reason.split(":")[0])
-
-    sim_components = defaultdict(list)
-    for gi in range(total_groups):
-        sim_components[sim_find(gi)].append(gi)
-
-    # ---------- 3) تصدير المكونات اللي فيها أكتر من مطعم ----------
-    sim_rows = []
-    n_flagged_groups = 0
-
-    for root, member_indices in sim_components.items():
-        if len(member_indices) < 2:
-            continue
-        n_flagged_groups += len(member_indices)
-
-        members = sorted(
-            member_indices,
-            key=lambda gi: (
-                -len(groups[gi]["ids"]), -len(groups[gi]["names"]),
-                groups[gi]["display"].lower(),
-            ),
-        )
-        head = groups[members[0]]
-        label = head["display"]
-        reasons = sorted(sim_reasons.get(root, set()))
-        other_displays = [groups[gi]["display"] for gi in members[1:]]
-
-        # تصدير من restaurant_rows عشان نحافظ على id/name/slug/branchUrl الحقيقي
-        member_keys = set()
-        for gi in members:
-            for k in groups[gi]["keys"]:
-                member_keys.add(k)
-
-        for record in restaurant_rows:
-            name = record.get("name")
-            if not name:
-                continue
-            if brand_key(name) in member_keys:
-                sim_rows.append({
-                    "Grouping label": label,
-                    "id": record.get("id"),
-                    "name": name,
-                    "restaurantSlug": record.get("restaurantSlug"),
-                    "branchUrl": record.get("branchUrl"),
-                    "similarity_reason": "; ".join(reasons),
-                    "other_restaurants_in_group": " | ".join(other_displays),
-                })
-
-    # إزالة التكرار (نفس الـ id جوه نفس المجموعة)
-    _seen = set()
-    sim_rows_dedup = []
-    for row in sim_rows:
-        key = (row["Grouping label"], clean(row.get("id")) or "",
-            clean(row.get("name")) or "", clean(row.get("branchUrl")) or "")
-        if key in _seen:
-            continue
-        _seen.add(key)
-        sim_rows_dedup.append(row)
-
-    sim_rows_dedup.sort(
-        key=lambda r: (
-            str(r["Grouping label"] or "").lower(),
-            str(r["name"] or "").lower(),
-            str(r["id"] or ""),
-        )
-    )
-
-    csv_columns = [
-        "Grouping label", "id", "name", "restaurantSlug", "branchUrl",
-        "similarity_reason", "other_restaurants_in_group",
-    ]
-    with open(SIM_CSV_FILE, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=csv_columns)
+    with open(CANDIDATES_CSV_FILE, "w", newline="",
+              encoding="utf-8-sig") as fh:
+        writer = csv.DictWriter(fh, fieldnames=COLUMNS, extrasaction="ignore")
         writer.writeheader()
-        writer.writerows(sim_rows_dedup)
+        writer.writerows(rows)
 
-    save_json(SIM_JSON_FILE, {
-        "note": (
-            "كل الأسماء اللي بينها أي إشارة تشابه (إملائي / ترتيب كلمات / "
-            "فواصل / بادئة / branchName). مُصدّرة للمراجعة اليدوية — "
-            "مش متطبقة على الداتا."
-        ),
-        "thresholds": {
-            "fuzzy_min": SIM_FUZZY_MIN,
-            "reorder_min": SIM_REORDER_MIN,
-            "max_len_diff": SIM_MAX_LEN_DIFF,
-            "block_prefix": SIM_BLOCK_PREFIX,
-        },
-        "pairs_checked": total_pairs_checked,
-        "pairs_skipped_length_diff": skipped_len,
-        "edges": len(sim_edges),
-        "groups_flagged": n_flagged_groups,
-        "groups_clean": total_groups - n_flagged_groups,
-        "records_exported": len(sim_rows_dedup),
-        "records": sim_rows_dedup,
+    # ---- إحصائيات ----
+    ids_in_candidates = {r["id"] for r in rows}
+    ids_with_name_count = len(id_names)
+
+    method_stats = defaultdict(lambda: {
+        "strength": None, "clusters": 0, "ids": set(),
     })
+    for f in final:
+        for m in f["methods"]:
+            ms = method_stats[m]
+            ms["strength"] = f["method_strengths"][m]
+            ms["clusters"] += 1
+            for i in f["idxs"]:
+                ms["ids"].add(entries[i]["id"])
 
-    # ---------- 4) تغطية كل الأسماء (مفيش اسم ماتشيكش) ----------
-    print(f"[similarity-graph] edges={len(sim_edges)} pairs_checked={total_pairs_checked}")
-    print(f"[similarity-graph] groups flagged={n_flagged_groups} / {total_groups} "
-        f"(clean={total_groups - n_flagged_groups})")
-    print(f"[similarity-graph] rows exported={len(sim_rows_dedup)}")
-    print(f"-> {SIM_CSV_FILE}")
-    print(f"-> {SIM_JSON_FILE}")
-
-    # ============================================================
-    # REMOVE DUPLICATES
-    # ============================================================
-
-    # Remove duplicate IDs within the same proposed grouping.
-    # Keep the first record encountered for each (Grouping label, id).
-    deduplicated_rows = []
-    seen_group_ids = set()
-
-    for row in grouping_review_rows:
-        record_id = clean(row.get("id"))
-        group_label = clean(row.get("Grouping label"))
-
-        # If ID is missing, use the available record fields to
-        # identify duplicate rows without merging unrelated records.
-        if record_id:
-            dedup_key = (group_label, record_id)
-        else:
-            dedup_key = (
-                group_label,
-                clean(row.get("name")),
-                clean(row.get("restaurantSlug")),
-                clean(row.get("branchUrl")),
-            )
-
-        if dedup_key in seen_group_ids:
-            continue
-
-        seen_group_ids.add(dedup_key)
-        deduplicated_rows.append(row)
-
-    grouping_review_rows = deduplicated_rows
-
-    # ============================================================
-    # STABLE ORDERING
-    # ============================================================
-
-    grouping_review_rows.sort(
-        key=lambda row: (
-            str(row["Grouping label"] or "").lower(),
-            str(row["name"] or "").lower(),
-            str(row["id"] or ""),
-        )
-    )
-
-    # ============================================================
-    # SAVE CSV
-    # ============================================================
-
-    csv_columns = [
-        "Grouping label",
-        "id",
-        "name",
-        "restaurantSlug",
-        "branchUrl",
-        "grouping_reason",
-    ]
-
-    with open(
-        GROUPING_CSV_FILE,
-        "w",
-        newline="",
-        encoding="utf-8-sig",
-    ) as f:
-        writer = csv.DictWriter(f, fieldnames=csv_columns)
-        writer.writeheader()
-        writer.writerows(grouping_review_rows)
-
-    # ============================================================
-    # SAVE JSON
-    # ============================================================
-
-    save_json(GROUPING_JSON_FILE, {
-        "note": (
-            "Includes records belonging to an existing group or a "
-            "candidate group produced by the name audit rules. "
-            "Proposed groupings are for review and are not applied "
-            "to the source data. Duplicate IDs within the same "
-            "Grouping label are removed."
-        ),
-        "records_exported": len(grouping_review_rows),
-        "groups_exported": len(included_roots),
-        "rules_used": list(rules.keys()),
-        "records": grouping_review_rows,
-    })
-
-    print(f"Grouping review CSV: {GROUPING_CSV_FILE}")
-    print(f"Grouping review JSON: {GROUPING_JSON_FILE}")
-    print(f"Grouping review rows after deduplication: {len(grouping_review_rows)}")
-    print(f"Grouping review groups: {len(included_roots)}")
-
-
-
-    rule_descriptions = {
-        "same_text_high": "same text without spaces/punctuation, similar cuisines",
-        "prefix_high": "name starts with an established restaurant name (high confidence)",
-        "prefix_medium": "same as above, medium confidence",
-        "branchname_high": "branchName of its branches starts with another restaurant's name (high)",
-        "branchname_medium": "same as above, medium confidence",
-        "separator_rule": "treat ' - ' and '(' like a comma when taking the restaurant name",
-        "noise_words_rule": "separator rule + remove trailing generic words (see last_words_of_restaurant_part)",
-    }
-
-    rule_reports = {}
-    for rname, pairs in rules.items():
-        rep = rule_report(pairs)
-        rep["description"] = rule_descriptions[rname]
-        rule_reports[rname] = rep
-
-    simulation = {
-        "restaurants_now": total_groups,
-    }
-    for rname, rep in rule_reports.items():
-        simulation[f"after_{rname}"] = rep["restaurants_after_rule"]
-
-    recommended = (
-        squash_high_pairs + prefix_high_pairs + bn_high_pairs + separator_pairs
-    )
-    everything = (
-        recommended + prefix_med_pairs + bn_med_pairs + noise_pairs
-    )
-    simulation["after_high_confidence_rules_together"] = count_after(
-        recommended
-    )
-    simulation["after_all_rules_together"] = count_after(everything)
-
-    # ====================================================
-    # بحث بالاسم (اختياري)
-    # ====================================================
-    terms = [t.strip() for t in SEARCH_TERMS.split(",") if t.strip()]
-    search_result = {}
-    for t in terms:
-        st = squash(t)
-        matches = []
-        if st:
-            for g in groups:
-                if any(st in squash(n) for n in g["names"]):
-                    matches.append(g)
-        matches.sort(key=lambda g: (-len(g["names"]), g["display"].lower()))
-        search_result[t] = [
+    methods_table = sorted(
+        (
             {
-                **brief(g),
-                "keys": g["keys"],
-                "all_names_without_comma": no_comma(g),
-                "is_established": established(g),
-                "names_list": sorted(g["names"])[:50],
+                "method": m,
+                "strength": s["strength"],
+                "clusters": s["clusters"],
+                "ids_covered": len(s["ids"]),
             }
-            for g in matches
-        ]
+            for m, s in method_stats.items()
+        ),
+        key=lambda x: (STRENGTH_RANK[x["strength"]], -x["clusters"]),
+    )
 
-    # ====================================================
-    # summary
-    # ====================================================
-    summary = {
-        "General info": {
-            "files": len(files),
-            "total_records": total_records,
-        },
-        "Name formats": {
-            "unique_names": len(all_names),
-            "names_with_comma": names_with_comma,
-            "names_without_comma": names_without_comma,
-            "names_with_dash_separator": names_with_dash,
-            "names_with_parentheses": names_with_paren,
-            "names_with_digits": names_with_digits,
-            "names_with_non_ascii_characters": names_non_ascii,
-            "names_all_caps": names_all_caps,
-            "names_with_double_spaces": names_double_space,
-            "names_ending_with_punctuation": names_end_punct,
-            "names_very_short": names_very_short,
-            "names_differing_only_by_letter_case": names_case_variants,
-        },
-        "Current grouping": {
-            "restaurants_after_grouping": total_groups,
-            "groups_merged_by_shared_id": groups_merged_by_id,
-            "groups_with_single_name": groups_single_name,
-            "groups_where_no_name_has_comma": groups_no_comma,
-            "groups_established": groups_established,
-        },
-        "Generic words at the end of restaurant names": {
-            "last_words_checked": len(noise_info),
-            "treated_as_noise": noise_words_found,
-        },
-        "First-word clusters": {
-            "first_words_starting_several_restaurants": len(first_token_entries),
-            "generic_first_words": ft_generic,
-            "non_generic_first_words": len(ft_non_generic),
-            "restaurants_in_non_generic_clusters": ft_groups_involved,
-        },
-        "Prefix rule": {
-            "candidates_total": len(prefix_entries),
-            "high": prefix_by_conf.get("high", 0),
-            "medium": prefix_by_conf.get("medium", 0),
-            "low": prefix_by_conf.get("low", 0),
-        },
-        "branchName evidence": {
-            "candidates_total": len(bn_entries),
-            "high": bn_by_conf.get("high", 0),
-            "medium": bn_by_conf.get("medium", 0),
-        },
-        "Same text / similar spelling": {
-            "same_text_groups": len(squash_entries),
-            "same_text_high": sum(
-                1 for e in squash_entries if e["confidence"] == "high"
-            ),
-            "similar_spelling_pairs": len(similar_entries),
-            "blocks_skipped_too_big": skipped_blocks,
-        },
-        "Possible wrong merges": {
-            "merged_by_id_with_dissimilar_names": len(susp_by_id),
-            "groups_with_mixed_cuisines": len(susp_mixed),
-        },
-        "Simulation: restaurants if a rule was applied": simulation,
+    by_strength = Counter(f["strength"] for f in final)
+    generic_sorted = sorted(
+        generic_skipped, key=lambda x: -x["names_containing_it"]
+    )
+    oversized_sorted = sorted(oversized, key=lambda x: -x["entries"])
+    placeholder_images.sort(key=lambda x: -x["ids"])
+
+    coverage = {
+        "unique_ids_with_a_name": ids_with_name_count,
+        "ids_in_at_least_one_candidate": len(ids_in_candidates),
+        "pct_of_ids_in_candidates": round(
+            len(ids_in_candidates) * 100 / ids_with_name_count, 2
+        ) if ids_with_name_count else 0,
+        "ids_in_no_candidate": ids_with_name_count - len(ids_in_candidates),
     }
 
-    print("\n" + "=" * 70)
-    print("SUMMARY")
-    print("=" * 70)
+    candidates_summary = {
+        "candidate_groups": len(final),
+        "strong": by_strength.get("strong", 0),
+        "medium": by_strength.get("medium", 0),
+        "weak": by_strength.get("weak", 0),
+        "rows": len(rows),
+        "similar_spelling_pairs_found": fuzzy_pairs,
+        "oversized_groups_not_listed": len(oversized_sorted),
+        "generic_words_not_listed": len(generic_sorted),
+        "placeholder_images_not_listed": len(placeholder_images),
+    }
 
-    for section, values in summary.items():
-        print(f"\n{section}")
-        for k, v in values.items():
-            print(f"{k:<46}: {v}")
+    save_json(CANDIDATES_JSON_FILE, {
+        "note": (
+            "Every set of restaurants whose names may be similar. Nothing is "
+            "grouped. validation is empty for the manual review. strength: "
+            "strong = deterministic evidence (same id/name/logo/slug...), "
+            "medium = probable, weak = loose (short shared start or letters)."
+        ),
+        "columns": COLUMNS,
+        "records_count": len(rows),
+        "records": rows,
+    })
 
-    # ----------------------------------------------------
-    # print-only info
-    # ----------------------------------------------------
-    print("\n" + "=" * 70)
-    print("PRINT-ONLY INFO (also saved in the summary file)")
-    print("=" * 70)
-
-    print("\nComma segments per name:")
-    for k, v in sorted(segments_dist.items()):
-        label = f"{k}+" if k == 5 else str(k)
-        print(f"  {label} segment(s): {v} names")
-
-    print_block(
-        "Last words of the restaurant part "
-        "(noise = many restaurants, mixed cuisines)",
-        len(noise_info),
-        [
-            f"{x['word']}: {x['restaurants_ending_with_it']} restaurants | "
-            f"top cuisine {x['top_cuisine']} {x['top_cuisine_share']} | "
-            f"{'NOISE' if x['treated_as_noise'] else 'kept'}"
-            for x in noise_info[:TOP_TOKENS]
-        ],
-        PATTERNS_FILE,
-    )
-
-    print_block(
-        "Largest restaurants after grouping (by ids)",
-        total_groups,
-        [
-            f"{b['restaurant']}: {b['names']} names | {b['ids']} ids | "
-            f"{b['branches']} branches"
-            for b in big_groups[:TOP_N_PRINT]
-        ],
-        PATTERNS_FILE,
-    )
-
-    # ----------------------------------------------------
-    # SAVE FILES
-    # ----------------------------------------------------
     save_json(SUMMARY_FILE, {
-        "summary": summary,
+        "steps_1_to_3": {k: v for k, v in overview.items() if k != "files"},
+        "candidates": candidates_summary,
+        "coverage": coverage,
+        "methods": methods_table,
         "thresholds": {
-            "est_min_names": EST_MIN_NAMES,
-            "est_min_branches": EST_MIN_BRANCHES,
-            "min_head_len": MIN_HEAD_LEN,
-            "high_min_jaccard": HIGH_MIN_JACCARD,
-            "med_min_jaccard": MED_MIN_JACCARD,
-            "high_max_tail_tokens": HIGH_MAX_TAIL_TOKENS,
-            "squash_min_jaccard": SQUASH_MIN_JACCARD,
+            "min_head_chars": MIN_HEAD_CHARS,
+            "min_substring_len": MIN_SUBSTRING_LEN,
+            "chain_min_names": CHAIN_MIN_NAMES,
+            "cluster_max_entries": CLUSTER_MAX_ENTRIES,
             "fuzzy_min_ratio": FUZZY_MIN_RATIO,
-            "suspicious_max_ratio": SUSPICIOUS_MAX_RATIO,
-            "mixed_min_ids": MIXED_MIN_IDS,
-            "mixed_max_avg_jaccard": MIXED_MAX_AVG_JACCARD,
-            "generic_min_groups": GENERIC_MIN_GROUPS,
-            "noise_min_groups": NOISE_MIN_GROUPS,
-            "noise_max_top_cuisine_share": NOISE_MAX_TOP_CUISINE_SHARE,
-            "bn_high_min_branches": BN_HIGH_MIN_BRANCHES,
-            "bn_high_min_share": BN_HIGH_MIN_SHARE,
+            "token_jaccard_min": TOKEN_JACCARD_MIN,
+            "token_max_postings": TOKEN_MAX_POSTINGS,
+            "slug_prefix_min_len": SLUG_PREFIX_MIN_LEN,
+            "image_max_ids": IMAGE_MAX_IDS,
+            "image_max_distinct_names": IMAGE_MAX_DISTINCT_NAMES,
+            "generic_words": sorted(GENERIC_WORDS),
         },
-        "comma_segments_distribution": {
-            (f"{k}+" if k == 5 else str(k)): v
-            for k, v in sorted(segments_dist.items())
-        },
-        "last_words_of_restaurant_part": noise_info[:TOP_TOKENS],
-        "simulation": simulation,
+        "oversized_groups_not_listed": oversized_sorted,
+        "generic_words_not_listed": generic_sorted,
+        "placeholder_images_not_listed": placeholder_images,
     })
-    save_json(PATTERNS_FILE, patterns_file)
-    save_json(FIRST_TOKEN_FILE, first_token_file)
-    save_json(PREFIX_FILE, {
-        "note": (
-            "Restaurants whose first words equal the name of an "
-            "established restaurant, so they may belong to it. high = "
-            "name without comma, not established, similar cuisines, "
-            "shared city. Review before merging."
-        ),
-        "counts_by_confidence": dict(prefix_by_conf),
-        "candidates": strip_internal(prefix_entries),
-    })
-    save_json(BRANCHNAME_FILE, {
-        "note": (
-            "The branchName of this restaurant's branches starts with the "
-            "name of another restaurant. This is a second, independent "
-            "signal besides the name column."
-        ),
-        "counts_by_confidence": dict(bn_by_conf),
-        "candidates": strip_internal(bn_entries),
-    })
-    save_json(SIMILAR_FILE, similar_file)
-    save_json(SUSPICIOUS_FILE, suspicious_file)
-    save_json(RULE_MERGES_FILE, {
-        "note": (
-            "For each rule: the clusters of restaurants that would be "
-            "merged if the rule was applied. Nothing here is applied to "
-            "market_insights."
-        ),
-        "simulation": simulation,
-        "rules": rule_reports,
-    })
-    save_json(SEARCH_FILE, search_result)
 
     # ----------------------------------------------------
-    # SAMPLES
+    # print
     # ----------------------------------------------------
     print("\n" + "=" * 70)
-    print(f"SAMPLES (first {SAMPLES} only, full details are in the files)")
+    print("STEP 4: SIMILAR-NAME CANDIDATES (nothing is grouped)")
     print("=" * 70)
+    for k, v in candidates_summary.items():
+        print(f"{k:<34}: {v}")
 
-    print_block(
-        "First-word clusters (non-generic, biggest first)",
-        len(ft_non_generic),
-        [
-            f"'{e['first_word']}': {e['restaurants_starting_with_it']} "
-            f"restaurants | largest {e['largest']} | avg cuisine similarity "
-            f"{e['avg_cuisine_similarity_to_largest']}"
-            for e in ft_non_generic[:TOP_N_PRINT]
-        ],
-        FIRST_TOKEN_FILE,
-    )
+    print("\nCoverage")
+    for k, v in coverage.items():
+        print(f"{k:<34}: {v}")
 
-    def prefix_line(e):
-        return (
-            f"{e['names'][0]} -> {e['would_merge_into']} "
-            f"({e['head_names']} names) | prefix '{e['matched_prefix']}' "
-            f"tail '{e['tail']}' | cuisines {e['cuisine_similarity']} | "
-            f"shared cities {e['shared_cities']}"
-        )
+    print("\nCandidate groups per method (a group can have several methods)")
+    for m in methods_table:
+        print(f"  [{m['strength']}] {m['method']}: {m['clusters']} groups, "
+              f"{m['ids_covered']} ids")
 
-    for conf, n in (("high", TOP_N_PRINT), ("medium", SAMPLES), ("low", SAMPLES)):
-        subset = [e for e in prefix_entries if e["confidence"] == conf]
-        print_block(
-            f"Prefix rule, {conf} confidence",
-            len(subset),
-            [prefix_line(e) for e in subset[:n]],
-            PREFIX_FILE,
-        )
-
-    for conf, n in (("high", TOP_N_PRINT), ("medium", SAMPLES)):
-        subset = [e for e in bn_entries if e["confidence"] == conf]
-        print_block(
-            f"branchName evidence, {conf} confidence",
-            len(subset),
-            [
-                f"{e['sample_names'][0]} -> {e['would_merge_into']} | "
-                f"{e['evidence_branches']} branches | e.g. branchName "
-                f"'{e['sample_branch_name']}'"
-                for e in subset[:n]
-            ],
-            BRANCHNAME_FILE,
-        )
-
-    print_block(
-        "Same text without spaces/punctuation",
-        len(squash_entries),
-        [
-            f"[{e['confidence']}] "
-            + " | ".join(
-                f"{g['restaurant']} ({g['names']} names)"
-                for g in e["groups"][:3]
+    def sample_lines(strength, limit):
+        out = []
+        for f in final:
+            if f["strength"] != strength:
+                continue
+            names_ = [entries[i]["name"] for i in f["idxs"]]
+            out.append(
+                f"{f['candidate_id']} {f['label']} ({f['ids']} ids): "
+                f"{short_list(names_, 4)} | {', '.join(f['methods'][:2])}"
             )
-            for e in squash_entries[:SAMPLES]
-        ],
-        SIMILAR_FILE,
-    )
+            if len(out) >= limit:
+                break
+        return out
 
-    print_block(
-        "Similar spelling pairs",
-        len(similar_entries),
-        [
-            f"{e['restaurant_a']['restaurant']} ~ "
-            f"{e['restaurant_b']['restaurant']} "
-            f"(similarity {e['similarity']}, cuisines "
-            f"{e['cuisine_similarity']})"
-            for e in similar_entries[:SAMPLES]
-        ],
-        SIMILAR_FILE,
-    )
-
-    for rname in ("separator_rule", "noise_words_rule"):
-        rep = rule_reports[rname]
+    for strength in ("strong", "medium", "weak"):
         print_block(
-            f"Rule '{rname}': clusters it would create "
-            f"(removes {rep['restaurants_removed']} restaurants)",
-            rep["clusters_count"],
-            [
-                f"{c['result_name']} <- "
-                + " | ".join(m["restaurant"] for m in c["members"][1:4])
-                + f" (cuisine similarity {c['min_cuisine_similarity_to_largest']})"
-                for c in rep["clusters"][:SAMPLES]
-            ],
-            RULE_MERGES_FILE,
+            f"Samples: {strength} candidates",
+            by_strength.get(strength, 0),
+            sample_lines(strength, TOP_N_PRINT),
+            CANDIDATES_CSV_FILE,
         )
 
     print_block(
-        "Merged by shared id but names look different",
-        len(susp_by_id),
-        [
-            f"{e['restaurant']}: {e['most_different_pair'][0]} <> "
-            f"{e['most_different_pair'][1]} (similarity {e['similarity']})"
-            for e in susp_by_id[:SAMPLES]
-        ],
-        SUSPICIOUS_FILE,
+        "Groups too big to list (medium/weak, not rows in the file)",
+        len(oversized_sorted),
+        [f"{o['label']} [{o['method']}]: {o['entries']} entries"
+         for o in oversized_sorted[:SAMPLES]],
+        SUMMARY_FILE,
     )
-
     print_block(
-        "Groups with mixed cuisines (maybe a generic name)",
-        len(susp_mixed),
-        [
-            f"{e['restaurant']}: {e['ids']} ids | avg similarity "
-            f"{e['avg_cuisine_similarity_between_ids']} | "
-            + ", ".join(c["cuisine"] for c in e["top_cuisines"][:3])
-            for e in susp_mixed[:SAMPLES]
-        ],
-        SUSPICIOUS_FILE,
+        "Generic words not used for matching",
+        len(generic_sorted),
+        [f"'{g['word']}' ({g['kind']}): {g['names_containing_it']} names"
+         for g in generic_sorted[:SAMPLES]],
+        SUMMARY_FILE,
+    )
+    print_block(
+        "Images shared by many unrelated restaurants (probably a default image)",
+        len(placeholder_images),
+        [f"{p['kind']} {p['image']}: {p['ids']} ids, "
+         f"{p['distinct_names']} different names"
+         for p in placeholder_images[:SAMPLES]],
+        SUMMARY_FILE,
     )
 
-    for t, matches in search_result.items():
-        print_block(
-            f"Search '{t}': groups containing it",
-            len(matches),
-            [
-                f"{m['restaurant']}: {m['names']} names | {m['ids']} ids | "
-                f"{m['branches']} branches | e.g. "
-                f"{short_list(m['sample_names'], 3)}"
-                for m in matches[:SEARCH_PRINT_MAX]
-            ],
-            SEARCH_FILE,
-        )
-
-    # ----------------------------------------------------
-    # SAVED FILES
-    # ----------------------------------------------------
     print("\n" + "=" * 70)
     print("SAVED FILES")
     print("=" * 70)
-    print(f"{SUMMARY_FILE:<44}: summary + thresholds + simulation")
-    print(f"{PATTERNS_FILE:<44}: name formats, generic words, largest groups")
-    print(f"{FIRST_TOKEN_FILE:<44}: restaurants sharing a first word")
-    print(f"{PREFIX_FILE:<44}: possible missed groupings (prefix rule)")
-    print(f"{BRANCHNAME_FILE:<44}: possible missed groupings (branchName)")
-    print(f"{SIMILAR_FILE:<44}: same text / similar spelling")
-    print(f"{SUSPICIOUS_FILE:<44}: possible wrong merges")
-    print(f"{RULE_MERGES_FILE:<44}: clusters each rule would create")
-    print(f"{SEARCH_FILE:<44}: optional name search")
+    print(f"{OVERVIEW_FILE:<40}: records per file + totals")
+    print(f"{UNIQUE_FILE:<40}: {len(all_ids)} unique restaurants (by id)")
+    print(f"{CANDIDATES_CSV_FILE:<40}: {len(rows)} rows for the manual review")
+    print(f"{CANDIDATES_JSON_FILE:<40}: same rows as JSON")
+    print(f"{SUMMARY_FILE:<40}: counts, methods, thresholds")
 
 
 if __name__ == "__main__":

@@ -43,18 +43,9 @@ jobs:
         with:
           name: name-audit
           path: |
-            name_audit.json
-            name_audit_name_patterns.json
-            name_audit_first_token_clusters.json
-            name_audit_prefix_candidates.json
-            name_audit_branchname_evidence.json
-            name_audit_similar_names.json
-            name_audit_suspicious_merges.json
-            name_audit_rule_merges.json
-            name_audit_search.json
-            restaurant_grouping_review.csv
-            restaurant_grouping_review.json
-            name_audit_log.txt
-            name_similarity_review.csv
-            name_similarity_review.json
+            name_review_files_overview.json
+            name_review_unique_restaurants.json
+            name_review_candidates.json
+            name_review_candidates.csv
+            name_review_summary.json
           if-no-files-found: warn
