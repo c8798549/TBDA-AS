@@ -2,32 +2,36 @@
 """
 similar_names.py
 ----------------
-1) Reads all JSON files from R2 under a prefix (in parallel)
-2) Prints the record count of every file + the total
-3) Aggregates all records per unique id (keeps ALL distinct names per id)
-4) Flags ids that look like duplicates of other ids (candidates only --
-   nothing is merged) and writes a CSV for manual validation.
+Finds ids whose names MIGHT be the same restaurant, for manual validation.
 
-Signals
--------
-ALWAYS-union (strong, safe even for big groups):
-    same_name, same_name_no_space, same_restaurant_slug, same_branch_url_slug
-CAPPED-union (strong, but only unioned when the group is <= UNION_MAX_GROUP,
-otherwise the reason is still written with "too_big" but clusters are NOT merged):
-    same_brand, same_brand_minus_noise, same_logo_exact, same_logo_brand,
-    branchname_matches_other_name, name_is_prefix_of_other, fuzzy_spelling
-WEAK (reason only, never merges strong clusters; ids with only weak reasons are
-hidden unless INCLUDE_WEAK_ONLY=1, then they get label W_<first word>):
-    same_first_word
+* NO initial grouping: every id is compared as it is (all its names are used).
+* NO size limits: a group can contain 70+ ids (Starbucks, McDonald's ...).
+* Everything goes in ONE csv (strong + weak together).
+* The logo is only shown as a link. It is NOT used to decide similarity.
 
-Logo cleaning
--------------
-logo_key(url) strips ?width=180, decodes %d8..., drops timestamps/digits and
-generic words (logo, WhatsApp_Image, IMG, Capture, renditionDownload ...).
-If nothing brand-like is left, the logo is ignored as a similarity signal.
+Methods (same ideas as name_audit.py, applied per id)
+    same_brand           same text before the first comma
+    separator_rule       same text before a comma / "(" / " - " / "|"
+    same_text_no_space   same letters ignoring spaces & punctuation (Mc Donalds = McDonalds)
+    prefix_rule          the name starts with the name of an "established" id
+    branchname_evidence  the branchName of its branches starts with another id's name
+    similar_spelling     spelling similarity >= FUZZY_MIN_SCORE (all vs all, nothing skipped)
+    noise_words_rule     same name after removing trailing generic words learned from the data
+    same_first_word      same first word (always weak)
+
+Strength
+    strong = confidence "high"      weak = confidence "medium" / "low"
+
+Output columns
+    group_word      the word / text the grouping is based on
+    group_method    which method created that group
+    strength        strong / weak (of group_word)
+    confidence      high / medium / low (of group_word)
+    group_size      how many ids share this group_word + method
+    ...             id, names, cuisineString, verticalType, city, branch info, logo
+    strong_reason / weak_reason / grouping_reason   every method[word] the id was flagged by
 
 Run
----
     export CF_R2_ENDPOINT_URL=... CF_R2_ACCESS_KEY_ID=... \
            CF_R2_SECRET_ACCESS_KEY=... CF_R2_BUCKET_NAME=...
     pip install boto3 rapidfuzz numpy
@@ -39,7 +43,6 @@ import re
 import csv
 import json
 import unicodedata
-import urllib.parse
 from collections import defaultdict, Counter
 from concurrent.futures import ThreadPoolExecutor
 
@@ -55,61 +58,34 @@ R2_PREFIX = os.environ.get(
     "R2_PREFIX", "merged-restaurant-info/year=2025/month=09/day=17/"
 )
 OUT_FILE = os.environ.get("OUT_FILE", "similar_name_candidates.csv")
-LOGO_AUDIT_FILE = os.environ.get("LOGO_AUDIT_FILE", "logo_audit.csv")
-
 READ_WORKERS = int(os.environ.get("READ_WORKERS", "8"))
+#LOGO_STRIP_QUERY = os.environ.get("LOGO_STRIP_QUERY", "0") == "1"  # drop ?width=180
+LOGO_STRIP_QUERY = os.environ.get("LOGO_STRIP_QUERY", "1") == "1"  # drop ?width=180
+
+
+# ---------------- thresholds (same meaning as name_audit) -------
+EST_MIN_NAMES = 2                # "established" id: at least 2 names
+EST_MIN_BRANCHES = 3             # or at least 3 branches
+MIN_HEAD_LEN = 4                 # min letters of the name used as prefix head
+HIGH_MIN_JACCARD = 0.5           # cuisine similarity for high confidence
+MED_MIN_JACCARD = 0.3            # cuisine similarity for medium confidence
+HIGH_MAX_TAIL_TOKENS = 6         # max words after the head for high confidence
+SQUASH_MIN_JACCARD = 0.3         # cuisine similarity for same-text / spelling = high
 FUZZY_MIN_SCORE = float(os.environ.get("FUZZY_MIN_SCORE", "88"))  # 0-100
-FUZZY_MIN_LEN = int(os.environ.get("FUZZY_MIN_LEN", "5"))   # skip very short names
 FUZZY_CHUNK = 500
-UNION_MAX_GROUP = int(os.environ.get("UNION_MAX_GROUP", "40"))
-INCLUDE_WEAK_ONLY = os.environ.get("INCLUDE_WEAK_ONLY", "0") == "1"
-MAX_NAMES_PER_ID = 5
-MIN_FIRST_WORD = 3        # min length of first word for same_first_word
-MIN_PREFIX_LEN = 4        # min chars of a prefix for name_is_prefix_of_other
-LOGO_MIN_KEY_LEN = 3      # min chars of a cleaned logo key
+MIN_FIRST_TOKEN_LEN = 3          # min length of the first word
+NOISE_CHECK_MIN_GROUPS = 3       # min ids ending with a word to evaluate it
+NOISE_MIN_GROUPS = 8             # noise word: ends 8+ ids ...
+NOISE_MAX_TOP_CUISINE_SHARE = 0.5  # ... and top cuisine share < 50%
+BN_HIGH_MIN_BRANCHES = 2         # branchName evidence: high if 2+ branches
+BN_HIGH_MIN_SHARE = 0.5          # or half of the id's branches
 
-# method -> how it behaves
-ALWAYS, CAPPED, WEAK = "always", "capped", "weak"
-METHOD_KIND = {
-    "same_name": ALWAYS,
-    "same_name_no_space": ALWAYS,
-    "same_restaurant_slug": ALWAYS,
-    "same_branch_url_slug": ALWAYS,
-    "same_brand": CAPPED,
-    "same_brand_minus_noise": CAPPED,
-    "same_logo_exact": CAPPED,
-    "same_logo_brand": CAPPED,
-    "branchname_matches_other_name": CAPPED,
-    "fuzzy_spelling": CAPPED,
-    "same_first_word": WEAK,
-    "name_is_prefix_of_other": CAPPED,
+CONF_RANK = {"high": 0, "medium": 1, "low": 2}
+METHOD_PRIORITY = {
+    "same_brand": 0, "same_text_no_space": 1, "separator_rule": 2,
+    "prefix_rule": 3, "branchname_evidence": 4, "similar_spelling": 5,
+    "noise_words_rule": 6, "same_first_word": 7,
 }
-# name-based methods: skip a group if an earlier method already produced
-# exactly the same set of ids (removes duplicated reasons)
-NAME_METHODS = ["same_name", "same_name_no_space", "same_brand",
-                "same_brand_minus_noise"]
-
-# trailing words that are not part of the brand (already normalized form)
-NOISE_WORDS = {
-    "mall", "branch", "branches", "coop", "city", "center", "centre",
-    "tower", "complex", "plaza", "block", "avenue", "ave", "road", "st",
-    "street", "area", "kuwait", "kw", "q8",
-    "فرع", "فروع", "مجمع", "برج", "شارع", "منطقه", "كويت",
-}
-
-# words in logo file names that say nothing about the brand
-GENERIC_LOGO_WORDS = {
-    "logo", "logos", "img", "image", "images", "whatsapp", "screenshot",
-    "capture", "photo", "pic", "pdf", "rendition", "renditiondownload",
-    "download", "downloaded", "eng", "en", "ar", "arabic", "english",
-    "new", "old", "final", "copy", "option", "converted", "resized",
-    "resize", "thumb", "thumbnail", "medium", "small", "large", "square",
-    "full", "with", "of", "the", "a", "page", "jpg", "jpeg", "png", "webp",
-    "shop", "bg", "dh", "untitled", "design", "banner", "cover", "icon",
-    "profile", "edit", "edited", "tmp", "mediumsquarelogo", "location",
-    "pic",
-}
-LOGO_AFFIXES = ("logos", "logo", "jpeg", "jpg", "png")
 
 # ---------------------------------------------------------------
 # TEXT NORMALIZATION (English + Arabic)
@@ -120,7 +96,7 @@ _AR_MAP = {
     "أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا",
     "ى": "ي", "ی": "ي", "ئ": "ي",
     "ة": "ه", "ؤ": "و", "ک": "ك",
-    "ـ": None,  # tatweel
+    "ـ": None,
 }
 for _i, _d in enumerate("٠١٢٣٤٥٦٧٨٩"):
     _AR_MAP[_d] = str(_i)
@@ -129,6 +105,7 @@ for _i, _d in enumerate("۰۱۲۳۴۵۶۷۸۹"):
 AR_TABLE = str.maketrans(_AR_MAP)
 
 SEP_RE = re.compile(r"\s*(?:,|،|\||\(|\)|\s[-–—]\s)\s*")
+COMMA_RE = re.compile(r"[,،]")
 
 
 def clean(value):
@@ -139,7 +116,7 @@ def clean(value):
 
 
 def norm_code(value):
-    """Normalize city codes: 1 and 1.0 and '1' all become '1'."""
+    """1 and 1.0 and '1' all become '1'."""
     if value is None:
         return None
     if isinstance(value, float):
@@ -153,6 +130,13 @@ def norm_code(value):
     return text or None
 
 
+def sort_key(value):
+    value = str(value)
+    if value.isdigit():
+        return (0, int(value), value)
+    return (1, 0, value)
+
+
 def normalize_text(text):
     text = unicodedata.normalize("NFKC", str(text))
     text = APOSTROPHES.sub("", text)
@@ -161,85 +145,38 @@ def normalize_text(text):
 
 
 def _strip_al(tok):
-    """Remove the Arabic definite article from long tokens (الباشا -> باشا)."""
     if len(tok) > 4 and tok.startswith("ال"):
         return tok[2:]
     return tok
 
 
 def tokens(text):
-    toks = re.findall(r"[^\W_]+", normalize_text(text))
-    return [_strip_al(t) for t in toks]
+    return [_strip_al(t) for t in re.findall(r"[^\W_]+", normalize_text(text))]
+
+
+def first_segment(name):
+    """Text before the first comma."""
+    return COMMA_RE.split(str(name), maxsplit=1)[0].strip()
 
 
 def first_part(name):
-    """First non-empty part before a comma / parenthesis / dash / |."""
+    """Text before a comma / parenthesis / ' - ' / '|'."""
     parts = [p for p in SEP_RE.split(str(name)) if p.strip()]
     return parts[0].strip() if parts else str(name).strip()
 
 
-def strip_noise_key(name):
-    t = tokens(first_part(name))
-    while len(t) > 1 and (t[-1] in NOISE_WORDS or t[-1].isdigit()):
-        t.pop()
-    return " ".join(t)
+def brand_key(name):
+    return " ".join(tokens(first_segment(name)))
 
 
-def url_slug(url):
-    """Last path segment of a URL (normalized)."""
-    if not url:
-        return None
-    m = re.search(r"/([^/?#]+)/?$", str(url))
-    if not m:
-        return None
-    s = normalize_text(urllib.parse.unquote(m.group(1))).strip()
-    return s or None
+def alt_key(name):
+    return " ".join(tokens(first_part(name)))
 
 
-# ---------------------------------------------------------------
-# LOGO CLEANING
-# ---------------------------------------------------------------
-def logo_exact(url):
-    """Logo URL without query string (?width=180) -> exact-file signal."""
-    if not url:
-        return None
-    return str(url).split("?")[0].split("#")[0].strip().lower() or None
-
-
-def _strip_logo_affixes(word):
-    changed = True
-    while changed:
-        changed = False
-        for a in LOGO_AFFIXES:
-            if word.startswith(a) and len(word) - len(a) >= 3:
-                word, changed = word[len(a):], True
-            elif word.endswith(a) and len(word) - len(a) >= 3:
-                word, changed = word[:-len(a)], True
-    return word
-
-
-def logo_key(url):
-    """
-    Brand-like key from a logo file name, or None when the file name is
-    generic (logo_6372..., WhatsApp_Image..., IMG_..., Capture...).
-    Drops: query string, extension, all digits (timestamps), generic words.
-    """
-    if not url:
-        return None
-    path = str(url).split("?")[0].split("#")[0]
-    fname = urllib.parse.unquote(path.rsplit("/", 1)[-1])
-    stem = fname.rsplit(".", 1)[0] if "." in fname else fname
-    words = re.findall(r"[^\W\d_]+", normalize_text(stem))   # letters only
-    out = []
-    for w in words:
-        if w in GENERIC_LOGO_WORDS:
-            continue
-        w = _strip_logo_affixes(w)
-        if len(w) < 2 or w in GENERIC_LOGO_WORDS:
-            continue
-        out.append(_strip_al(w))
-    key = " ".join(out)
-    return key if len(key.replace(" ", "")) >= LOGO_MIN_KEY_LEN else None
+def jaccard(a, b):
+    if not a or not b:
+        return 0.0
+    return len(a & b) / len(a | b)
 
 
 # ---------------------------------------------------------------
@@ -283,10 +220,10 @@ def load_records(s3, bucket, key):
 
 
 # ---------------------------------------------------------------
-# FUZZY (rapidfuzz, all-vs-all in chunks, no blocking, no skipping)
+# FUZZY (rapidfuzz, all vs all, nothing skipped)
 # ---------------------------------------------------------------
 def fuzzy_pairs(keys_in):
-    keys = sorted(k for k in keys_in if len(k) >= FUZZY_MIN_LEN)
+    keys = sorted(keys_in)
     pairs = []
     n = len(keys)
     for start in range(0, n, FUZZY_CHUNK):
@@ -298,7 +235,7 @@ def fuzzy_pairs(keys_in):
         rows, cols = np.nonzero(scores)
         for r, c in zip(rows, cols):
             gi = start + int(r)
-            if int(c) > gi:                      # upper triangle only
+            if int(c) > gi:
                 pairs.append((keys[gi], keys[int(c)], int(scores[r, c])))
     return pairs
 
@@ -311,11 +248,20 @@ def main(s3=None, bucket=None):
         s3 = make_client()
         bucket = os.environ["CF_R2_BUCKET_NAME"]
 
-    # ---------- STEP 1+2: list / read / count ----------
+    # ============ read + count ============
     files = list_json_files(s3, bucket, R2_PREFIX)
     print(f"Files found: {len(files)}")
 
-    ids = defaultdict(lambda: defaultdict(Counter))
+    def new_acc():
+        return {
+            "names": Counter(), "branch_ids": set(), "cities": set(),
+            "cuisines": set(), "cuisine_str": Counter(),
+            "vertical": Counter(), "slug": Counter(), "url": Counter(),
+            "branchName": Counter(), "shopCity": Counter(),
+            "logo": Counter(), "branch_brands": defaultdict(set),
+        }
+
+    acc = defaultdict(new_acc)
     total_records = 0
 
     def _load(k):
@@ -328,295 +274,348 @@ def main(s3=None, bucket=None):
                 _id = clean(r.get("id"))
                 if not _id:
                     continue
-                bag = ids[_id]
-                for field in ("name", "restaurantSlug", "branchUrl",
-                              "branchName", "shopCity", "logo"):
-                    v = r.get(field)
-                    v = norm_code(v) if field == "shopCity" else clean(v)
+                a = acc[_id]
+                name = clean(r.get("name"))
+                b_id = clean(r.get("branchId"))
+                b_name = clean(r.get("branchName"))
+                city = norm_code(r.get("shopCity"))
+                cuisine_str = clean(r.get("cuisineString"))
+                vertical = clean(r.get("verticalType"))
+
+                if name:
+                    a["names"][name] += 1
+                if b_id:
+                    a["branch_ids"].add(b_id)
+                if city:
+                    a["cities"].add(city)
+                    a["shopCity"][city] += 1
+                if cuisine_str:
+                    a["cuisine_str"][cuisine_str] += 1
+                    for part in cuisine_str.split(","):
+                        p = re.sub(r"\s+", " ", part).strip().lower()
+                        if p:
+                            a["cuisines"].add(p)
+                if vertical:
+                    a["vertical"][vertical] += 1
+                for field, bag in (("restaurantSlug", "slug"),
+                                   ("branchUrl", "url"), ("logo", "logo")):
+                    v = clean(r.get(field))
                     if v:
-                        bag[field][v] += 1
+                        a[bag][v] += 1
+                if b_name:
+                    a["branchName"][b_name] += 1
+                    if b_id:
+                        bk = brand_key(b_name)
+                        if bk:
+                            a["branch_brands"][bk].add(b_id)
             print(f"[{i}/{len(files)}] {key} -> {len(records)} records")
 
     print("\n================ COUNTS ================")
     print(f"Total records (all files) : {total_records}")
-    print(f"Unique ids after dedup    : {len(ids)}")
+    print(f"Unique ids after dedup    : {len(acc)}")
 
-    # ---------- STEP 3: canonical row per id ----------
+    # ============ one record per id ============
     def ranked(counter):
-        # most frequent first, tie-break on shortest value
         return [v for v, _ in sorted(counter.items(),
-                                     key=lambda x: (-x[1], len(x[0])))]
+                                     key=lambda x: (-x[1], len(x[0]), x[0]))]
 
     def canon(counter):
         r = ranked(counter)
         return r[0] if r else None
 
     rec = {}
-    for _id, bag in ids.items():
-        names = ranked(bag["name"])
-        if not names:
-            continue     # cannot compare without a name
-        logo = canon(bag["logo"])
+    for _id, a in acc.items():
+        if not a["names"]:
+            continue
+        names = ranked(a["names"])
+        keys = {brand_key(n) for n in names}
+        keys.discard("")
+        logo = canon(a["logo"])
+        if logo and LOGO_STRIP_QUERY:
+            logo = logo.split("?")[0]
         rec[_id] = {
             "id": _id,
             "name": names[0],
-            "names": names[:MAX_NAMES_PER_ID],
-            "restaurantSlug": canon(bag["restaurantSlug"]),
-            "branchUrl": canon(bag["branchUrl"]),
-            "branchName": canon(bag["branchName"]),
-            "shopCity": canon(bag["shopCity"]),
+            "names": names,
+            "keys": keys,
+            "no_comma": all(not COMMA_RE.search(n) for n in names),
+            "branch_ids": a["branch_ids"],
+            "cities": a["cities"],
+            "cuisines": a["cuisines"],
+            "branch_brands": a["branch_brands"],
+            "cuisineString": canon(a["cuisine_str"]),
+            "verticalType": canon(a["vertical"]),
+            "restaurantSlug": canon(a["slug"]),
+            "branchUrl": canon(a["url"]),
+            "branchName": canon(a["branchName"]),
+            "shopCity": canon(a["shopCity"]),
             "logo": logo,
-            "logo_exact": logo_exact(logo),
-            "logo_key": logo_key(logo),
         }
     print(f"Unique ids with a name    : {len(rec)}")
 
-    # ---------- logo audit ----------
-    logo_stat = Counter()
-    for r in rec.values():
-        if not r["logo"]:
-            logo_stat["no logo"] += 1
-        elif r["logo_key"] is None:
-            logo_stat["generic file name (ignored as brand signal)"] += 1
+    def established(r):
+        return (len(r["names"]) >= EST_MIN_NAMES
+                or len(r["branch_ids"]) >= EST_MIN_BRANCHES)
+
+    # ============ reasons container ============
+    # reasons[id] = list of (method, word, confidence, group_size)
+    reasons = defaultdict(list)
+
+    def add_group(method, word, id_conf):
+        """id_conf: {id: confidence}"""
+        if len(id_conf) < 2 or not word:
+            return
+        size = len(id_conf)
+        for _id, c in id_conf.items():
+            reasons[_id].append((method, word, c, size))
+
+    def set_best(d, _id, conf):
+        if _id not in d or CONF_RANK[conf] < CONF_RANK[d[_id]]:
+            d[_id] = conf
+
+    # ============ noise words learned from the data ============
+    tail_ids = defaultdict(set)
+    for _id, r in rec.items():
+        for n in r["names"]:
+            t = tokens(first_part(n))
+            if len(t) >= 2:
+                tail_ids[t[-1]].add(_id)
+
+    noise_set, noise_info = set(), []
+    for tok, idset in tail_ids.items():
+        if len(idset) < NOISE_CHECK_MIN_GROUPS:
+            continue
+        cc = Counter()
+        for i in idset:
+            cc.update(rec[i]["cuisines"])
+        top_c, top_n = cc.most_common(1)[0] if cc else (None, 0)
+        share = top_n / len(idset)
+        if len(idset) >= NOISE_MIN_GROUPS and share < NOISE_MAX_TOP_CUISINE_SHARE:
+            noise_set.add(tok)
+            noise_info.append((tok, len(idset), top_c, round(share, 2)))
+    noise_info.sort(key=lambda x: (-x[1], x[0]))
+
+    # ============ indexes ============
+    brand_idx = defaultdict(set)      # text before first comma
+    alt_idx = defaultdict(set)        # text before comma / ( / - / |
+    noise_idx = defaultdict(set)      # alt text without trailing noise words
+    squash_idx = defaultdict(set)     # brand text without spaces
+    squash_keys = defaultdict(set)    # squash -> distinct brand texts
+    first_idx = defaultdict(set)      # first word of brand text
+
+    for _id, r in rec.items():
+        for n in r["names"]:
+            bk = brand_key(n)
+            if bk:
+                brand_idx[bk].add(_id)
+                sq = bk.replace(" ", "")
+                squash_idx[sq].add(_id)
+                squash_keys[sq].add(bk)
+                w = bk.split()[0]
+                if len(w) >= MIN_FIRST_TOKEN_LEN:
+                    first_idx[w].add(_id)
+            ak = alt_key(n)
+            if ak:
+                alt_idx[ak].add(_id)
+                t = ak.split()
+                while len(t) > 1 and t[-1] in noise_set:
+                    t.pop()
+                noise_idx[" ".join(t)].add(_id)
+
+    # ============ name-based groups (deduped by same id-set) ============
+    seen_sets = set()
+
+    def name_group(method, word, idset, conf):
+        if len(idset) < 2:
+            return
+        fs = frozenset(idset)
+        if fs in seen_sets:
+            return
+        seen_sets.add(fs)
+        add_group(method, word, dict.fromkeys(idset, conf))
+
+    for key, s in brand_idx.items():
+        name_group("same_brand", key, s, "high")
+
+    for key, s in alt_idx.items():
+        name_group("separator_rule", key, s, "high")
+
+    for sq, s in squash_idx.items():
+        keys = squash_keys[sq]
+        if len(keys) < 2:
+            continue                      # same text -> already same_brand
+        ordered = sorted(s, key=lambda i: (-len(rec[i]["names"]), sort_key(i)))
+        head = rec[ordered[0]]
+        min_j = min(jaccard(head["cuisines"], rec[i]["cuisines"])
+                    for i in ordered[1:])
+        conf = "high" if min_j >= SQUASH_MIN_JACCARD else "low"
+        name_group("same_text_no_space", " ~ ".join(sorted(keys)), s, conf)
+
+    for key, s in noise_idx.items():
+        name_group("noise_words_rule", key, s, "medium")
+
+    # ============ same first word (weak) ============
+    for key, s in first_idx.items():
+        add_group("same_first_word", key, dict.fromkeys(s, "low"))
+
+    # ============ prefix rule ============
+    head_index = defaultdict(set)
+    for _id, r in rec.items():
+        if not established(r):
+            continue
+        for key in r["keys"]:
+            t = tuple(key.split())
+            if t and len("".join(t)) >= MIN_HEAD_LEN:
+                head_index[t].add(_id)
+
+    prefix_groups = defaultdict(dict)
+    for _id, r in rec.items():
+        best = None
+        for key in r["keys"]:
+            toks = key.split()
+            for L in range(len(toks) - 1, 0, -1):
+                heads = head_index.get(tuple(toks[:L]), set()) - {_id}
+                if heads:
+                    if best is None or L > best[0]:
+                        best = (L, toks, heads)
+                    break
+        if best is None:
+            continue
+        L, toks, heads = best
+        hi = sorted(heads, key=lambda h: (-len(rec[h]["names"]), sort_key(h)))[0]
+        h = rec[hi]
+        cj = jaccard(r["cuisines"], h["cuisines"])
+        shared_cities = len(r["cities"] & h["cities"])
+        tail = toks[L:]
+        est = established(r)
+        if (not est and r["no_comma"] and cj >= HIGH_MIN_JACCARD
+                and shared_cities >= 1 and len(tail) <= HIGH_MAX_TAIL_TOKENS):
+            conf = "high"
+        elif not est and cj >= MED_MIN_JACCARD:
+            conf = "medium"
         else:
-            logo_stat["brand-like file name (used)"] += 1
-    print("\n================ LOGO CLEANING ================")
-    for k, v in logo_stat.items():
-        print(f"  {k:<48}: {v}")
+            conf = "low"
+        grp = prefix_groups[" ".join(toks[:L])]
+        set_best(grp, _id, conf)
+        for hd in heads:
+            set_best(grp, hd, conf)
+    for word, id_conf in prefix_groups.items():
+        add_group("prefix_rule", word, id_conf)
 
-    with open(LOGO_AUDIT_FILE, "w", encoding="utf-8-sig", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["id", "name", "logo_key", "logo"])
-        for r in sorted(rec.values(), key=lambda x: (x["logo_key"] or "~", x["name"])):
-            w.writerow([r["id"], r["name"], r["logo_key"] or "", r["logo"] or ""])
-
-    # ---------- STEP 4: build indexes  method -> key -> {ids} ----------
-    raw = defaultdict(lambda: defaultdict(set))
-
-    def index(method, key, _id):
-        if key:
-            raw[method][key].add(_id)
-
+    # ============ branchName evidence ============
+    key_to_ids = defaultdict(set)
     for _id, r in rec.items():
-        for n in r["names"]:
-            toks = tokens(n)
-            if not toks:
-                continue
-            index("same_name", " ".join(toks), _id)
-            index("same_name_no_space", "".join(toks), _id)
-            ft = tokens(first_part(n))
-            if ft:
-                index("same_brand", " ".join(ft), _id)
-            index("same_brand_minus_noise", strip_noise_key(n), _id)
-            if len(toks[0]) >= MIN_FIRST_WORD:
-                index("same_first_word", toks[0], _id)
+        for k in r["keys"]:
+            key_to_ids[k].add(_id)
 
-        if r["restaurantSlug"]:
-            index("same_restaurant_slug", normalize_text(r["restaurantSlug"]), _id)
-        index("same_branch_url_slug", url_slug(r["branchUrl"]), _id)
-        index("same_logo_exact", r["logo_exact"], _id)
-        index("same_logo_brand", r["logo_key"], _id)
-
-    brand_idx = raw["same_brand"]
-
-    # branchName equals ANOTHER restaurant's brand
+    bn_groups = defaultdict(dict)
     for _id, r in rec.items():
-        if not r["branchName"]:
-            continue
-        bn = " ".join(tokens(first_part(r["branchName"])))
-        others = brand_idx.get(bn, set()) - {_id}
-        if bn and others:
-            grp = raw["branchname_matches_other_name"][bn]
-            grp.add(_id)
-            grp |= others
-
-    # a name that starts with another restaurant's brand
-    for _id, r in rec.items():
-        for n in r["names"]:
-            ft = tokens(first_part(n))
-            hit = None
-            for L in range(len(ft) - 1, 0, -1):
-                head = " ".join(ft[:L])
-                if len(head.replace(" ", "")) < MIN_PREFIX_LEN:
-                    break
-                if brand_idx.get(head, set()) - {_id}:
-                    hit = head
-                    break
-            if hit:
-                grp = raw["name_is_prefix_of_other"][hit]
-                grp.add(_id)
-                grp |= brand_idx[hit]
-                break
-
-    # ---------- turn indexes into groups ----------
-    groups = []                      # (method, key, sorted ids)
-    seen_name_sets = set()
-    for method in NAME_METHODS:      # name methods first, deduped by id-set
-        for key, idset in raw[method].items():
-            if len(idset) < 2:
+        for bk, bset in r["branch_brands"].items():
+            if bk in r["keys"]:
+                continue                  # branchName = its own name: natural
+            heads = key_to_ids.get(bk, set()) - {_id}
+            if not heads:
                 continue
-            fs = frozenset(idset)
-            if fs in seen_name_sets:
-                continue
-            seen_name_sets.add(fs)
-            groups.append((method, key, sorted(idset)))
-    for method, by_key in raw.items():
-        if method in NAME_METHODS or method == "fuzzy_spelling":
-            continue
-        for key, idset in by_key.items():
-            if len(idset) >= 2:
-                groups.append((method, key, sorted(idset)))
+            ev = len(bset)
+            share = ev / max(1, len(r["branch_ids"]))
+            conf = ("high" if ev >= BN_HIGH_MIN_BRANCHES
+                    or share >= BN_HIGH_MIN_SHARE else "medium")
+            grp = bn_groups[bk]
+            set_best(grp, _id, conf)
+            for hd in heads:
+                set_best(grp, hd, conf)
+    for word, id_conf in bn_groups.items():
+        add_group("branchname_evidence", word, id_conf)
 
-    # fuzzy spelling over the no-space keys (no blocking, nothing skipped)
-    nospace = raw["same_name_no_space"]
-    print(f"\nFuzzy: comparing {sum(1 for k in nospace if len(k) >= FUZZY_MIN_LEN)} "
-          f"unique names (score >= {FUZZY_MIN_SCORE:.0f})...")
-    fz = fuzzy_pairs(nospace.keys())
-    for ka, kb, score in fz:
-        idset = nospace[ka] | nospace[kb]
-        if len(idset) >= 2:
-            groups.append(("fuzzy_spelling", f"{ka}~{kb}:{score}", sorted(idset)))
+    # ============ similar spelling (all vs all) ============
+    print(f"\nFuzzy: comparing {len(squash_idx)} unique names "
+          f"(score >= {FUZZY_MIN_SCORE:.0f}), nothing skipped...")
+    fz = fuzzy_pairs(squash_idx.keys())
     print(f"Fuzzy pairs found: {len(fz)}")
+    for ka, kb, score in fz:
+        ia, ib = squash_idx[ka], squash_idx[kb]
+        ca = set().union(*(rec[i]["cuisines"] for i in ia))
+        cb = set().union(*(rec[i]["cuisines"] for i in ib))
+        conf = "high" if jaccard(ca, cb) >= SQUASH_MIN_JACCARD else "low"
+        word = f"{sorted(squash_keys[ka])[0]} ~ {sorted(squash_keys[kb])[0]}"
+        add_group("similar_spelling", word, dict.fromkeys(ia | ib, conf))
 
-    # ---------- STEP 5: reasons, strength, review clusters ----------
-    reasons = defaultdict(set)
-    strong_pairs = defaultdict(set)   # id -> {(method, key)} that merged clusters
-    weak_pairs = defaultdict(set)     # id -> {(method, key)} weak / too_big
-    weak_tags = defaultdict(set)
-    strong = set()
-    city_peer = set()
-    parent = {}
-
-    def find(x):
-        parent.setdefault(x, x)
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
-
-    for method, key, id_list in groups:
-        kind = METHOD_KIND[method]
-        n = len(id_list)
-        unionable = kind == ALWAYS or (kind == CAPPED and n <= UNION_MAX_GROUP)
-        tag = f"{method}[{key}]"
-        if kind == CAPPED and not unionable:
-            tag += f"(n={n},too_big)"
-        for _id in id_list:
-            reasons[_id].add(tag)
-            if unionable:
-                strong_pairs[_id].add((method, key))
-            else:
-                weak_pairs[_id].add((method, key))
-                weak_tags[_id].add(tag)
-        if not unionable:
-            continue
-        strong.update(id_list)
-        root = find(id_list[0])
-        for other in id_list[1:]:
-            ro = find(other)
-            if ro != root:
-                parent[ro] = root
-        cities = Counter(rec[i]["shopCity"] for i in id_list if rec[i]["shopCity"])
-        for i in id_list:
-            c = rec[i]["shopCity"]
-            if c and cities[c] > 1:
-                city_peer.add(i)
-
-    flagged = [i for i in reasons if (i in strong or INCLUDE_WEAK_ONLY)]
-    weak_only_hidden = len([i for i in reasons if i not in strong]) if not INCLUDE_WEAK_ONLY else 0
-
-    cluster_members = defaultdict(list)
-    for i in flagged:
-        if i in strong:
-            cluster_members[find(i)].append(i)
-    order = sorted(cluster_members, key=lambda r_: (-len(cluster_members[r_]), r_))
-    label = {root: f"C{k + 1:05d}" for k, root in enumerate(order)}
-
-    # ---------- STEP 6: CSV ----------
-    def short_key(method, key):
-        return key.split("~")[0] if method == "fuzzy_spelling" else key
-
-    hint = {}
-    for root, members in cluster_members.items():
-        c = Counter()
-        for m in members:
-            for method, key in strong_pairs[m]:
-                c[short_key(method, key)] += 1
-        hint[root] = (sorted(c.items(), key=lambda x: (-x[1], len(x[0])))[0][0]
-                      if c else "")
-
-    def fmt(pairs):
-        return " | ".join(sorted(f"{m}[{k}]" for m, k in pairs))
-
+    # ============ build the rows ============
     rows = []
-    for _id in flagged:
+    for _id, rs in reasons.items():
         r = rec[_id]
-        if _id in strong:
-            root = find(_id)
-            lab, size, hnt = label[root], len(cluster_members[root]), hint[root]
-        else:
-            words = sorted({k for m, k in weak_pairs[_id] if m == "same_first_word"})
-            hnt = " + ".join(words)
-            lab, size = "W_" + (hnt or "other"), 0
+        primary = min(rs, key=lambda x: (CONF_RANK[x[2]],
+                                         METHOD_PRIORITY[x[0]], -x[3], x[1]))
+        method, word, conf, size = primary
+        tags_all = {f"{m}[{w}]" for m, w, c, s in rs}
+        tags_strong = {f"{m}[{w}]" for m, w, c, s in rs if c == "high"}
+        tags_weak = tags_all - tags_strong
         rows.append({
-            "cluster_label": lab,
-            "cluster_hint": hnt,
-            "cluster_size": size,
+            "group_word": word,
+            "group_method": method,
+            "strength": "strong" if conf == "high" else "weak",
+            "confidence": conf,
+            "group_size": size,
             "id": _id,
             "name": r["name"],
             "all_names": " | ".join(r["names"]) if len(r["names"]) > 1 else "",
+            "cuisineString": r["cuisineString"] or "",
+            "verticalType": r["verticalType"] or "",
+            "shopCity": r["shopCity"] or "",
+            "branches": len(r["branch_ids"]),
             "restaurantSlug": r["restaurantSlug"] or "",
             "branchUrl": r["branchUrl"] or "",
             "branchName": r["branchName"] or "",
-            "shopCity": r["shopCity"] or "",
-            "same_city_peer": "Y" if _id in city_peer else "",
-            "strength": "strong" if _id in strong else "weak_only",
-            "strong_reason": fmt(strong_pairs[_id]),
-            "weak_reason": " | ".join(sorted(weak_tags[_id])),
-            "logo_key": r["logo_key"] or "",
             "logo": r["logo"] or "",
-            "grouping_reason": " | ".join(sorted(reasons[_id])),
+            "strong_reason": " | ".join(sorted(tags_strong)),
+            "weak_reason": " | ".join(sorted(tags_weak)),
+            "grouping_reason": " | ".join(sorted(tags_all)),
         })
-    wc = Counter(x["cluster_label"] for x in rows if x["strength"] == "weak_only")
-    for x in rows:
-        if x["strength"] == "weak_only":
-            x["cluster_size"] = wc[x["cluster_label"]]
-    rows.sort(key=lambda x: (x["strength"] != "strong", x["cluster_label"],
+
+    rows.sort(key=lambda x: (x["group_word"], METHOD_PRIORITY[x["group_method"]],
                              x["name"].lower()))
 
-    fields = ["cluster_label", "cluster_hint", "cluster_size", "id", "name",
-              "all_names", "restaurantSlug", "branchUrl", "branchName",
-              "shopCity", "same_city_peer", "strength", "strong_reason",
-              "weak_reason", "logo_key", "logo", "grouping_reason"]
+    fields = ["group_word", "group_method", "strength", "confidence",
+              "group_size", "id", "name", "all_names", "cuisineString",
+              "verticalType", "shopCity", "branches", "restaurantSlug",
+              "branchUrl", "branchName", "logo", "strong_reason",
+              "weak_reason", "grouping_reason"]
     with open(OUT_FILE, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(rows)
 
-    # ---------- SUMMARY ----------
+    # ============ summary ============
+    strong_ids = sum(1 for x in rows if x["strength"] == "strong")
     print("\n================ SIMILARITY CANDIDATES ================")
-    print(f"Ids in CSV                              : {len(rows)}")
-    print(f"  strong ids                            : {len(strong & set(flagged))}")
-    print(f"  weak-only ids hidden                  : {weak_only_hidden}")
-    print(f"Review clusters (label only, no merge)  : {len(order)}")
-    if order:
-        sizes = [len(cluster_members[r_]) for r_ in order[:5]]
-        print(f"Largest clusters                        : {sizes}")
-        if sizes[0] > 200:
-            print("  !! very large cluster: lower UNION_MAX_GROUP or check the "
-                  "grouping_reason of that cluster")
+    print(f"Ids in CSV                    : {len(rows)}")
+    print(f"  strong (has a high reason)  : {strong_ids}")
+    print(f"  weak only                   : {len(rows) - strong_ids}")
 
-    method_counts = Counter()
-    for _id in flagged:
-        for m in reasons[_id]:
-            method_counts[m.split("[")[0]] += 1
-    print("\nIds touched per method:")
-    for m, c in method_counts.most_common():
-        print(f"  {m:<32} [{METHOD_KIND[m]:<6}]: {c}")
+    per_method = defaultdict(lambda: {"ids": set(), "strong": set(), "groups": set()})
+    for _id, rs in reasons.items():
+        for m, w, c, s in rs:
+            per_method[m]["ids"].add(_id)
+            per_method[m]["groups"].add(w)
+            if c == "high":
+                per_method[m]["strong"].add(_id)
+    print("\nPer method (ids touched | of them strong | groups):")
+    for m in sorted(per_method, key=lambda x: METHOD_PRIORITY[x]):
+        d = per_method[m]
+        print(f"  {m:<22}: {len(d['ids']):>5} | {len(d['strong']):>5} | {len(d['groups'])}")
+
+    biggest = sorted({(m, w, s) for rs in reasons.values() for m, w, c, s in rs},
+                     key=lambda x: -x[2])[:10]
+    print("\nLargest groups:")
+    for m, w, s in biggest:
+        print(f"  {m}[{w}] : {s} ids")
+
+    print(f"\nNoise words learned from the data ({len(noise_info)}):")
+    for tok, n, top_c, share in noise_info[:15]:
+        print(f"  {tok}: ends {n} ids | top cuisine {top_c} {share}")
 
     print(f"\nSaved -> {OUT_FILE}")
-    print(f"Saved -> {LOGO_AUDIT_FILE}  (check logo_key column to validate the logo cleaning)")
-    print("Sort by cluster_label in Excel to see candidates next to each other.")
+    print("Sort / filter by group_word and strength in Excel; logo column has the link.")
 
 
 if __name__ == "__main__":

@@ -4,14 +4,8 @@ on:
   workflow_dispatch:   # manual run only
     inputs:
       fuzzy_min_score:
-        description: "Fuzzy spelling threshold (0-100)"
+        description: "Spelling similarity threshold (0-100)"
         default: "88"
-      union_max_group:
-        description: "Max group size allowed to merge review clusters"
-        default: "40"
-      include_weak_only:
-        description: "Include ids that only have weak reasons (1/0)"
-        default: "1"
 
 jobs:
   find-similar-names:
@@ -38,17 +32,12 @@ jobs:
           CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
           R2_PREFIX: "merged-restaurant-info/year=2025/month=09/day=17/"
           OUT_FILE: "similar_name_candidates.csv"
-          LOGO_AUDIT_FILE: "logo_audit.csv"
           FUZZY_MIN_SCORE: ${{ inputs.fuzzy_min_score }}
-          UNION_MAX_GROUP: ${{ inputs.union_max_group }}
-          INCLUDE_WEAK_ONLY: ${{ inputs.include_weak_only }}
         run: python similar_names.py
 
-      - name: Upload CSV artifacts
+      - name: Upload CSV artifact
         uses: actions/upload-artifact@v4
         with:
           name: similar-name-candidates
-          path: |
-            similar_name_candidates.csv
-            logo_audit.csv
+          path: similar_name_candidates.csv
           retention-days: 30
