@@ -1,4 +1,4 @@
-name: Talabat Restaurant Name Similarity Audit
+name: Name Similarity Audit
 
 on:
   workflow_dispatch:
