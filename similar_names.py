@@ -16,8 +16,8 @@ CAPPED-union (strong, but only unioned when the group is <= UNION_MAX_GROUP,
 otherwise the reason is still written with "too_big" but clusters are NOT merged):
     same_brand, same_brand_minus_noise, same_logo_exact, same_logo_brand,
     branchname_matches_other_name, name_is_prefix_of_other, fuzzy_spelling
-WEAK (reason only, never merges clusters, ids with only weak reasons are
-hidden unless INCLUDE_WEAK_ONLY=1):
+WEAK (reason only, never merges strong clusters; ids with only weak reasons are
+hidden unless INCLUDE_WEAK_ONLY=1, then they get label W_<first word>):
     same_first_word
 
 Logo cleaning
@@ -480,6 +480,9 @@ def main(s3=None, bucket=None):
 
     # ---------- STEP 5: reasons, strength, review clusters ----------
     reasons = defaultdict(set)
+    strong_pairs = defaultdict(set)   # id -> {(method, key)} that merged clusters
+    weak_pairs = defaultdict(set)     # id -> {(method, key)} weak / too_big
+    weak_tags = defaultdict(set)
     strong = set()
     city_peer = set()
     parent = {}
@@ -500,6 +503,11 @@ def main(s3=None, bucket=None):
             tag += f"(n={n},too_big)"
         for _id in id_list:
             reasons[_id].add(tag)
+            if unionable:
+                strong_pairs[_id].add((method, key))
+            else:
+                weak_pairs[_id].add((method, key))
+                weak_tags[_id].add(tag)
         if not unionable:
             continue
         strong.update(id_list)
@@ -525,16 +533,34 @@ def main(s3=None, bucket=None):
     label = {root: f"C{k + 1:05d}" for k, root in enumerate(order)}
 
     # ---------- STEP 6: CSV ----------
+    def short_key(method, key):
+        return key.split("~")[0] if method == "fuzzy_spelling" else key
+
+    hint = {}
+    for root, members in cluster_members.items():
+        c = Counter()
+        for m in members:
+            for method, key in strong_pairs[m]:
+                c[short_key(method, key)] += 1
+        hint[root] = (sorted(c.items(), key=lambda x: (-x[1], len(x[0])))[0][0]
+                      if c else "")
+
+    def fmt(pairs):
+        return " | ".join(sorted(f"{m}[{k}]" for m, k in pairs))
+
     rows = []
     for _id in flagged:
         r = rec[_id]
         if _id in strong:
             root = find(_id)
-            lab, size = label[root], len(cluster_members[root])
+            lab, size, hnt = label[root], len(cluster_members[root]), hint[root]
         else:
-            lab, size = "WEAK", 1
+            words = sorted({k for m, k in weak_pairs[_id] if m == "same_first_word"})
+            hnt = " + ".join(words)
+            lab, size = "W_" + (hnt or "other"), 0
         rows.append({
             "cluster_label": lab,
+            "cluster_hint": hnt,
             "cluster_size": size,
             "id": _id,
             "name": r["name"],
@@ -545,16 +571,23 @@ def main(s3=None, bucket=None):
             "shopCity": r["shopCity"] or "",
             "same_city_peer": "Y" if _id in city_peer else "",
             "strength": "strong" if _id in strong else "weak_only",
+            "strong_reason": fmt(strong_pairs[_id]),
+            "weak_reason": " | ".join(sorted(weak_tags[_id])),
             "logo_key": r["logo_key"] or "",
             "logo": r["logo"] or "",
             "grouping_reason": " | ".join(sorted(reasons[_id])),
         })
-    rows.sort(key=lambda x: (x["cluster_label"], x["name"].lower()))
+    wc = Counter(x["cluster_label"] for x in rows if x["strength"] == "weak_only")
+    for x in rows:
+        if x["strength"] == "weak_only":
+            x["cluster_size"] = wc[x["cluster_label"]]
+    rows.sort(key=lambda x: (x["strength"] != "strong", x["cluster_label"],
+                             x["name"].lower()))
 
-    fields = ["cluster_label", "cluster_size", "id", "name", "all_names",
-              "restaurantSlug", "branchUrl", "branchName", "shopCity",
-              "same_city_peer", "strength", "logo_key", "logo",
-              "grouping_reason"]
+    fields = ["cluster_label", "cluster_hint", "cluster_size", "id", "name",
+              "all_names", "restaurantSlug", "branchUrl", "branchName",
+              "shopCity", "same_city_peer", "strength", "strong_reason",
+              "weak_reason", "logo_key", "logo", "grouping_reason"]
     with open(OUT_FILE, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()

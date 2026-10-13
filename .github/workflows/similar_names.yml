@@ -11,7 +11,7 @@ on:
         default: "40"
       include_weak_only:
         description: "Include ids that only have weak reasons (1/0)"
-        default: "0"
+        default: "1"
 
 jobs:
   find-similar-names:
