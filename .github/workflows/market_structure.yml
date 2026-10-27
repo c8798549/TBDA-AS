@@ -22,13 +22,12 @@ jobs:
 
       - name: Run market structure analysis
         env:
-          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.CF_R2_BUCKET_NAME }}
           R2_PREFIX: "merged-restaurant-info/year=2025/month=09/day=17/"
-          # ملف الـ manual validation: ارفعيه في الـ repo (MAPPING_PATH)
-          # أو سيبي MAPPING_PATH واكتبي MAPPING_R2_KEY لو هو على R2
+
           MAPPING_PATH: "all_unique_restaurants_total.xlsx"
           MAPPING_R2_KEY: ""
           MAPPING_SHEET: "unique"
