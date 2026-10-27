@@ -4,7 +4,8 @@ market_structure.py
 Market / Restaurant Structure analysis.
 
 المصدر:
-  1) ملف الـ manual validation (sheet "unique"): كل صف = مطعم واحد، وفيه list بفروعه
+  1) ملف الـ brand grouping (sheet "restaurants" اللي بيعملها build_restaurants_sheet.py):
+     كل صف = مطعم (brand) واحد، وفيه list بفروعه
      (branchId) وأسماء الفروع (branchName).  <- المرجع لتعريف المطعم وفروعه.
   2) الـ JSON على R2: بنستخدمه بس لجلب shopCity / shopArea / cuisineString / verticalType
      للفروع (بالـ branchId). أي record فرعه مش في الملف بيتجاهل.
@@ -42,8 +43,8 @@ R2_PREFIX = os.environ.get(
 )
 
 MAPPING_R2_KEY = os.environ.get("MAPPING_R2_KEY", "")
-MAPPING_PATH = os.environ.get("MAPPING_PATH", "all_unique_restaurants_total.xlsx")
-MAPPING_SHEET = os.environ.get("MAPPING_SHEET", "")  # فاضي = أول sheet فيه "unique"
+MAPPING_PATH = os.environ.get("MAPPING_PATH", "unique_restaurants_grouped_by_brand.xlsx")
+MAPPING_SHEET = os.environ.get("MAPPING_SHEET", "restaurants")  # الـ sheet اللي عملها build_restaurants_sheet.py
 MAPPING_ID_COL = os.environ.get("MAPPING_ID_COL", "id")
 MAPPING_NAME_COL = os.environ.get("MAPPING_NAME_COL", "name")
 MAPPING_BRANCH_COL = os.environ.get("MAPPING_BRANCH_COL", "branchId")
@@ -56,7 +57,7 @@ AREA_MAP_PATH = os.environ.get("AREA_MAP_PATH", "shoparea_and_id.xlsx")
 AREA_MAP_ID_COL = os.environ.get("AREA_MAP_ID_COL", "area_id")
 AREA_MAP_LABEL_COL = os.environ.get("AREA_MAP_LABEL_COL", "area_name")
 
-EXPECTED_RESTAURANTS = int(os.environ.get("EXPECTED_RESTAURANTS", "3979"))
+EXPECTED_RESTAURANTS = int(os.environ.get("EXPECTED_RESTAURANTS", "0"))  # 0 = بدون مقارنة
 TOP_N = int(os.environ.get("TOP_N", "10"))
 OUT_DIR = os.environ.get("OUT_DIR", "market_structure_output")
 
@@ -70,7 +71,7 @@ CITY_LABELS = {
     "8": "Other / Unmapped",
 }
 
-RAW_COLS = ["branchId", "shopCity", "shopArea", "cuisineString", "verticalType"]
+RAW_COLS = ["id", "name", "branchId", "shopCity", "shopArea", "cuisineString", "verticalType"]
 os.makedirs(OUT_DIR, exist_ok=True)
 
 s3 = boto3.client(
@@ -167,6 +168,10 @@ def to_list(v):
     return [] if s in ("", "None", "nan") else [s]
 
 
+def is_none(v):
+    return v is None or (isinstance(v, float) and pd.isna(v))
+
+
 def read_table(src, name, sheet=None):
     if str(name).lower().endswith(".csv"):
         return pd.read_csv(src, dtype=str)
@@ -197,7 +202,8 @@ def load_mapping():
         if MAPPING_SHEET:
             sheet_used = MAPPING_SHEET
         else:
-            cands = [s for s in xl.sheet_names if "unique" in s.lower()]
+            cands = [s for s in xl.sheet_names if s.lower() == "restaurants"] or \
+                    [s for s in xl.sheet_names if "unique" in s.lower()]
             sheet_used = cands[0] if cands else xl.sheet_names[0]
         if hasattr(src, "seek"):
             src.seek(0)
@@ -228,6 +234,15 @@ def load_mapping():
         })
     rests = pd.DataFrame(rows)
 
+    # raw id -> restaurant (من عمود all_ids، عشان نعرف الـ ids المتعددة تبع نفس المطعم ولا لأ)
+    id_to_rest = {}
+    if "all_ids" in m.columns:
+        for rid, a in zip(m[MAPPING_ID_COL], m["all_ids"]):
+            for i in parse_ids(a):
+                id_to_rest.setdefault(i, rid)
+    for rid in rests["restaurant_id"]:
+        id_to_rest.setdefault(rid, rid)
+
     # area labels (اختياري)
     area_map, area_src = {}, "none"
     if AREA_MAP_PATH and os.path.exists(AREA_MAP_PATH):
@@ -242,7 +257,7 @@ def load_mapping():
         area_map = (t.groupby(MAPPING_AREA_COL)[MAPPING_AREANAME_COL]
                       .agg(lambda x: x.value_counts().index[0]).to_dict())
         area_src = f"{sheet_used} sheet ({MAPPING_AREANAME_COL})"
-    return rests, dup_ids, area_map, area_src, sheet_used
+    return rests, dup_ids, area_map, area_src, sheet_used, id_to_rest
 
 
 # ----------------------------------------------------------------------------
@@ -310,7 +325,7 @@ def dist_table(pairs, attr, col, total_restaurants):
 # 4) Main
 # ----------------------------------------------------------------------------
 def main():
-    rests, dup_ids, area_map, area_src, sheet_used = load_mapping()
+    rests, dup_ids, area_map, area_src, sheet_used, id_to_rest = load_mapping()
     raw, n_files = load_raw()
     total_records = len(raw)
 
@@ -339,6 +354,39 @@ def main():
 
     # ---------------- raw vs validation ----------------
     raw["branchId"] = raw["branchId"].astype(str).str.strip()
+    raw["id"] = raw["id"].astype(str).str.strip()
+
+    # فروع مشتركة حسب الـ JSONs: نفس الـ branchId ظاهر تحت أكتر من id
+    rb = raw[["branchId", "id", "name"]].drop_duplicates()
+    rb = rb[~rb["id"].str.lower().isin(["", "none", "nan"])]
+    gj = rb.groupby("branchId").agg(
+        ids=("id", lambda x: sorted(set(x))),
+        names=("name", lambda x: sorted({str(v) for v in x if not is_none(v)})),
+    )
+    gj = gj[gj["ids"].apply(len) > 1]
+    rows_j = []
+    for b, r in gj.iterrows():
+        mapped = sorted({id_to_rest[i] for i in r["ids"] if i in id_to_rest})
+        unmapped_n = sum(1 for i in r["ids"] if i not in id_to_rest)
+        if unmapped_n:
+            status = "has id not in validation file"
+        elif len(mapped) == 1:
+            status = "same restaurant in validation file"
+        else:
+            status = "different restaurants in validation file"
+        rows_j.append({
+            "branchId": b,
+            "ids_count": len(r["ids"]),
+            "ids": ", ".join(r["ids"]),
+            "names": " | ".join(r["names"]),
+            "restaurants_in_validation_count": len(mapped),
+            "restaurant_ids_in_validation": ", ".join(mapped),
+            "restaurant_names_in_validation": " | ".join(str(name_of.get(x)) for x in mapped),
+            "status": status,
+        })
+    shared_json_df = pd.DataFrame(rows_j, columns=[
+        "branchId", "ids_count", "ids", "names", "restaurants_in_validation_count",
+        "restaurant_ids_in_validation", "restaurant_names_in_validation", "status"])
     valid_b = set(pairs["branchId"])
     in_map = raw["branchId"].isin(valid_b)
     dropped_records = int((~in_map).sum())
@@ -353,7 +401,8 @@ def main():
     kv("JSON records", f"{total_records:,}")
     kv("Records ignored (branch not in file)", f"{dropped_records:,}  ({len(dropped_branch_ids):,} branchIds)")
     kv("Branches in file, missing from JSON", f"{len(missing_in_raw):,}")
-    kv("Branches shared by >1 restaurant", f"{len(shared_df):,}")
+    kv("Shared branches - validation file", f"{len(shared_df):,}  (branch under >1 restaurant)")
+    kv("Shared branches - JSONs", f"{len(shared_json_df):,}  (branch under >1 id)")
     kv("Duplicate restaurant ids in sheet", len(dup_ids))
     if missing_in_raw:
         out("\n  Branches in the validation file but missing from the JSON files")
@@ -364,8 +413,13 @@ def main():
             "restaurant": [name_of.get(per_branch[b][0]) for b in missing_in_raw],
         }))
     if len(shared_df):
-        out("\n  Shared branches (first 10) - full list in summary xlsx, sheet Shared_Branches:")
+        out("\n  Shared branches from the VALIDATION file (first 10) - full list: summary xlsx, sheet Shared_Branches_Unique:")
         show(shared_df, 10)
+    if len(shared_json_df):
+        out("\n  Shared branches from the JSONs (first 10) - full list: summary xlsx, sheet Shared_Branches_JSON:")
+        show(shared_json_df.drop(columns=["names", "restaurant_ids_in_validation"]), 10)
+        out("\n  JSON shared branches by status:")
+        show(shared_json_df["status"].value_counts().rename_axis("status").reset_index(name="branches"))
 
     # =======================================================================
     # Totals + per restaurant
@@ -410,7 +464,7 @@ def main():
     multi_rest_t = rest_table(rests[rests["branches"] > 1])
 
     section("2) TOTALS")
-    kv("Total restaurants", f"{total_restaurants:,}   (expected {EXPECTED_RESTAURANTS:,})")
+    kv("Total restaurants", f"{total_restaurants:,}" + (f"   (expected {EXPECTED_RESTAURANTS:,})" if EXPECTED_RESTAURANTS else ""))
     kv("Total branches (unique branchId)", f"{total_branches:,}")
     kv("Sum of branches listed per restaurant", f"{sum_branch_counts:,}")
 
@@ -491,7 +545,7 @@ def main():
     # ---------------- save ----------------
     overview = pd.DataFrame([
         ("Totals", "total_restaurants", total_restaurants),
-        ("Totals", "expected_restaurants", EXPECTED_RESTAURANTS),
+        *([("Totals", "expected_restaurants", EXPECTED_RESTAURANTS)] if EXPECTED_RESTAURANTS else []),
         ("Totals", "total_branches_unique", total_branches),
         ("Totals", "sum_of_branches_listed_per_restaurant", sum_branch_counts),
         ("Branches per restaurant", "average_listed", avg_listed),
@@ -512,7 +566,9 @@ def main():
         ("records_ignored_branch_not_in_validation_file", dropped_records),
         ("distinct_branchIds_ignored", len(dropped_branch_ids)),
         ("validation_branches_missing_from_json", len(missing_in_raw)),
-        ("branches_shared_by_more_than_one_restaurant", len(shared_df)),
+        ("shared_branches_validation_file", len(shared_df)),
+        ("shared_branches_json", len(shared_json_df)),
+        *[(f"shared_branches_json: {k}", int(v)) for k, v in shared_json_df["status"].value_counts().items()],
         ("duplicate_restaurant_ids_in_validation_sheet", len(dup_ids)),
         ("restaurants_without_city", city_without),
         ("restaurants_without_area", area_without),
@@ -527,7 +583,9 @@ def main():
         "Data_Quality": dq,
     }
     if len(shared_df):
-        summary_sheets["Shared_Branches"] = shared_df
+        summary_sheets["Shared_Branches_Unique"] = shared_df
+    if len(shared_json_df):
+        summary_sheets["Shared_Branches_JSON"] = shared_json_df
     if missing_in_raw:
         summary_sheets["Missing_In_JSON"] = pd.DataFrame({
             "branchId": missing_in_raw,
@@ -548,7 +606,7 @@ def main():
     for f in files:
         out(f"  {f}")
     out("  market_structure_report.txt")
-    if total_restaurants != EXPECTED_RESTAURANTS:
+    if EXPECTED_RESTAURANTS and total_restaurants != EXPECTED_RESTAURANTS:
         out(f"\n[WARNING] restaurants={total_restaurants} but expected {EXPECTED_RESTAURANTS}.")
 
     with open(os.path.join(OUT_DIR, "market_structure_report.txt"), "w", encoding="utf-8") as f:
