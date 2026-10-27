@@ -1,70 +1,47 @@
-name: Market Insights
+name: Market Structure Analysis
 
 on:
   workflow_dispatch:
-    inputs:
-      r2_prefix:
-        description: "R2 prefix"
-        required: true
-        default: "merged-restaurant-info/year=2025/month=09/day=17/"
-
-      use_reviewed_grouping:
-        description: "Use reviewed restaurant grouping"
-        required: true
-        type: choice
-        options:
-          - "false"
-          - "true"
-        default: "false"
 
 jobs:
-  count:
+  market-structure:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: python -m pip install boto3
+        run: pip install boto3 pandas openpyxl
 
-      - name: Run analysis
+      - name: Run market structure analysis
         env:
-          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
-          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
-          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
-          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
-          R2_PREFIX: ${{ inputs.r2_prefix }}
-          USE_REVIEWED_GROUPING: ${{ inputs.use_reviewed_grouping }}
-        run: |
-          set -o pipefail
-          python -u market_insights.py 2>&1 | tee analysis_log.txt
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PREFIX: "merged-restaurant-info/year=2025/month=09/day=17/"
+          MAPPING_PATH: "data/restaurants_validated.xlsx"
+          MAPPING_R2_KEY: ""
+          MAPPING_SHEET: "unique"
+          MAPPING_ID_COL: "id"
+          MAPPING_NAME_COL: "name"
+          MAPPING_BRANCH_COL: "branchId"
+          EXPECTED_RESTAURANTS: "3979"
+          TOP_N: "10"
+          OUT_DIR: "market_structure_output"
+        run: python market_structure.py
 
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: market-insights
+          name: market-structure-output
+          path: market_structure_output/
           if-no-files-found: warn
-          path: |
-            market_insights.json
-            unique_restaurants.json
-            restaurants_grouped.json
-            unique_branches.json
-            branches_grouped.json
-            restaurant_branch_counts.json
-            restaurants_multiple_branches.json
-            cuisine_distribution.json
-            duplicates_details.json
-            restaurants_multiple_names.json
-            restaurants_merged_by_id.json
-            restaurants_by_city.json
-            branches_by_area.json
-            restaurant_density_by_area.json
-            grouping_comparison.json
-            analysis_log.txt
