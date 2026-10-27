@@ -37,7 +37,7 @@ R2_PREFIX = os.environ.get(
 )
 
 MAPPING_R2_KEY = os.environ.get("MAPPING_R2_KEY", "")  # لو الملف على R2
-MAPPING_PATH = os.environ.get("MAPPING_PATH", "data/restaurants_validated.xlsx")
+MAPPING_PATH = os.environ.get("MAPPING_PATH", "all_unique_restaurants_total.xlsx")
 MAPPING_SHEET = os.environ.get("MAPPING_SHEET", "")  # فاضي = أول sheet اسمه فيه "unique"
 MAPPING_ID_COL = os.environ.get("MAPPING_ID_COL", "id")
 MAPPING_NAME_COL = os.environ.get("MAPPING_NAME_COL", "name")
@@ -91,6 +91,15 @@ def load_mapping():
         name = MAPPING_R2_KEY
     else:
         src, name = MAPPING_PATH, MAPPING_PATH
+        # لو الاسم من غير extension جرّب xlsx ثم csv
+        if not os.path.splitext(name)[1]:
+            for ext in (".xlsx", ".csv"):
+                if os.path.exists(name + ext):
+                    src = name = name + ext
+                    break
+        if not os.path.exists(name):
+            sys.exit(f"Mapping file not found: {name}. Put it in the repo and set "
+                     "MAPPING_PATH, or upload it to R2 and set MAPPING_R2_KEY.")
 
     if name.lower().endswith(".csv"):
         m = pd.read_csv(src, dtype=str)
