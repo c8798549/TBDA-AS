@@ -4,16 +4,19 @@ market_structure.py
 Market / Restaurant Structure analysis.
 
 المصدر:
-  1) ملف الـ manual validation (sheet "unique"): كل صف = مطعم واحد (3979)،
-     وعمود branchId فيه list بكل فروع المطعم.  <- ده المرجع لتعريف المطعم وفروعه.
-  2) الـ 119 JSON على R2: بنستخدمهم بس عشان نجيب shopCity / shopArea / cuisineString
-     للفروع (بالـ branchId). أي record فرعه مش في الملف بيتم تجاهله.
+  1) ملف الـ manual validation (sheet "unique"): كل صف = مطعم واحد، وفيه list بفروعه
+     (branchId) وأسماء الفروع (branchName).  <- المرجع لتعريف المطعم وفروعه.
+  2) الـ JSON على R2: بنستخدمه بس لجلب shopCity / shopArea / cuisineString / verticalType
+     للفروع (بالـ branchId). أي record فرعه مش في الملف بيتجاهل.
 
 Outputs (OUT_DIR):
-  market_structure_summary.json, branches_per_restaurant.json,
-  multi_branch_restaurants.json, branch_count_distribution.json,
-  restaurants_by_city.json, branches_by_area.json, area_density.json,
-  restaurants_by_cuisine.json, data_quality.json
+  market_structure_report.txt        نفس اللي بيتطبع في اللوج
+  market_structure_summary.xlsx      Overview + توزيع الفروع + كثافة المناطق + Data_Quality
+  branches_per_restaurant.xlsx       كل المطاعم (id, name, عدد الفروع, ids, names)
+  multi_branch_restaurants.xlsx      نفس الشكل للمطاعم متعددة الفروع بس
+  restaurants_by_city.xlsx           المطاعم/الفروع لكل مدينة (مع label)
+  branches_by_area.xlsx              المطاعم/الفروع لكل منطقة
+  restaurants_by_activity.xlsx       sheet بالـ cuisine + sheet بالـ verticalType
 """
 
 import io
@@ -24,6 +27,8 @@ import sys
 
 import boto3
 import pandas as pd
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
 
 # ----------------------------------------------------------------------------
 # Config
@@ -36,18 +41,36 @@ R2_PREFIX = os.environ.get(
     "R2_PREFIX", "merged-restaurant-info/year=2025/month=09/day=17/"
 )
 
-MAPPING_R2_KEY = os.environ.get("MAPPING_R2_KEY", "")  # لو الملف على R2
+MAPPING_R2_KEY = os.environ.get("MAPPING_R2_KEY", "")
 MAPPING_PATH = os.environ.get("MAPPING_PATH", "all_unique_restaurants_total.xlsx")
-MAPPING_SHEET = os.environ.get("MAPPING_SHEET", "")  # فاضي = أول sheet اسمه فيه "unique"
+MAPPING_SHEET = os.environ.get("MAPPING_SHEET", "")  # فاضي = أول sheet فيه "unique"
 MAPPING_ID_COL = os.environ.get("MAPPING_ID_COL", "id")
 MAPPING_NAME_COL = os.environ.get("MAPPING_NAME_COL", "name")
 MAPPING_BRANCH_COL = os.environ.get("MAPPING_BRANCH_COL", "branchId")
+MAPPING_BRANCHNAME_COL = os.environ.get("MAPPING_BRANCHNAME_COL", "branchName")
+MAPPING_AREA_COL = os.environ.get("MAPPING_AREA_COL", "shopArea")
+MAPPING_AREANAME_COL = os.environ.get("MAPPING_AREANAME_COL", "area_name")
+
+# ملف map للمناطق (xlsx أو csv): أعمدة area_id , area_name
+AREA_MAP_PATH = os.environ.get("AREA_MAP_PATH", "shoparea_and_id.xlsx")
+AREA_MAP_ID_COL = os.environ.get("AREA_MAP_ID_COL", "area_id")
+AREA_MAP_LABEL_COL = os.environ.get("AREA_MAP_LABEL_COL", "area_name")
 
 EXPECTED_RESTAURANTS = int(os.environ.get("EXPECTED_RESTAURANTS", "3979"))
 TOP_N = int(os.environ.get("TOP_N", "10"))
 OUT_DIR = os.environ.get("OUT_DIR", "market_structure_output")
 
-RAW_COLS = ["branchId", "shopCity", "shopArea", "cuisineString"]
+CITY_LABELS = {
+    "1": "Capital / Kuwait City",
+    "2": "Hawalli",
+    "3": "Farwaniya",
+    "4": "Ahmadi",
+    "5": "Jahra",
+    "6": "Mubarak Al-Kabeer",
+    "8": "Other / Unmapped",
+}
+
+RAW_COLS = ["branchId", "shopCity", "shopArea", "cuisineString", "verticalType"]
 os.makedirs(OUT_DIR, exist_ok=True)
 
 s3 = boto3.client(
@@ -58,22 +81,84 @@ s3 = boto3.client(
     region_name="auto",
 )
 
+pd.set_option("display.width", 200)
+pd.set_option("display.max_colwidth", 60)
 
-def save(name, obj):
-    with open(os.path.join(OUT_DIR, name), "w", encoding="utf-8") as f:
-        json.dump(obj, f, ensure_ascii=False, indent=2)
-    print(f"  saved -> {name}")
+# ----------------------------------------------------------------------------
+# Output helpers
+# ----------------------------------------------------------------------------
+REPORT = []
 
 
+def out(text=""):
+    print(text)
+    REPORT.append(str(text))
+
+
+def section(title):
+    out()
+    out("=" * 72)
+    out(title)
+    out("=" * 72)
+
+
+def show(df, n=None):
+    d = df.head(n) if n else df
+    out(d.to_string(index=False))
+
+
+def kv(label, value, width=34):
+    out(f"  {label:<{width}}: {value}")
+
+
+def write_excel(name, sheets):
+    path = os.path.join(OUT_DIR, name)
+    with pd.ExcelWriter(path, engine="openpyxl") as w:
+        for sheet, df in sheets.items():
+            sheet = sheet[:31]
+            df = df.copy()
+            for c in df.columns:
+                if df[c].dtype == object:
+                    df[c] = df[c].apply(
+                        lambda v: v[:32000] if isinstance(v, str) else v
+                    )
+            df.to_excel(w, sheet_name=sheet, index=False)
+            ws = w.sheets[sheet]
+            ws.freeze_panes = "A2"
+            for cell in ws[1]:
+                cell.font = Font(bold=True)
+            for i, col in enumerate(df.columns, 1):
+                longest = max(
+                    [len(str(col))] + [len(str(v)) for v in df[col].head(200)]
+                )
+                ws.column_dimensions[get_column_letter(i)].width = min(longest + 2, 60)
+    return name
+
+
+# ----------------------------------------------------------------------------
+# Parsing helpers
+# ----------------------------------------------------------------------------
 def parse_ids(v):
-    """'[720193, 682706]' أو '720193' أو list -> list of digit-strings."""
     if v is None or (isinstance(v, float) and pd.isna(v)):
         return []
     return re.findall(r"\d+", str(v))
 
 
+def parse_names(v):
+    if v is None or (isinstance(v, float) and pd.isna(v)):
+        return []
+    s = str(v).strip()
+    try:
+        data = json.loads(s)
+        if isinstance(data, list):
+            return [str(x) for x in data]
+    except Exception:
+        pass
+    found = re.findall(r'"((?:[^"\\]|\\.)*)"', s)
+    return found if found else [s]
+
+
 def to_list(v):
-    """shopArea / shopCity -> list of strings."""
     if v is None or (isinstance(v, float) and pd.isna(v)):
         return []
     if isinstance(v, (list, tuple, set)):
@@ -82,16 +167,21 @@ def to_list(v):
     return [] if s in ("", "None", "nan") else [s]
 
 
+def read_table(src, name, sheet=None):
+    if str(name).lower().endswith(".csv"):
+        return pd.read_csv(src, dtype=str)
+    return pd.read_excel(src, sheet_name=sheet if sheet is not None else 0, dtype=str)
+
+
 # ----------------------------------------------------------------------------
-# 1) Manual validation file (sheet unique)
+# 1) Manual validation file
 # ----------------------------------------------------------------------------
 def load_mapping():
     if MAPPING_R2_KEY:
         src = io.BytesIO(s3.get_object(Bucket=R2_BUCKET, Key=MAPPING_R2_KEY)["Body"].read())
         name = MAPPING_R2_KEY
     else:
-        src, name = MAPPING_PATH, MAPPING_PATH
-        # لو الاسم من غير extension جرّب xlsx ثم csv
+        src = name = MAPPING_PATH
         if not os.path.splitext(name)[1]:
             for ext in (".xlsx", ".csv"):
                 if os.path.exists(name + ext):
@@ -101,44 +191,62 @@ def load_mapping():
             sys.exit(f"Mapping file not found: {name}. Put it in the repo and set "
                      "MAPPING_PATH, or upload it to R2 and set MAPPING_R2_KEY.")
 
-    if name.lower().endswith(".csv"):
-        m = pd.read_csv(src, dtype=str)
-        sheet_used = "csv"
-    else:
+    sheet_used = "csv"
+    if not name.lower().endswith(".csv"):
         xl = pd.ExcelFile(src)
         if MAPPING_SHEET:
             sheet_used = MAPPING_SHEET
         else:
             cands = [s for s in xl.sheet_names if "unique" in s.lower()]
             sheet_used = cands[0] if cands else xl.sheet_names[0]
-        m = xl.parse(sheet_used, dtype=str)
-    print(f"Mapping sheet: {sheet_used} | rows: {len(m):,}")
+        if hasattr(src, "seek"):
+            src.seek(0)
+    m = read_table(src, name, sheet_used if sheet_used != "csv" else None)
 
-    m = m[[MAPPING_ID_COL, MAPPING_NAME_COL, MAPPING_BRANCH_COL]].copy()
     m[MAPPING_ID_COL] = m[MAPPING_ID_COL].astype(str).str.strip()
-    m["branch_list"] = m[MAPPING_BRANCH_COL].apply(parse_ids)
-
     dup_ids = m[m.duplicated(MAPPING_ID_COL, keep=False)][MAPPING_ID_COL].unique().tolist()
-    m = m.drop_duplicates(MAPPING_ID_COL, keep="first")
+    m = m.drop_duplicates(MAPPING_ID_COL, keep="first").reset_index(drop=True)
 
-    rest_name = dict(zip(m[MAPPING_ID_COL], m[MAPPING_NAME_COL]))
-    rest_branches = {
-        rid: sorted(set(bl)) for rid, bl in zip(m[MAPPING_ID_COL], m["branch_list"])
-    }
+    has_names = MAPPING_BRANCHNAME_COL in m.columns
+    rows = []
+    for _, r in m.iterrows():
+        ids = parse_ids(r[MAPPING_BRANCH_COL])
+        names = parse_names(r[MAPPING_BRANCHNAME_COL]) if has_names else []
+        aligned = len(names) == len(ids)
+        seen, o_ids, o_names = set(), [], []
+        for i, b in enumerate(ids):
+            if b in seen:
+                continue
+            seen.add(b)
+            o_ids.append(b)
+            o_names.append(names[i] if aligned else "")
+        rows.append({
+            "restaurant_id": r[MAPPING_ID_COL],
+            "restaurant": r[MAPPING_NAME_COL],
+            "branch_ids": o_ids,
+            "branch_names": o_names,
+        })
+    rests = pd.DataFrame(rows)
 
-    # branchId -> restaurant (لو فرع ظهر تحت أكتر من مطعم ناخد الأول ونسجل)
-    branch_to_rest, conflicts = {}, {}
-    for rid, bl in rest_branches.items():
-        for b in bl:
-            if b in branch_to_rest and branch_to_rest[b] != rid:
-                conflicts.setdefault(b, {branch_to_rest[b]}).add(rid)
-            else:
-                branch_to_rest[b] = rid
-    return rest_name, rest_branches, branch_to_rest, conflicts, dup_ids
+    # area labels (اختياري)
+    area_map, area_src = {}, "none"
+    if AREA_MAP_PATH and os.path.exists(AREA_MAP_PATH):
+        am = read_table(AREA_MAP_PATH, AREA_MAP_PATH)
+        am = am.dropna(subset=[AREA_MAP_ID_COL, AREA_MAP_LABEL_COL])
+        area_map = dict(zip(am[AREA_MAP_ID_COL].astype(str).str.strip(),
+                            am[AREA_MAP_LABEL_COL].astype(str).str.strip()))
+        area_src = AREA_MAP_PATH
+    elif MAPPING_AREA_COL in m.columns and MAPPING_AREANAME_COL in m.columns:
+        t = m[[MAPPING_AREA_COL, MAPPING_AREANAME_COL]].dropna()
+        t[MAPPING_AREA_COL] = t[MAPPING_AREA_COL].astype(str).str.strip()
+        area_map = (t.groupby(MAPPING_AREA_COL)[MAPPING_AREANAME_COL]
+                      .agg(lambda x: x.value_counts().index[0]).to_dict())
+        area_src = f"{sheet_used} sheet ({MAPPING_AREANAME_COL})"
+    return rests, dup_ids, area_map, area_src, sheet_used
 
 
 # ----------------------------------------------------------------------------
-# 2) Raw JSON files
+# 2) Raw JSON
 # ----------------------------------------------------------------------------
 def extract_records(data):
     if isinstance(data, list):
@@ -171,211 +279,280 @@ def load_raw():
 
 
 # ----------------------------------------------------------------------------
-# 3) Main
+# 3) Branch attribute tables  (branchId, value)  one row per distinct pair
+# ----------------------------------------------------------------------------
+def attr_table(raw, col, comma_split=False, casefold=False):
+    t = raw[["branchId", col]].copy()
+    if comma_split:
+        t[col] = t[col].fillna("").astype(str).str.split(",")
+    else:
+        t[col] = t[col].apply(to_list)
+    t = t.explode(col).dropna(subset=[col])
+    t[col] = t[col].astype(str).str.strip()
+    if casefold:
+        t[col] = t[col].str.casefold()
+    t = t[~t[col].str.lower().isin(["", "none", "nan"])]
+    return t.drop_duplicates()
+
+
+def dist_table(pairs, attr, col, total_restaurants):
+    j = pairs.merge(attr, on="branchId")
+    g = (j.groupby(col)
+           .agg(restaurants=("restaurant_id", "nunique"), branches=("branchId", "nunique"))
+           .reset_index())
+    g["pct_of_restaurants"] = (g["restaurants"] / total_restaurants * 100).round(2)
+    g["branches_per_restaurant"] = (g["branches"] / g["restaurants"]).round(2)
+    without = int(total_restaurants - j["restaurant_id"].nunique())
+    return g.sort_values(["restaurants", "branches"], ascending=False).reset_index(drop=True), without
+
+
+# ----------------------------------------------------------------------------
+# 4) Main
 # ----------------------------------------------------------------------------
 def main():
-    rest_name, rest_branches, branch_to_rest, conflicts, dup_ids = load_mapping()
+    rests, dup_ids, area_map, area_src, sheet_used = load_mapping()
     raw, n_files = load_raw()
     total_records = len(raw)
 
-    # ---------------- A) totals (من ملف الـ manual validation) ----------------
-    total_restaurants = len(rest_branches)
-    all_mapping_branches = set(branch_to_rest)
-    total_branches = len(all_mapping_branches)
+    # ---------------- pairs (restaurant, branch) ----------------
+    pairs = (rests[["restaurant_id", "branch_ids"]]
+             .explode("branch_ids").dropna()
+             .rename(columns={"branch_ids": "branchId"})
+             .drop_duplicates())
+    name_of = dict(zip(rests["restaurant_id"], rests["restaurant"]))
 
-    bpr = pd.Series({rid: len(bl) for rid, bl in rest_branches.items()}).sort_values(
-        ascending=False
-    )
-    restaurants_zero_branches = int((bpr == 0).sum())
+    total_restaurants = len(rests)
+    total_branches = pairs["branchId"].nunique()
+    rests["branches"] = rests["branch_ids"].apply(len)
+    bpr = rests.set_index("restaurant_id")["branches"]
+    sum_branch_counts = int(bpr.sum())
 
-    # ---------------- ربط الـ raw بالمطاعم (بالـ branchId بس) ----------------
+    # فروع مربوطة بأكتر من مطعم
+    per_branch = pairs.groupby("branchId")["restaurant_id"].agg(list)
+    shared = per_branch[per_branch.apply(len) > 1]
+    shared_df = pd.DataFrame({
+        "branchId": shared.index,
+        "restaurants_count": shared.apply(len).values,
+        "restaurant_ids": shared.apply(lambda l: ", ".join(l)).values,
+        "restaurant_names": shared.apply(lambda l: " | ".join(str(name_of.get(x)) for x in l)).values,
+    })
+
+    # ---------------- raw vs validation ----------------
     raw["branchId"] = raw["branchId"].astype(str).str.strip()
-    in_map = raw["branchId"].isin(all_mapping_branches)
+    valid_b = set(pairs["branchId"])
+    in_map = raw["branchId"].isin(valid_b)
     dropped_records = int((~in_map).sum())
     dropped_branch_ids = sorted(raw.loc[~in_map, "branchId"].unique().tolist())
-    df = raw[in_map].copy()
-    df["restaurant_id"] = df["branchId"].map(branch_to_rest)
-    mapping_branches_not_in_raw = sorted(all_mapping_branches - set(df["branchId"].unique()))
+    raw = raw[in_map].copy()
+    missing_in_raw = sorted(valid_b - set(raw["branchId"].unique()))
 
-    print(f"\nrecords: {total_records:,} | files: {n_files}")
-    print(f"records ignored (branchId not in validation file): {dropped_records:,} "
-          f"({len(dropped_branch_ids):,} distinct branchIds)")
-    print(f"branches in validation file but not found in raw: {len(mapping_branches_not_in_raw):,}")
-    if mapping_branches_not_in_raw:
-        print("Branches in validation file but missing from the JSON files "
-              "(counted in branch totals, but have no city/area/cuisine):")
-        for b in mapping_branches_not_in_raw:
-            rid = branch_to_rest[b]
-            print(f"  branchId {b} -> {rest_name.get(rid)} [restaurant id {rid}]")
-    print(f"branches linked to >1 restaurant in validation file: {len(conflicts)}")
+    # =======================================================================
+    section("1) INPUTS & DATA CHECKS")
+    kv("Validation file / sheet", f"{MAPPING_R2_KEY or MAPPING_PATH}  /  {sheet_used}")
+    kv("JSON files", n_files)
+    kv("JSON records", f"{total_records:,}")
+    kv("Records ignored (branch not in file)", f"{dropped_records:,}  ({len(dropped_branch_ids):,} branchIds)")
+    kv("Branches in file, missing from JSON", f"{len(missing_in_raw):,}")
+    kv("Branches shared by >1 restaurant", f"{len(shared_df):,}")
+    kv("Duplicate restaurant ids in sheet", len(dup_ids))
+    if missing_in_raw:
+        out("\n  Branches in the validation file but missing from the JSON files")
+        out("  (counted in branch totals, but have no city/area/cuisine):")
+        show(pd.DataFrame({
+            "branchId": missing_in_raw,
+            "restaurant_id": [per_branch[b][0] for b in missing_in_raw],
+            "restaurant": [name_of.get(per_branch[b][0]) for b in missing_in_raw],
+        }))
+    if len(shared_df):
+        out("\n  Shared branches (first 10) - full list in summary xlsx, sheet Shared_Branches:")
+        show(shared_df, 10)
 
-    # ---------------- B) branches per restaurant ----------------
-    def label(rid):
-        return {"restaurant_id": rid, "restaurant": rest_name.get(rid)}
-
-    branches_per_restaurant = [{**label(k), "branches": int(v)} for k, v in bpr.items()]
+    # =======================================================================
+    # Totals + per restaurant
     multi = bpr[bpr > 1]
     single = bpr[bpr == 1]
-    avg_branches = round(float(bpr.mean()), 3)
-    median_branches = float(bpr.median())
+    avg_listed = round(float(bpr.mean()), 3)
+    avg_unique = round(total_branches / total_restaurants, 3)
+    median_b = float(bpr.median())
 
     bins = [(1, 1), (2, 2), (3, 3), (4, 5), (6, 10), (11, 20), (21, 50), (51, 10**9)]
-    dist = []
+    dist_rows = []
     for lo, hi in bins:
         n = int(((bpr >= lo) & (bpr <= hi)).sum())
         lab = f"{lo}" if lo == hi else (f"{lo}+" if hi == 10**9 else f"{lo}-{hi}")
-        dist.append({"branches_range": lab, "restaurants": n,
-                     "pct_of_restaurants": round(n / total_restaurants * 100, 2)})
+        dist_rows.append({"branches_range": lab, "restaurants": n,
+                          "pct_of_restaurants": round(n / total_restaurants * 100, 2)})
+    dist_df = pd.DataFrame(dist_rows)
 
-    # ---------------- C) restaurants vs branches ----------------
-    branches_of_multi = int(multi.sum())
+    owned_multi = int(multi.sum())
     ratio = {
         "restaurants_to_branches_pct": round(total_restaurants / total_branches * 100, 2),
-        "branches_per_restaurant": avg_branches,
         "single_branch_restaurants": int(len(single)),
         "single_branch_restaurants_pct": round(len(single) / total_restaurants * 100, 2),
         "multi_branch_restaurants": int(len(multi)),
         "multi_branch_restaurants_pct": round(len(multi) / total_restaurants * 100, 2),
-        "branches_owned_by_multi_branch_restaurants": branches_of_multi,
-        "branches_owned_by_multi_branch_restaurants_pct": round(
-            branches_of_multi / int(bpr.sum()) * 100, 2),
+        "branches_of_multi_branch_restaurants": owned_multi,
+        "branches_of_multi_branch_restaurants_pct": round(owned_multi / sum_branch_counts * 100, 2),
     }
 
-    # ---------------- D) city + area (الفرع بيتعد في كل منطقة/مدينة ظاهر فيها) ----------------
-    def geo_table(col):
-        g = df[["restaurant_id", "branchId", col]].copy()
-        g[col] = g[col].apply(to_list)
-        g = g.explode(col).dropna(subset=[col]).drop_duplicates()
-        out = (g.groupby(col)
-                 .agg(restaurants=("restaurant_id", "nunique"), branches=("branchId", "nunique"))
-                 .reset_index())
-        out["branches_per_restaurant"] = (out["branches"] / out["restaurants"]).round(2)
-        return out
+    # per-restaurant excel tables
+    def rest_table(df):
+        t = pd.DataFrame({
+            "restaurant_id": df["restaurant_id"],
+            "restaurant_name": df["restaurant"],
+            "branches_count": df["branches"],
+            "branch_ids": df["branch_ids"].apply(lambda l: ", ".join(l)),
+            "branch_names": df["branch_names"].apply(lambda l: " | ".join(l)),
+        })
+        return t.sort_values(["branches_count", "restaurant_name"], ascending=[False, True]).reset_index(drop=True)
 
-    city_t = geo_table("shopCity").rename(columns={"shopCity": "city"})
-    city_t["pct_of_restaurants"] = (city_t["restaurants"] / total_restaurants * 100).round(2)
-    city_t = city_t.sort_values("restaurants", ascending=False)
+    all_rest_t = rest_table(rests)
+    multi_rest_t = rest_table(rests[rests["branches"] > 1])
 
-    area_t = geo_table("shopArea").rename(columns={"shopArea": "area"})
-    area_by_branches = area_t.sort_values("branches", ascending=False)
-    area_t["restaurant_density_share_pct"] = (
-        area_t["restaurants"] / area_t["restaurants"].sum() * 100).round(3)
-    area_density = area_t.sort_values(["restaurants", "branches"], ascending=False).reset_index(drop=True)
+    section("2) TOTALS")
+    kv("Total restaurants", f"{total_restaurants:,}   (expected {EXPECTED_RESTAURANTS:,})")
+    kv("Total branches (unique branchId)", f"{total_branches:,}")
+    kv("Sum of branches listed per restaurant", f"{sum_branch_counts:,}")
+
+    section("3) BRANCHES PER RESTAURANT")
+    kv("Avg branches / restaurant", f"{avg_listed}   (using unique branches: {avg_unique})")
+    kv("Median", median_b)
+    kv("Max", int(bpr.max()))
+    kv("Multi-branch restaurants", f"{len(multi):,}  ({ratio['multi_branch_restaurants_pct']}%)")
+    kv("Single-branch restaurants", f"{len(single):,}  ({ratio['single_branch_restaurants_pct']}%)")
+    out(f"\n  Top {TOP_N} restaurants by branches:")
+    show(all_rest_t[["restaurant_id", "restaurant_name", "branches_count"]], TOP_N)
+    out("\n  Distribution of restaurants by number of branches:")
+    show(dist_df)
+
+    section("4) RESTAURANTS vs BRANCHES")
+    kv("Restaurants / branches", f"{ratio['restaurants_to_branches_pct']}%")
+    kv("Branches per restaurant", avg_listed)
+    kv("Branches owned by multi-branch", f"{owned_multi:,}  ({ratio['branches_of_multi_branch_restaurants_pct']}% of listed branches)")
+
+    # ---------------- city ----------------
+    city_attr = attr_table(raw, "shopCity")
+    city_t, city_without = dist_table(pairs, city_attr, "shopCity", total_restaurants)
+    city_t.insert(1, "shopCity_label", city_t["shopCity"].map(CITY_LABELS).fillna("Unmapped"))
+    city_t = city_t.rename(columns={"shopCity": "shopCity_id"})
+
+    section("5) RESTAURANTS BY CITY")
+    out("  (a restaurant is counted in every city where it has a branch, so % sums to more than 100)")
+    show(city_t)
+
+    # ---------------- area ----------------
+    area_attr = attr_table(raw, "shopArea")
+    area_t, area_without = dist_table(pairs, area_attr, "shopArea", total_restaurants)
+    area_t.insert(1, "shopArea_label", area_t["shopArea"].map(area_map).fillna("Unmapped"))
+    area_t["pct_of_branches"] = (area_t["branches"] / total_branches * 100).round(2)
+    area_t = area_t.rename(columns={"shopArea": "shopArea_id"})
+    area_by_branches = area_t.sort_values(["branches", "restaurants"], ascending=False).reset_index(drop=True)
+    area_by_branches.insert(0, "rank", range(1, len(area_by_branches) + 1))
+    area_density = area_t.copy()
+    area_density.insert(0, "rank", range(1, len(area_density) + 1))
     highest = area_density.head(TOP_N)
     lowest = area_density.sort_values(["restaurants", "branches"]).head(TOP_N)
-    dens_stats = {
+    dens = {
         "total_areas": int(len(area_t)),
-        "avg_restaurants_per_area": round(float(area_density["restaurants"].mean()), 2),
-        "median_restaurants_per_area": float(area_density["restaurants"].median()),
-        "max_restaurants_in_area": int(area_density["restaurants"].max()),
-        "min_restaurants_in_area": int(area_density["restaurants"].min()),
-        "areas_with_only_1_restaurant": int((area_density["restaurants"] == 1).sum()),
+        "avg_restaurants_per_area": round(float(area_t["restaurants"].mean()), 2),
+        "median_restaurants_per_area": float(area_t["restaurants"].median()),
+        "max_restaurants_in_area": int(area_t["restaurants"].max()),
+        "min_restaurants_in_area": int(area_t["restaurants"].min()),
+        "areas_with_only_1_restaurant": int((area_t["restaurants"] == 1).sum()),
     }
+    labeled = int((area_t["shopArea_label"] != "Unmapped").sum())
 
-    # ---------------- E) cuisine ----------------
-    cz = df[["restaurant_id", "branchId", "cuisineString"]].copy()
-    cz["cuisine"] = cz["cuisineString"].fillna("").astype(str).str.split(",")
-    cz = cz.explode("cuisine")
-    cz["cuisine"] = cz["cuisine"].str.strip().str.casefold()
-    cz = cz[~cz["cuisine"].isin(["", "none", "nan"])]
-    cz = cz[["restaurant_id", "branchId", "cuisine"]].drop_duplicates()
-    cuisine_t = (cz.groupby("cuisine")
-                   .agg(restaurants=("restaurant_id", "nunique"), branches=("branchId", "nunique"))
-                   .reset_index().sort_values("restaurants", ascending=False))
-    cuisine_t["pct_of_restaurants"] = (cuisine_t["restaurants"] / total_restaurants * 100).round(2)
-    cuisine_t["cuisine"] = cuisine_t["cuisine"].str.title()
-    restaurants_without_cuisine = int(total_restaurants - cz["restaurant_id"].nunique())
+    section("6) AREAS (BRANCHES & DENSITY)")
+    kv("Total areas", dens["total_areas"])
+    kv("Avg / median restaurants per area", f"{dens['avg_restaurants_per_area']} / {dens['median_restaurants_per_area']}")
+    kv("Areas with only 1 restaurant", dens["areas_with_only_1_restaurant"])
+    kv("Area labels source", f"{area_src}  ({labeled}/{dens['total_areas']} areas labelled)")
+    out(f"\n  Top {TOP_N} areas by restaurants (highest density):")
+    show(highest[["rank", "shopArea_id", "shopArea_label", "restaurants", "branches"]])
+    out(f"\n  Bottom {TOP_N} areas by restaurants (lowest density, ties are arbitrary):")
+    show(lowest[["shopArea_id", "shopArea_label", "restaurants", "branches"]])
 
-    # ---------------- F) save ----------------
-    summary = {
-        "source": {
-            "r2_prefix": R2_PREFIX, "files": n_files, "total_records": total_records,
-            "records_ignored_not_in_validation_file": dropped_records,
-        },
-        "totals": {
-            "total_restaurants": total_restaurants,
-            "expected_restaurants": EXPECTED_RESTAURANTS,
-            "matches_expected": total_restaurants == EXPECTED_RESTAURANTS,
-            "total_branches": total_branches,
-        },
-        "branches_per_restaurant_stats": {
-            "average": avg_branches, "median": median_branches, "max": int(bpr.max()),
-            "top_10_restaurants_by_branches": branches_per_restaurant[:10],
-        },
-        "multi_branch": {"count": int(len(multi)),
-                         "pct_of_restaurants": ratio["multi_branch_restaurants_pct"]},
-        "restaurants_vs_branches": ratio,
-        "branch_count_distribution": dist,
-        "cities": {"total_cities": int(len(city_t)), "table": city_t.to_dict("records")},
-        "areas": {**dens_stats,
-                  "highest_density": highest.to_dict("records"),
-                  "lowest_density": lowest.to_dict("records"),
-                  "top_areas_by_branches": area_by_branches.head(TOP_N).to_dict("records")},
-        "cuisines": {"total_cuisines": int(len(cuisine_t)),
-                     "restaurants_without_cuisine": restaurants_without_cuisine,
-                     "top_10": cuisine_t.head(10).to_dict("records")},
+    # ---------------- activity ----------------
+    cu_attr = attr_table(raw, "cuisineString", comma_split=True, casefold=True)
+    cu_t, cu_without = dist_table(pairs, cu_attr, "cuisineString", total_restaurants)
+    cu_t["cuisineString"] = cu_t["cuisineString"].str.title()
+    cu_t = cu_t.rename(columns={"cuisineString": "cuisine"})
+
+    vt_attr = attr_table(raw, "verticalType")
+    vt_t, vt_without = dist_table(pairs, vt_attr, "verticalType", total_restaurants)
+
+    section("7) RESTAURANTS BY ACTIVITY")
+    out("  (a restaurant can have several cuisines, so % sums to more than 100)")
+    out(f"\n  By cuisine - {len(cu_t)} cuisines, {cu_without} restaurants without cuisine. Top {TOP_N}:")
+    show(cu_t[["cuisine", "restaurants", "pct_of_restaurants", "branches"]], TOP_N)
+    out(f"\n  By verticalType - {len(vt_t)} values, {vt_without} restaurants without verticalType:")
+    show(vt_t[["verticalType", "restaurants", "pct_of_restaurants", "branches"]])
+
+    # ---------------- save ----------------
+    overview = pd.DataFrame([
+        ("Totals", "total_restaurants", total_restaurants),
+        ("Totals", "expected_restaurants", EXPECTED_RESTAURANTS),
+        ("Totals", "total_branches_unique", total_branches),
+        ("Totals", "sum_of_branches_listed_per_restaurant", sum_branch_counts),
+        ("Branches per restaurant", "average_listed", avg_listed),
+        ("Branches per restaurant", "average_using_unique_branches", avg_unique),
+        ("Branches per restaurant", "median", median_b),
+        ("Branches per restaurant", "max", int(bpr.max())),
+        *[("Restaurants vs branches", k, v) for k, v in ratio.items()],
+        ("Cities", "total_cities", int(len(city_t))),
+        *[("Areas", k, v) for k, v in dens.items()],
+        ("Activity", "total_cuisines", int(len(cu_t))),
+        ("Activity", "restaurants_without_cuisine", cu_without),
+        ("Activity", "restaurants_without_verticalType", vt_without),
+    ], columns=["section", "metric", "value"])
+
+    dq = pd.DataFrame([
+        ("json_files", n_files),
+        ("json_records", total_records),
+        ("records_ignored_branch_not_in_validation_file", dropped_records),
+        ("distinct_branchIds_ignored", len(dropped_branch_ids)),
+        ("validation_branches_missing_from_json", len(missing_in_raw)),
+        ("branches_shared_by_more_than_one_restaurant", len(shared_df)),
+        ("duplicate_restaurant_ids_in_validation_sheet", len(dup_ids)),
+        ("restaurants_without_city", city_without),
+        ("restaurants_without_area", area_without),
+    ], columns=["check", "value"])
+
+    summary_sheets = {
+        "Overview": overview,
+        "Branch_Distribution": dist_df,
+        "Area_Density_All": area_density,
+        "Highest_Density": highest,
+        "Lowest_Density": lowest,
+        "Data_Quality": dq,
     }
-    quality = {
-        "duplicate_restaurant_ids_in_validation_sheet": dup_ids[:100],
-        "restaurants_with_zero_branches": restaurants_zero_branches,
-        "branches_linked_to_more_than_one_restaurant_count": len(conflicts),
-        "branches_linked_to_more_than_one_restaurant_sample": {
-            b: sorted(r) for b, r in list(conflicts.items())[:50]},
-        "raw_records_ignored": dropped_records,
-        "raw_branch_ids_ignored_count": len(dropped_branch_ids),
-        "raw_branch_ids_ignored_sample": dropped_branch_ids[:50],
-        "validation_branches_not_found_in_raw_count": len(mapping_branches_not_in_raw),
-        "validation_branches_not_found_in_raw": [
-            {"branchId": b, "restaurant_id": branch_to_rest[b],
-             "restaurant": rest_name.get(branch_to_rest[b])}
-            for b in mapping_branches_not_in_raw
-        ],
-    }
+    if len(shared_df):
+        summary_sheets["Shared_Branches"] = shared_df
+    if missing_in_raw:
+        summary_sheets["Missing_In_JSON"] = pd.DataFrame({
+            "branchId": missing_in_raw,
+            "restaurant_id": [per_branch[b][0] for b in missing_in_raw],
+            "restaurant": [name_of.get(per_branch[b][0]) for b in missing_in_raw],
+        })
 
-    print("\nSaving outputs:")
-    save("market_structure_summary.json", summary)
-    save("branches_per_restaurant.json", branches_per_restaurant)
-    save("multi_branch_restaurants.json", [{**label(k), "branches": int(v)} for k, v in multi.items()])
-    save("branch_count_distribution.json", dist)
-    save("restaurants_by_city.json", city_t.to_dict("records"))
-    save("branches_by_area.json", area_by_branches.to_dict("records"))
-    save("area_density.json", {"stats": dens_stats, "highest": highest.to_dict("records"),
-                               "lowest": lowest.to_dict("records"),
-                               "all_areas": area_density.to_dict("records")})
-    save("restaurants_by_cuisine.json", cuisine_t.to_dict("records"))
-    save("data_quality.json", quality)
+    files = [
+        write_excel("market_structure_summary.xlsx", summary_sheets),
+        write_excel("branches_per_restaurant.xlsx", {"Branches_per_Restaurant": all_rest_t}),
+        write_excel("multi_branch_restaurants.xlsx", {"Multi_Branch_Restaurants": multi_rest_t}),
+        write_excel("restaurants_by_city.xlsx", {"By_City": city_t}),
+        write_excel("branches_by_area.xlsx", {"By_Area": area_by_branches}),
+        write_excel("restaurants_by_activity.xlsx", {"By_Cuisine": cu_t, "By_VerticalType": vt_t}),
+    ]
 
-    # ---------------- logs ----------------
-    print("\n===== MARKET / RESTAURANT STRUCTURE =====")
-    print(f"Total restaurants           : {total_restaurants:,} (expected {EXPECTED_RESTAURANTS:,})")
-    print(f"Total branches              : {total_branches:,}")
-    print(f"Avg branches / restaurant   : {avg_branches}  (median {median_branches})")
-    print(f"Multi-branch restaurants    : {len(multi):,} ({ratio['multi_branch_restaurants_pct']}%)")
-    print(f"Single-branch restaurants   : {len(single):,} ({ratio['single_branch_restaurants_pct']}%)")
-    print(f"Restaurants/Branches        : {ratio['restaurants_to_branches_pct']}%")
-    print("\nTop 10 restaurants by branches:")
-    for r in branches_per_restaurant[:10]:
-        print(f"  {r['restaurant']} [{r['restaurant_id']}]: {r['branches']}")
-    print("\nBranch-count distribution:")
-    for d in dist:
-        print(f"  {d['branches_range']:>6}: {d['restaurants']:,} ({d['pct_of_restaurants']}%)")
-    print("\nRestaurants per city:")
-    for r in city_t.to_dict("records"):
-        print(f"  city {r['city']}: {r['restaurants']:,} restaurants / {r['branches']:,} branches")
-    print(f"\nAreas: {dens_stats['total_areas']} | avg restaurants/area {dens_stats['avg_restaurants_per_area']}")
-    print("Highest-density areas:")
-    for r in highest.to_dict("records"):
-        print(f"  area {r['area']}: {r['restaurants']} restaurants / {r['branches']} branches")
-    print("Lowest-density areas:")
-    for r in lowest.to_dict("records"):
-        print(f"  area {r['area']}: {r['restaurants']} restaurants / {r['branches']} branches")
-    print("\nTop 10 cuisines (restaurants):")
-    for r in cuisine_t.head(10).to_dict("records"):
-        print(f"  {r['cuisine']}: {r['restaurants']:,} ({r['pct_of_restaurants']}%)")
-
+    section("8) FILES SAVED")
+    for f in files:
+        out(f"  {f}")
+    out("  market_structure_report.txt")
     if total_restaurants != EXPECTED_RESTAURANTS:
-        print(f"\n[WARNING] restaurants={total_restaurants} but expected {EXPECTED_RESTAURANTS}. "
-              "Check data_quality.json (duplicate ids in the unique sheet).")
+        out(f"\n[WARNING] restaurants={total_restaurants} but expected {EXPECTED_RESTAURANTS}.")
+
+    with open(os.path.join(OUT_DIR, "market_structure_report.txt"), "w", encoding="utf-8") as f:
+        f.write("\n".join(REPORT))
 
 
 if __name__ == "__main__":
