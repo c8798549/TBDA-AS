@@ -27,15 +27,15 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.CF_R2_BUCKET_NAME }}
           R2_PREFIX: "merged-restaurant-info/year=2025/month=09/day=17/"
-          # ملف الـ brand grouping (فيه sheet restaurants): ارفعيه في الـ repo (MAPPING_PATH)
-          # أو سيبي MAPPING_PATH واكتبي MAPPING_R2_KEY لو هو على R2
+          # Brand-grouping file (has a restaurants sheet): upload it to the repo (MAPPING_PATH)
+          # or leave MAPPING_PATH as is and set MAPPING_R2_KEY if the file is on R2
           MAPPING_PATH: "unique_restaurants_grouped_by_brand.xlsx"
           MAPPING_R2_KEY: ""
           MAPPING_SHEET: "restaurants"
           MAPPING_ID_COL: "id"
           MAPPING_NAME_COL: "name"
           MAPPING_BRANCH_COL: "branchId"
-          # ملف map للمناطق: أعمدة area_id , area_name
+          # Area label map file: columns area_id, area_name
           AREA_MAP_PATH: "shoparea_and_id.xlsx"
           AREA_MAP_ID_COL: "area_id"
           AREA_MAP_LABEL_COL: "area_name"
