@@ -12,7 +12,9 @@ Sources:
 
 Outputs (OUT_DIR):
   market_structure_report.txt        same text as the console log
-  market_structure_summary.xlsx      Overview + branch distribution + area density + Data_Quality
+  market_structure_summary.xlsx      Overview + Data_Quality (+ shared / missing branch lists)
+  branch_distribution.xlsx           Branch_Distribution + Branches_In_Multiple_Cities / _Areas
+  area_density.xlsx                  Area_Density_All + Highest_Density + Lowest_Density
   branches_per_restaurant.xlsx       all restaurants (id, name, branch count, branch ids, branch names)
   multi_branch_restaurants.xlsx      same layout, multi-branch restaurants only
   restaurants_by_city.xlsx           restaurants / branches per city (with label)
@@ -529,7 +531,7 @@ def main():
     kv("Sum of branches over cities", f"{city_sum_branches:,}   (unique branches with a city: {city_unique_branches:,})")
     if len(multi_city_df):
         out(f"\n  {len(multi_city_df)} branch(es) appear in more than one city in the JSONs "
-            "(counted in each) - sheet Branches_In_Multiple_Cities:")
+            "(counted in each) - branch_distribution.xlsx, sheet Branches_In_Multiple_Cities:")
         show(multi_city_df, 10)
 
     # ---------------- area ----------------
@@ -565,7 +567,7 @@ def main():
     kv("Sum of branches over areas", f"{area_sum_branches:,}   (unique branches with an area: {area_unique_branches:,})")
     if len(multi_area_df):
         out(f"  {len(multi_area_df)} branch(es) appear in more than one area in the JSONs "
-            "(counted in each) - sheet Branches_In_Multiple_Areas")
+            "(counted in each) - branch_distribution.xlsx, sheet Branches_In_Multiple_Areas")
     out(f"\n  Top {TOP_N} areas by restaurants (highest density):")
     show(highest[["rank", "shopArea_id", "shopArea_label", "restaurants", "branches"]])
     out(f"\n  Bottom {TOP_N} areas by restaurants (lowest density, ties are arbitrary):")
@@ -623,22 +625,15 @@ def main():
         ("restaurants_without_area", area_without),
     ], columns=["check", "value"])
 
+    # summary: Overview + Data_Quality (+ detail lists behind the data-quality counts)
     summary_sheets = {
         "Overview": overview,
-        "Branch_Distribution": dist_df,
-        "Area_Density_All": area_density,
-        "Highest_Density": highest,
-        "Lowest_Density": lowest,
         "Data_Quality": dq,
     }
     if len(shared_df):
         summary_sheets["Shared_Branches_Unique"] = shared_df
     if len(shared_json_df):
         summary_sheets["Shared_Branches_JSON"] = shared_json_df
-    if len(multi_city_df):
-        summary_sheets["Branches_In_Multiple_Cities"] = multi_city_df
-    if len(multi_area_df):
-        summary_sheets["Branches_In_Multiple_Areas"] = multi_area_df
     if missing_in_raw:
         summary_sheets["Missing_In_JSON"] = pd.DataFrame({
             "branchId": missing_in_raw,
@@ -648,14 +643,20 @@ def main():
 
     files = [
         write_excel("market_structure_summary.xlsx", summary_sheets),
+        write_excel("branch_distribution.xlsx", {
+            "Branch_Distribution": dist_df,
+            "Branches_In_Multiple_Cities": multi_city_df,
+            "Branches_In_Multiple_Areas": multi_area_df,
+        }),
+        write_excel("area_density.xlsx", {
+            "Area_Density_All": area_density,
+            "Highest_Density": highest,
+            "Lowest_Density": lowest,
+        }),
         write_excel("branches_per_restaurant.xlsx", {"Branches_per_Restaurant": all_rest_t}),
         write_excel("multi_branch_restaurants.xlsx", {"Multi_Branch_Restaurants": multi_rest_t}),
-        write_excel("restaurants_by_city.xlsx", {
-            "By_City": city_out,
-            **({"Branches_In_Multiple_Cities": multi_city_df} if len(multi_city_df) else {})}),
-        write_excel("branches_by_area.xlsx", {
-            "By_Area": area_by_branches,
-            **({"Branches_In_Multiple_Areas": multi_area_df} if len(multi_area_df) else {})}),
+        write_excel("restaurants_by_city.xlsx", {"By_City": city_out}),
+        write_excel("branches_by_area.xlsx", {"By_Area": area_by_branches}),
         write_excel("restaurants_by_activity.xlsx", {"By_Cuisine": cu_t, "By_VerticalType": vt_t}),
     ]
 
