@@ -15,7 +15,8 @@ Outputs (OUT_DIR):
   market_structure_summary.xlsx      Overview + Data_Quality (+ shared / missing branch lists)
   area_density.xlsx                  Area_Density_All + Highest_Density + Lowest_Density
   branches_per_restaurant.xlsx       Branches_per_Restaurant (id, name, branch count, branch ids, branch names) + Branch_Distribution
-  multi_branch_restaurants.xlsx      same layout, multi-branch restaurants only
+  multi_branch_restaurants.xlsx      Multi_Branch_Restaurants (same layout, multi-branch only)
+                                     + ids_restaurant_info (branch-level rows for restaurants merged from >1 id)
   restaurants_by_city.xlsx           By_City (restaurants / branches per city, with label) + Branches_In_Multiple_Cities
   branches_by_area.xlsx              By_Area (restaurants / branches per area) + Branches_In_Multiple_Areas
   restaurants_by_activity.xlsx       one sheet by cuisine + one sheet by verticalType
@@ -72,7 +73,8 @@ CITY_LABELS = {
     "8": "Other / Unmapped",
 }
 
-RAW_COLS = ["id", "name", "branchId", "shopCity", "shopArea", "cuisineString", "verticalType"]
+RAW_COLS = ["id", "name", "branchId", "branchName", "latitude", "longitude", "shopCity", "shopArea",
+            "cuisineString", "verticalType", "isGrocery", "shopType", "isDarkstore"]
 os.makedirs(OUT_DIR, exist_ok=True)
 
 s3 = boto3.client(
@@ -227,13 +229,19 @@ def load_mapping():
             seen.add(b)
             o_ids.append(b)
             o_names.append(names[i] if aligned else "")
+        # all restaurant ids merged into this restaurant (representative id first if missing)
+        ids_all = list(dict.fromkeys(parse_ids(r["all_ids"]))) if "all_ids" in m.columns else []
+        if r[MAPPING_ID_COL] not in ids_all:
+            ids_all.insert(0, r[MAPPING_ID_COL])
         rows.append({
             "restaurant_id": r[MAPPING_ID_COL],
             "restaurant": r[MAPPING_NAME_COL],
+            "restaurant_ids": ids_all,
             "branch_ids": o_ids,
             "branch_names": o_names,
         })
     rests = pd.DataFrame(rows)
+    rests["ids_merged"] = rests["restaurant_ids"].apply(len)
 
     # raw id -> restaurant (via the all_ids column, to tell whether several ids belong to the same restaurant)
     id_to_rest = {}
@@ -395,6 +403,40 @@ def main():
     raw = raw[in_map].copy()
     missing_in_raw = sorted(valid_b - set(raw["branchId"].unique()))
 
+    # branch-level details for restaurants that were merged from more than one restaurant id
+    multi_id_rests = set(rests.loc[rests["ids_merged"] > 1, "restaurant_id"])
+    info = raw[raw["id"].map(id_to_rest).isin(multi_id_rests)].copy()
+    info["_rest"] = info["id"].map(id_to_rest)
+    info = info.drop_duplicates(subset=["id", "branchId"])  # first record per (restaurant id, branch)
+
+    def scalar(v):
+        vals = to_list(v)
+        return ", ".join(vals) if len(vals) > 1 else (vals[0] if vals else None)
+
+    def as_int(v):
+        return int(v) if v is not None and str(v).isdigit() else v
+
+    info["shopArea"] = info["shopArea"].apply(scalar).apply(as_int)
+    info["shopCity"] = info["shopCity"].apply(scalar).apply(as_int)
+    info["area_name"] = info["shopArea"].apply(
+        lambda v: None if v is None else area_map.get(str(v), "Unmapped"))
+    ids_info = pd.DataFrame({
+        "Restaurant (name)": info["_rest"].map(name_of),
+        "restaurantId": info["id"].apply(as_int),
+        "longitude": info["longitude"],
+        "latitude": info["latitude"],
+        "branchId": info["branchId"].apply(as_int),
+        "branchName": info["branchName"],
+        "cuisineString": info["cuisineString"],
+        "shopArea": info["shopArea"],
+        "area_name": info["area_name"],
+        "shopCity": info["shopCity"],
+        "isGrocery": info["isGrocery"],
+        "verticalType": info["verticalType"],
+        "shopType": info["shopType"],
+        "isDarkstore": info["isDarkstore"],
+    }).sort_values(["Restaurant (name)", "restaurantId", "branchId"]).reset_index(drop=True)
+
     # =======================================================================
     section("1) INPUTS & DATA CHECKS")
     kv("Validation file / sheet", f"{MAPPING_R2_KEY or MAPPING_PATH}  /  {sheet_used}")
@@ -448,13 +490,15 @@ def main():
     # per-restaurant excel tables
     def rest_table(df):
         t = pd.DataFrame({
-            "restaurant_id": df["restaurant_id"],
-            "restaurant_name": df["restaurant"],
-            "branches_count": df["branches"],
-            "branch_ids": df["branch_ids"].apply(lambda l: ", ".join(l)),
-            "branch_names": df["branch_names"].apply(lambda l: " | ".join(l)),
+            "Restaurant (name)": df["restaurant"],
+            "restaurantIds merged": df["ids_merged"],
+            "restaurantIds": df["restaurant_ids"].apply(lambda l: "[" + ", ".join(l) + "]"),
+            "Branches_count": df["branches"],
+            "branchIds": df["branch_ids"].apply(lambda l: "[" + ", ".join(l) + "]"),
+            "branchNames": df["branch_names"].apply(lambda l: json.dumps(l, ensure_ascii=False)),
         })
-        return t.sort_values(["branches_count", "restaurant_name"], ascending=[False, True]).reset_index(drop=True)
+        return t.sort_values(["Branches_count", "Restaurant (name)"],
+                             ascending=[False, True]).reset_index(drop=True)
 
     all_rest_t = rest_table(rests)
     multi_rest_t = rest_table(rests[rests["branches"] > 1])
@@ -470,8 +514,10 @@ def main():
     kv("Max", int(bpr.max()))
     kv("Multi-branch restaurants", f"{len(multi):,}  ({ratio['multi_branch_restaurants_pct']}%)")
     kv("Single-branch restaurants", f"{len(single):,}  ({ratio['single_branch_restaurants_pct']}%)")
+    kv("Restaurants merged from >1 id", f"{len(multi_id_rests):,}")
+    kv("Rows in ids_restaurant_info", f"{len(ids_info):,}")
     out(f"\n  Top {TOP_N} restaurants by branches:")
-    show(all_rest_t[["restaurant_id", "restaurant_name", "branches_count"]], TOP_N)
+    show(all_rest_t[["Restaurant (name)", "restaurantIds merged", "Branches_count"]], TOP_N)
     out("\n  Number of restaurants for each exact branch count:")
     show(dist_df)
 
@@ -651,7 +697,10 @@ def main():
             "Branches_per_Restaurant": all_rest_t,
             "Branch_Distribution": dist_df,
         }),
-        write_excel("multi_branch_restaurants.xlsx", {"Multi_Branch_Restaurants": multi_rest_t}),
+        write_excel("multi_branch_restaurants.xlsx", {
+            "Multi_Branch_Restaurants": multi_rest_t,
+            "ids_restaurant_info": ids_info,
+        }),
         write_excel("restaurants_by_city.xlsx", {
             "By_City": city_out,
             "Branches_In_Multiple_Cities": multi_city_df,
