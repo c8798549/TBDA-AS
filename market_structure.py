@@ -250,6 +250,57 @@ def unique_file_branches(g):
     return df.drop_duplicates(["Branch id", "Restaurant id"])
 
 
+def _k(v):
+    return "" if is_none(v) else str(v).strip()
+
+
+def _kname(v):
+    return "" if is_none(v) else re.sub(r"\s+", " ", str(v)).strip().casefold()
+
+
+def fill_coordinates(geo, cs):
+    """Fill Longitude / Latitude of the unique-file branches from the JSON records `cs`
+    (columns branchId, branchName, shopArea, shopCity, longitude, latitude).
+    Matching goes from the strictest to the loosest key, and the first match wins:
+      1) Branch id + Branch name + Shoparea + Shopcity
+      2) Branch id + Shoparea + Shopcity
+      3) Branch id + Branch name
+      4) Branch id only
+    Returns the filled table and how many branches were matched at each level."""
+    d1, d2, d3, d4 = {}, {}, {}, {}
+    for b, n, a, c, lon, lat in zip(cs["branchId"], cs["branchName"], cs["shopArea"],
+                                    cs["shopCity"], cs["longitude"], cs["latitude"]):
+        v = (lon, lat)
+        b, n, a, c = _k(b), _kname(n), _k(a), _k(c)
+        d1.setdefault((b, n, a, c), v)
+        d2.setdefault((b, a, c), v)
+        d3.setdefault((b, n), v)
+        d4.setdefault(b, v)
+
+    lons, lats, levels = [], [], []
+    for b, n, a, c in zip(geo["Branch id"], geo["Branch name"], geo["Shoparea"], geo["Shopcity"]):
+        b, n, a, c = _k(b), _kname(n), _k(a), _k(c)
+        for lvl, d, key in (
+            ("id+name+area+city", d1, (b, n, a, c)),
+            ("id+area+city", d2, (b, a, c)),
+            ("id+name", d3, (b, n)),
+            ("id only", d4, b),
+        ):
+            if key in d:
+                lons.append(d[key][0])
+                lats.append(d[key][1])
+                levels.append(lvl)
+                break
+        else:
+            lons.append(None)
+            lats.append(None)
+            levels.append("no match")
+    geo = geo.copy()
+    geo["Longitude"], geo["Latitude"] = lons, lats
+    counts = pd.Series(levels).value_counts().to_dict()
+    return geo, counts
+
+
 def branch_count_sheet(geo, area_labels):
     """Final branch counts from a branch-location table: per shopCity, per shopArea and per
     (shopCity, shopArea). A branch is counted once per value it appears under; the TOTAL rows
@@ -565,6 +616,14 @@ def main():
     geo_uniq = unique_file_branches(grouped_df)
     for c in ("Branch id", "Restaurant id", "Shoparea", "Shopcity"):
         geo_uniq[c] = geo_uniq[c].apply(as_int)
+    # coordinates for the unique file come from the JSON records
+    cs = raw[["branchId", "branchName", "shopArea", "shopCity", "longitude", "latitude"]].copy()
+    cs["shopArea"] = cs["shopArea"].apply(scalar).apply(as_int)
+    cs["shopCity"] = cs["shopCity"].apply(scalar).apply(as_int)
+    cs = cs.dropna(subset=["longitude", "latitude"]).drop_duplicates(
+        subset=["branchId", "branchName", "shopArea", "shopCity"])
+    geo_uniq, coord_levels = fill_coordinates(geo_uniq, cs)
+
     sort_cols = ["Shopcity", "Shoparea", "Restaurant name", "Branch id"]
     def sort_key(c):
         if c.name in ("Shopcity", "Shoparea", "Branch id"):
@@ -808,6 +867,7 @@ def main():
         ("duplicate_restaurant_ids_in_validation_sheet", len(dup_ids)),
         ("branch_location_rows_unique_file", len(geo_uniq)),
         ("branch_location_rows_json", len(geo_json)),
+        *[(f"unique_file_coordinates_match: {k}", int(v)) for k, v in coord_levels.items()],
         ("branches_shopcity_differs_unique_vs_json", city_diff),
         ("branches_shoparea_differs_unique_vs_json", area_diff),
         ("sum_of_branches_over_cities", city_sum_branches),
@@ -875,7 +935,9 @@ def main():
     kv("Branches in both sources", f"{len(common):,}")
     kv("shopCity differs between sources", f"{city_diff:,}")
     kv("shopArea differs between sources", f"{area_diff:,}")
-    out("  (the unique file has no coordinates, so Longitude / Latitude are empty in branches_by_city_area_unique.xlsx)")
+    out("\n  Longitude / Latitude of the unique-file branches (matched with the JSON records), rows per match level:")
+    for lvl in ("id+name+area+city", "id+area+city", "id+name", "id only", "no match"):
+        kv("  " + lvl, f"{coord_levels.get(lvl, 0):,}")
 
     section("9) FILES SAVED")
     for f in files:
