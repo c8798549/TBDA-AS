@@ -20,8 +20,9 @@ Outputs (OUT_DIR):
   restaurants_by_city.xlsx           By_City (restaurants / branches per city, with label) + Branches_In_Multiple_Cities
   branches_by_area.xlsx              By_Area (restaurants / branches per area) + Branches_In_Multiple_Areas
   restaurants_by_activity.xlsx       one sheet by cuisine + one sheet by verticalType
-  branches_by_city_area.xlsx         one row per branch with shopArea / shopCity / coordinates:
-                                     From_Unique_File (grouped sheet) + From_JSON
+  branches_by_city_area_json.xlsx    Branches (one row per branch: shopArea / shopCity / coordinates, from the JSONs)
+                                     + Branch_Count (branches per shopCity, per shopArea, per city+area)
+  branches_by_city_area_unique.xlsx  same two sheets, built from the unique file (grouped sheet)
 """
 
 import ast
@@ -247,6 +248,33 @@ def unique_file_branches(g):
                 })
     df = pd.DataFrame(rows, columns=UNIQUE_BRANCH_COLS)
     return df.drop_duplicates(["Branch id", "Restaurant id"])
+
+
+def branch_count_sheet(geo, area_labels):
+    """Final branch counts from a branch-location table: per shopCity, per shopArea and per
+    (shopCity, shopArea). A branch is counted once per value it appears under; the TOTAL rows
+    give the unique number of branches."""
+    def count_by(cols, name):
+        t = geo.dropna(subset=cols)
+        out_df = (t.groupby(cols)["Branch id"].nunique().reset_index(name=name)
+                    .sort_values([name] + cols, ascending=[False] + [True] * len(cols))
+                    .reset_index(drop=True))
+        return out_df, int(t["Branch id"].nunique())
+
+    city, city_total = count_by(["Shopcity"], "Branches in city")
+    city.insert(1, "Shopcity_label", city["Shopcity"].map(lambda v: CITY_LABELS.get(str(v), "Unmapped")))
+    city.loc[len(city)] = ["TOTAL (unique)", "", city_total]
+
+    area, area_total = count_by(["Shoparea"], "Branches in area")
+    area.insert(1, "Shoparea_label", area["Shoparea"].map(lambda v: area_labels.get(str(v), "Unmapped")))
+    area.loc[len(area)] = ["TOTAL (unique)", "", area_total]
+
+    combo, _ = count_by(["Shopcity", "Shoparea"], "Branches in city+area")
+    combo = combo.rename(columns={"Shopcity": "City", "Shoparea": "Area"})
+
+    gap1 = pd.DataFrame({" ": []})
+    gap2 = pd.DataFrame({"  ": []})
+    return pd.concat([city, gap1, area, gap2, combo], axis=1)
 
 
 def read_table(src, name, sheet=None):
@@ -830,9 +858,13 @@ def main():
             "Branches_In_Multiple_Areas": multi_area_df,
         }),
         write_excel("restaurants_by_activity.xlsx", {"By_Cuisine": cu_t, "By_VerticalType": vt_t}),
-        write_excel("branches_by_city_area.xlsx", {
-            "From_Unique_File": geo_uniq,
-            "From_JSON": geo_json,
+        write_excel("branches_by_city_area_json.xlsx", {
+            "Branches": geo_json,
+            "Branch_Count": branch_count_sheet(geo_json, area_map),
+        }),
+        write_excel("branches_by_city_area_unique.xlsx", {
+            "Branches": geo_uniq,
+            "Branch_Count": branch_count_sheet(geo_uniq, area_map),
         }),
     ]
 
@@ -843,7 +875,7 @@ def main():
     kv("Branches in both sources", f"{len(common):,}")
     kv("shopCity differs between sources", f"{city_diff:,}")
     kv("shopArea differs between sources", f"{area_diff:,}")
-    out("  (the unique file has no coordinates, so Longitude / Latitude are empty in that sheet)")
+    out("  (the unique file has no coordinates, so Longitude / Latitude are empty in branches_by_city_area_unique.xlsx)")
 
     section("9) FILES SAVED")
     for f in files:
