@@ -207,11 +207,21 @@ UNIQUE_BRANCH_COLS = ["Branch id", "Restaurant id", "Branch name", "Restaurant n
 
 
 def unique_file_branches(g):
-    """One row per branch from the grouped sheet. Each branch gets the shopArea / shopCity stored
-    in the file for the restaurant id it belongs to. The file has no coordinates."""
+    """One row per branch from the grouped sheet. Each branch gets the coordinates stored for it in
+    the file, and the shopArea / shopCity stored for the restaurant id it belongs to."""
     rows = []
     if g is None:
         return pd.DataFrame(columns=UNIQUE_BRANCH_COLS)
+
+    def nums(x):
+        out_l = []
+        for v in parse_names(x):
+            try:
+                out_l.append(float(v))
+            except ValueError:
+                out_l.append(None)
+        return out_l
+
     for r in g.to_dict("records"):
         ids_m = [str(x).strip() for x in as_list(r.get("id")) if not is_none(x)]
         names_m = [str(x).strip() for x in as_list(r.get("name")) if not is_none(x)]
@@ -220,85 +230,48 @@ def unique_file_branches(g):
         n = len(ids_m)
         key, rname = ids_m[0], (names_m[0] if names_m else None)
 
-        # per-id branch ids and names
+        # per-id branch ids, names and coordinates (nested lists, one element per id)
         bcell, ncell = r.get("branchId"), r.get("branchName")
-        per_ids = per_names = None
-        if n > 1:
-            ob, on = parse_value(bcell), parse_value(ncell)
+        lcell, ocell = r.get("latitude"), r.get("longitude")
+        per_ids = per_names = per_lat = per_lon = None
+        if n == 1:
+            per_ids = [parse_ids(bcell)]
+            per_names = [parse_names(ncell)]
+            per_lat = [nums(lcell) if not is_none(lcell) else []]
+            per_lon = [nums(ocell) if not is_none(ocell) else []]
+        else:
+            ob = parse_value(bcell)
             if isinstance(ob, list) and len(ob) == n:
                 per_ids = [parse_ids(x) for x in ob]
-                if isinstance(on, list) and len(on) == n:
-                    per_names = [parse_names(x) for x in on]
-        if per_ids is None:  # single id, or could not align: put everything on the first id
+
+                def nested(cell, fn):
+                    o = parse_value(cell)
+                    return [fn(x) for x in o] if isinstance(o, list) and len(o) == n else None
+
+                per_names = nested(ncell, parse_names)
+                per_lat = nested(lcell, nums)
+                per_lon = nested(ocell, nums)
+        if per_ids is None:  # could not align per id: put every branch on the first id, no extras
             per_ids = [parse_ids(bcell)] + [[] for _ in range(n - 1)]
-            per_names = [parse_names(ncell) if not is_none(ncell) else []] + [[] for _ in range(n - 1)]
-        if per_names is None:
-            per_names = [[] for _ in range(n)]
+        blank = [[] for _ in range(n)]
+        per_names, per_lat, per_lon = per_names or blank, per_lat or blank, per_lon or blank
 
         areas, cities = as_list(r.get("shopArea")), as_list(r.get("shopCity"))
         for i in range(n):
             area = areas[i] if len(areas) == n else (areas[0] if areas else None)
             city = cities[i] if len(cities) == n else (cities[0] if cities else None)
-            names_i = per_names[i] if len(per_names[i]) == len(per_ids[i]) else [""] * len(per_ids[i])
-            for b, bn in zip(per_ids[i], names_i):
+            k = len(per_ids[i])
+            names_i = per_names[i] if len(per_names[i]) == k else [""] * k
+            lat_i = per_lat[i] if len(per_lat[i]) == k else [None] * k
+            lon_i = per_lon[i] if len(per_lon[i]) == k else [None] * k
+            for b_, bn, la, lo in zip(per_ids[i], names_i, lat_i, lon_i):
                 rows.append({
-                    "Branch id": b, "Restaurant id": key, "Branch name": bn,
+                    "Branch id": b_, "Restaurant id": key, "Branch name": bn,
                     "Restaurant name": rname, "Shoparea": area, "Shopcity": city,
-                    "Longitude": None, "Latitude": None,
+                    "Longitude": lo, "Latitude": la,
                 })
     df = pd.DataFrame(rows, columns=UNIQUE_BRANCH_COLS)
     return df.drop_duplicates(["Branch id", "Restaurant id"])
-
-
-def _k(v):
-    return "" if is_none(v) else str(v).strip()
-
-
-def _kname(v):
-    return "" if is_none(v) else re.sub(r"\s+", " ", str(v)).strip().casefold()
-
-
-def fill_coordinates(geo, cs):
-    """Fill Longitude / Latitude of the unique-file branches from the JSON records `cs`
-    (columns branchId, branchName, shopArea, shopCity, longitude, latitude).
-    Matching goes from the strictest to the loosest key, and the first match wins:
-      1) Branch id + Branch name + Shoparea + Shopcity
-      2) Branch id + Shoparea + Shopcity
-      3) Branch id + Branch name
-      4) Branch id only
-    Returns the filled table and how many branches were matched at each level."""
-    d1, d2, d3, d4 = {}, {}, {}, {}
-    for b, n, a, c, lon, lat in zip(cs["branchId"], cs["branchName"], cs["shopArea"],
-                                    cs["shopCity"], cs["longitude"], cs["latitude"]):
-        v = (lon, lat)
-        b, n, a, c = _k(b), _kname(n), _k(a), _k(c)
-        d1.setdefault((b, n, a, c), v)
-        d2.setdefault((b, a, c), v)
-        d3.setdefault((b, n), v)
-        d4.setdefault(b, v)
-
-    lons, lats, levels = [], [], []
-    for b, n, a, c in zip(geo["Branch id"], geo["Branch name"], geo["Shoparea"], geo["Shopcity"]):
-        b, n, a, c = _k(b), _kname(n), _k(a), _k(c)
-        for lvl, d, key in (
-            ("id+name+area+city", d1, (b, n, a, c)),
-            ("id+area+city", d2, (b, a, c)),
-            ("id+name", d3, (b, n)),
-            ("id only", d4, b),
-        ):
-            if key in d:
-                lons.append(d[key][0])
-                lats.append(d[key][1])
-                levels.append(lvl)
-                break
-        else:
-            lons.append(None)
-            lats.append(None)
-            levels.append("no match")
-    geo = geo.copy()
-    geo["Longitude"], geo["Latitude"] = lons, lats
-    counts = pd.Series(levels).value_counts().to_dict()
-    return geo, counts
 
 
 def branch_count_sheet(geo, area_labels):
@@ -616,14 +589,6 @@ def main():
     geo_uniq = unique_file_branches(grouped_df)
     for c in ("Branch id", "Restaurant id", "Shoparea", "Shopcity"):
         geo_uniq[c] = geo_uniq[c].apply(as_int)
-    # coordinates for the unique file come from the JSON records
-    cs = raw[["branchId", "branchName", "shopArea", "shopCity", "longitude", "latitude"]].copy()
-    cs["shopArea"] = cs["shopArea"].apply(scalar).apply(as_int)
-    cs["shopCity"] = cs["shopCity"].apply(scalar).apply(as_int)
-    cs = cs.dropna(subset=["longitude", "latitude"]).drop_duplicates(
-        subset=["branchId", "branchName", "shopArea", "shopCity"])
-    geo_uniq, coord_levels = fill_coordinates(geo_uniq, cs)
-
     sort_cols = ["Shopcity", "Shoparea", "Restaurant name", "Branch id"]
     def sort_key(c):
         if c.name in ("Shopcity", "Shoparea", "Branch id"):
@@ -867,7 +832,6 @@ def main():
         ("duplicate_restaurant_ids_in_validation_sheet", len(dup_ids)),
         ("branch_location_rows_unique_file", len(geo_uniq)),
         ("branch_location_rows_json", len(geo_json)),
-        *[(f"unique_file_coordinates_match: {k}", int(v)) for k, v in coord_levels.items()],
         ("branches_shopcity_differs_unique_vs_json", city_diff),
         ("branches_shoparea_differs_unique_vs_json", area_diff),
         ("sum_of_branches_over_cities", city_sum_branches),
@@ -935,9 +899,8 @@ def main():
     kv("Branches in both sources", f"{len(common):,}")
     kv("shopCity differs between sources", f"{city_diff:,}")
     kv("shopArea differs between sources", f"{area_diff:,}")
-    out("\n  Longitude / Latitude of the unique-file branches (matched with the JSON records), rows per match level:")
-    for lvl in ("id+name+area+city", "id+area+city", "id+name", "id only", "no match"):
-        kv("  " + lvl, f"{coord_levels.get(lvl, 0):,}")
+    out("  (Longitude / Latitude of the unique file are read directly from its latitude / longitude columns)")
+    kv("Unique-file branches without coordinates", f"{int(geo_uniq['Latitude'].isna().sum()):,}")
 
     section("9) FILES SAVED")
     for f in files:
