@@ -1,0 +1,42 @@
+name: Branch Area Mapping
+
+on:
+  workflow_dispatch:
+
+jobs:
+  branch-area-mapping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install boto3 pandas openpyxl
+
+      - name: Run branch area mapping
+        env:
+          R2_ENDPOINT: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.CF_R2_BUCKET_NAME }}
+          R2_PREFIX: "merged-restaurant-info/year=2025/month=09/day=17/"
+          # The correction file (branchId, branchName, ..., final_area_id ...) must be in the repo
+          INPUT_PATH: "q_area_validation.xlsx"
+          INPUT_SHEET: ""
+          OUT_DIR: "branch_area_mapping_output"
+        run: python branch_area_mapping.py
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-area-mapping-output
+          path: branch_area_mapping_output/
+          if-no-files-found: warn
