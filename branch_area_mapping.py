@@ -15,7 +15,9 @@ Steps:
      final_area_id in it -> final_shopCity (+ final_city_name). Only final_area_id is used for this lookup.
   3) area_in_city and branch_loc are added as empty columns.
 
-Output (OUT_DIR): branch_area_mapped.xlsx  (sheet "mapped" + sheet "summary")
+Output (OUT_DIR): branch_area_mapped.xlsx  (sheets "mapped", "summary", "Ambiguous_Keys")
+  Ambiguous_Keys lists every JSON key (branchId + branchName + shopArea) that has more than one
+  (id, name, city) combination, with the record count of each; "used" marks the value that was taken.
 """
 
 import json
@@ -177,6 +179,25 @@ def build_lookups(raw):
         return d
 
     l1 = to_dict(g1, ["branchId", "nk", "area"])
+
+    # every (branchId + branchName + shopArea) key that has more than one (id, name, city) combination
+    kc = ["branchId", "nk", "area"]
+    allc = t.groupby(kc + vals, dropna=False).size().reset_index(name="records")
+    cnt = allc.groupby(kc).size().reset_index(name="combos")
+    amb = allc.merge(cnt[cnt["combos"] > 1], on=kc)
+    if len(amb):
+        diff = (amb.groupby(kc)[vals].nunique() > 1)
+        amb = amb.merge(
+            diff.apply(lambda r: ", ".join(c if c != "name" else "name" for c in vals if r[c]), axis=1)
+                .rename("differs_in").reset_index(), on=kc)
+        orig = t.drop_duplicates(["branchId", "nk"])[["branchId", "nk", "branchName"]]
+        amb = amb.merge(orig, on=["branchId", "nk"], how="left")
+        amb["used"] = [
+            l1.get((b, k, a)) == (i, n, c or None)
+            for b, k, a, i, n, c in zip(amb["branchId"], amb["nk"], amb["area"], amb["id"], amb["name"], amb["city"])
+        ]
+    else:
+        amb = pd.DataFrame(columns=kc + vals + ["records", "combos", "differs_in", "branchName", "used"])
     l2 = to_dict(g2, ["branchId", "area"])
     l3 = to_dict(g3, ["branchId"])
 
@@ -185,7 +206,7 @@ def build_lookups(raw):
     cities_per_area = ac.groupby("area")["city"].nunique()
     area_city = (ac.sort_values("n", ascending=False).drop_duplicates("area")
                    .set_index("area")["city"].to_dict())
-    return l1, l2, l3, area_city, amb1, int((cities_per_area > 1).sum())
+    return l1, l2, l3, area_city, amb1, int((cities_per_area > 1).sum()), amb
 
 
 # ----------------------------------------------------------------------------
@@ -204,7 +225,7 @@ def main():
     out(f"Input rows: {len(df):,}   ({INPUT_PATH})")
 
     raw = load_raw()
-    l1, l2, l3, area_city, ambiguous_keys, areas_many_cities = build_lookups(raw)
+    l1, l2, l3, area_city, ambiguous_keys, areas_many_cities, amb = build_lookups(raw)
     out(f"JSON records: {len(raw):,} | areas in the area->city map: {len(area_city):,} "
         f"| areas seen under more than one city: {areas_many_cities}")
 
@@ -250,7 +271,6 @@ def main():
     out("\nMatch with the JSON records (rows per level):")
     for k, v in levels.items():
         out(f"  {k:<32}: {v:,}")
-    out(f"  keys with more than one JSON value (id/name/city): {ambiguous_keys:,}  -> most frequent was used")
     n = len(res)
     not_found = int(res["final_shopCity"].isna().sum())
     changed = int(((res["shopCity"].astype(str) != res["final_shopCity"].astype(str))
@@ -262,16 +282,40 @@ def main():
     out("\nRows by area_basis:")
     out(res["area_basis"].value_counts(dropna=False).rename_axis("area_basis").reset_index(name="rows").to_string(index=False))
 
+    # ambiguous JSON keys: all combinations, flagged when the key is used by the input file
+    input_keys = {(key(b), name_key(n), key(a)) for b, n, a in zip(df["branchId"], df["branchName"], df["shopArea"])}
+    amb_out = pd.DataFrame({
+        "branchId": amb["branchId"].apply(norm_id),
+        "branchName": amb["branchName"],
+        "shopArea": amb["area"].apply(norm_id),
+        "differs_in": amb["differs_in"],
+        "restaurant_id": amb["id"],
+        "restaurant_name": amb["name"],
+        "shopCity": amb["city"].apply(lambda v: norm_id(v) if v else None),
+        "records": amb["records"],
+        "used": amb["used"],
+        "in_input_file": [(b, k, a) in input_keys for b, k, a in zip(amb["branchId"], amb["nk"], amb["area"])],
+    })
+    amb_out["shopCity_name"] = amb_out["shopCity"].apply(city_name)
+    amb_out = amb_out[["branchId", "branchName", "shopArea", "differs_in", "restaurant_id", "restaurant_name",
+                       "shopCity", "shopCity_name", "records", "used", "in_input_file"]]
+    amb_out = amb_out.sort_values(["in_input_file", "branchId", "records"], ascending=[False, True, False]).reset_index(drop=True)
+    keys_in_input = int(amb_out.loc[amb_out["in_input_file"], ["branchId", "shopArea"]].drop_duplicates().shape[0])
+    out(f"\nJSON keys with more than one value: {ambiguous_keys} (used by rows of the input file: {keys_in_input})")
+    if len(amb_out):
+        out(amb_out.drop(columns=["shopCity_name"]).to_string(index=False))
+
     summary = pd.DataFrame(
         [(f"match: {k}", v) for k, v in levels.items()]
         + [("rows", n), ("final_area_id found in a shopCity", n - not_found),
            ("final_area_id not found", not_found), ("final_shopCity differs from shopCity", changed),
-           ("JSON keys with more than one value", ambiguous_keys)],
+           ("JSON keys with more than one value", ambiguous_keys),
+           ("... of which used by the input file", keys_in_input)],
         columns=["metric", "value"])
 
     path = os.path.join(OUT_DIR, "branch_area_mapped.xlsx")
     with pd.ExcelWriter(path, engine="openpyxl") as w:
-        for name, d in (("mapped", res), ("summary", summary)):
+        for name, d in (("mapped", res), ("summary", summary), ("Ambiguous_Keys", amb_out)):
             d.to_excel(w, sheet_name=name, index=False)
             ws = w.sheets[name]
             ws.freeze_panes = "A2"
