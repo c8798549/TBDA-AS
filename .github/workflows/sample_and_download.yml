@@ -36,9 +36,10 @@ jobs:
           SAMPLE_SIZE: "70"
           SEED: ""  # leave empty for a different sample each run (the seed is printed in the log)
           OUT_DIR: "sample_output"
-          # Task 2: folder downloaded as it is
+          # Task 2: folder downloaded as it is (+ an Excel of its records with location_url)
           DOWNLOAD_PREFIX: "merged-restaurant-info/year=2025/month=09/day=17/6-farwaniya/"
           DOWNLOAD_DIR: "downloaded_files"
+          TABLE_OUT_DIR: "farwaniya_output"
         run: python sample_and_download.py
 
       - name: Upload the sample
@@ -55,4 +56,12 @@ jobs:
         with:
           name: downloaded-6-farwaniya
           path: downloaded_files/
+          if-no-files-found: warn
+
+      - name: Upload the records table with location_url
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farwaniya-records-with-location-url
+          path: farwaniya_output/
           if-no-files-found: warn

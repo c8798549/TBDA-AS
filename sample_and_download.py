@@ -8,8 +8,12 @@ Task 1 - random sample of unique branches
   Output (OUT_DIR): branches_sample.xlsx (+ branches_sample.json)
 
 Task 2 - plain download of one folder
-  Downloads every file under DOWNLOAD_PREFIX exactly as it is (no parsing, same names and sub-folders)
-  into DOWNLOAD_DIR.
+  Downloads every file under DOWNLOAD_PREFIX exactly as it is (same names and sub-folders) into
+  DOWNLOAD_DIR. The downloaded files are never modified.
+  In addition, every record of the downloaded JSON files is written to one Excel file with the extra
+  column location_url (output in TABLE_OUT_DIR).
+
+location_url = https://www.google.com/maps?q=<latitude>,<longitude>   (empty when a coordinate is missing)
 """
 
 import json
@@ -51,6 +55,7 @@ DOWNLOAD_PREFIX = os.environ.get("DOWNLOAD_PREFIX", BASE + "6-farwaniya/")
 if not DOWNLOAD_PREFIX.endswith("/"):
     DOWNLOAD_PREFIX += "/"
 DOWNLOAD_DIR = os.environ.get("DOWNLOAD_DIR", "downloaded_files")
+TABLE_OUT_DIR = os.environ.get("TABLE_OUT_DIR", "farwaniya_output")  # Excel of the downloaded records
 
 RUN_SAMPLE = os.environ.get("RUN_SAMPLE", "1") == "1"
 RUN_DOWNLOAD = os.environ.get("RUN_DOWNLOAD", "1") == "1"
@@ -94,6 +99,36 @@ def excel_value(v):
     return v
 
 
+def location_url(rec):
+    """Google Maps link from the record's latitude / longitude (None if either is missing)."""
+    lat, lng = rec.get("latitude"), rec.get("longitude")
+    if any(v is None or str(v).strip() in ("", "None", "nan") for v in (lat, lng)):
+        return None
+    return f"https://www.google.com/maps?q={str(lat).strip()},{str(lng).strip()}"
+
+
+def write_excel(path, sheet, df):
+    with pd.ExcelWriter(path, engine="openpyxl") as w:
+        out = df.apply(lambda c: c.map(excel_value))
+        out.to_excel(w, sheet_name=sheet, index=False)
+        ws = w.sheets[sheet]
+        ws.freeze_panes = "A2"
+        for c in ws[1]:
+            c.font = Font(bold=True)
+        for i, col in enumerate(out.columns, 1):
+            longest = max([len(str(col))] + [len(str(v)) for v in out[col].head(100)])
+            ws.column_dimensions[get_column_letter(i)].width = min(longest + 2, 50)
+
+
+def ordered_columns(rows, first):
+    cols = [c for c in first if any(c in r for r in rows)]
+    for r in rows:
+        for c in r:
+            if c not in cols:
+                cols.append(c)
+    return cols
+
+
 # ----------------------------------------------------------------------------
 # Task 1: random sample of unique branches
 # ----------------------------------------------------------------------------
@@ -132,27 +167,17 @@ def sample_branches():
     rows = []
     for i, b in enumerate(picked, 1):
         rec, folder, fname = seen[b]
-        rows.append({"sample_no": i, "source_folder": folder, "source_file": fname, **rec})
+        rows.append({"sample_no": i, "source_folder": folder, "source_file": fname,
+                     **rec, "location_url": location_url(rec)})
     first = ["sample_no", "source_folder", "source_file", "branchId", "branchName", "id", "name",
-             "shopArea", "shopCity", "latitude", "longitude"]
-    cols = [c for c in first if any(c in r for r in rows)]
-    cols += [c for r in rows for c in r if c not in cols and not cols.append(c)]
-    df = pd.DataFrame(rows, columns=cols)
+             "shopArea", "shopCity", "latitude", "longitude", "location_url"]
+    df = pd.DataFrame(rows, columns=ordered_columns(rows, first))
 
     os.makedirs(OUT_DIR, exist_ok=True)
     with open(os.path.join(OUT_DIR, "branches_sample.json"), "w", encoding="utf-8") as f:
         json.dump(rows, f, ensure_ascii=False, indent=2, default=str)
     path = os.path.join(OUT_DIR, "branches_sample.xlsx")
-    with pd.ExcelWriter(path, engine="openpyxl") as w:
-        out = df.apply(lambda c: c.map(excel_value))
-        out.to_excel(w, sheet_name="branches_sample", index=False)
-        ws = w.sheets["branches_sample"]
-        ws.freeze_panes = "A2"
-        for c in ws[1]:
-            c.font = Font(bold=True)
-        for i, col in enumerate(out.columns, 1):
-            longest = max([len(str(col))] + [len(str(v)) for v in out[col].head(100)])
-            ws.column_dimensions[get_column_letter(i)].width = min(longest + 2, 50)
+    write_excel(path, "branches_sample", df)
 
     print("\nSample by folder:")
     print(df["source_folder"].value_counts().rename_axis("folder").reset_index(name="branches").to_string(index=False))
@@ -178,6 +203,37 @@ def download_folder():
     if n == 0:
         print("No files found under this prefix - check DOWNLOAD_PREFIX.")
     print(f"\nDownloaded {n} file(s), {total / 1024 / 1024:,.2f} MB -> {DOWNLOAD_DIR}/")
+    records_table()
+
+
+def records_table():
+    """One Excel with every record of the downloaded JSON files + location_url (files stay untouched)."""
+    rows = []
+    for root, _, files in os.walk(DOWNLOAD_DIR):
+        for fn in sorted(files):
+            if not fn.lower().endswith(".json"):
+                continue
+            path = os.path.join(root, fn)
+            try:
+                with open(path, encoding="utf-8") as f:
+                    recs = extract_records(json.load(f))
+            except Exception as e:  # not a JSON we can read: skip it, the file itself is already downloaded
+                print(f"  [skip] {path}: {e}")
+                continue
+            rel = os.path.relpath(path, DOWNLOAD_DIR)
+            rows += [{"source_file": rel, **r, "location_url": location_url(r)} for r in recs]
+    if not rows:
+        print("No JSON records found, no Excel written.")
+        return
+    first = ["source_file", "branchId", "branchName", "id", "name", "shopArea", "shopCity",
+             "latitude", "longitude", "location_url"]
+    df = pd.DataFrame(rows, columns=ordered_columns(rows, first))
+    os.makedirs(TABLE_OUT_DIR, exist_ok=True)
+    path = os.path.join(TABLE_OUT_DIR, f"{folder_name(DOWNLOAD_PREFIX)}_records_with_location_url.xlsx")
+    write_excel(path, "records", df)
+    with_url = int(df["location_url"].notna().sum())
+    print(f"\nRecords table: {len(df):,} records ({df['branchId'].nunique():,} unique branches), "
+          f"{with_url:,} with location_url -> {path}")
 
 
 def main():
