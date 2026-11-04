@@ -1,0 +1,58 @@
+name: Sample Branches and Download Folder
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sample-and-download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install boto3 pandas openpyxl
+
+      - name: Run sample and download
+        env:
+          R2_ENDPOINT: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.CF_R2_BUCKET_NAME }}
+          # Task 1: the folders to sample from (one per line) and how many unique branches to pick in total
+          SAMPLE_PREFIXES: |
+            merged-restaurant-info/year=2025/month=09/day=17/62-ardhiya/
+            merged-restaurant-info/year=2025/month=09/day=17/67-jahra-waha/
+            merged-restaurant-info/year=2025/month=09/day=17/68-jahra-oyoun/
+            merged-restaurant-info/year=2025/month=09/day=17/6858-ardhiya-government/
+            merged-restaurant-info/year=2025/month=09/day=17/10652-jahra-jahra-industrial-area/
+          SAMPLE_SIZE: "70"
+          SEED: ""  # leave empty for a different sample each run (the seed is printed in the log)
+          OUT_DIR: "sample_output"
+          # Task 2: folder downloaded as it is
+          DOWNLOAD_PREFIX: "merged-restaurant-info/year=2025/month=09/day=17/6-farwaniya/"
+          DOWNLOAD_DIR: "downloaded_files"
+        run: python sample_and_download.py
+
+      - name: Upload the sample
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: branches-sample
+          path: sample_output/
+          if-no-files-found: warn
+
+      - name: Upload the downloaded files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: downloaded-6-farwaniya
+          path: downloaded_files/
+          if-no-files-found: warn
