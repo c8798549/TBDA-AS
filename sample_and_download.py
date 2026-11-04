@@ -5,7 +5,9 @@ Task 1 - random sample of unique branches
   Reads every JSON file under the SAMPLE_PREFIXES folders, collects the unique branches (by branchId),
   and picks SAMPLE_SIZE of them at random. For each picked branch the first record found is kept, with
   all its fields.
-  Output (OUT_DIR): branches_sample.xlsx (+ branches_sample.json)
+  Output (OUT_DIR): branches_sample.xlsx, with only the columns listed in SAMPLE_COLUMNS.
+  shopArea_name comes from the area map file (AREA_MAP_PATH: area_id, area_name) and shopCity_name from
+  the city map in this script.
 
 Task 2 - plain download of one folder
   Downloads every file under DOWNLOAD_PREFIX exactly as it is (same names and sub-folders) into
@@ -57,6 +59,28 @@ if not DOWNLOAD_PREFIX.endswith("/"):
 DOWNLOAD_DIR = os.environ.get("DOWNLOAD_DIR", "downloaded_files")
 TABLE_OUT_DIR = os.environ.get("TABLE_OUT_DIR", "farwaniya_output")  # Excel of the downloaded records
 
+# area map file (xlsx or csv) with the columns area_id, area_name; used for shopArea_name
+AREA_MAP_PATH = os.environ.get("AREA_MAP_PATH", "shoparea_and_id.xlsx")
+AREA_MAP_ID_COL = os.environ.get("AREA_MAP_ID_COL", "area_id")
+AREA_MAP_LABEL_COL = os.environ.get("AREA_MAP_LABEL_COL", "area_name")
+CITY_LABELS = {
+    "1": "Capital / Kuwait City",
+    "2": "Hawalli",
+    "3": "Farwaniya",
+    "4": "Ahmadi",
+    "5": "Jahra",
+    "6": "Mubarak Al-Kabeer",
+    "8": "Other / Unmapped",
+}
+
+# columns of branches_sample.xlsx, in this order
+SAMPLE_COLUMNS = [
+    "sample_no", "source_folder", "source_file", "id", "name", "restaurantSlug", "branchId", "branchName",
+    "branchSlug", "branchUrl", "shopArea", "shopCity", "shopArea_name", "shopCity_name", "latitude",
+    "longitude", "location_url", "cuisineString", "rate", "totalReviews", "totalRatings", "deliveryFee",
+    "minimumOrderAmount", "avgDeliveryTime", "deliveryTime",
+]
+
 RUN_SAMPLE = os.environ.get("RUN_SAMPLE", "1") == "1"
 RUN_DOWNLOAD = os.environ.get("RUN_DOWNLOAD", "1") == "1"
 
@@ -105,6 +129,28 @@ def location_url(rec):
     if any(v is None or str(v).strip() in ("", "None", "nan") for v in (lat, lng)):
         return None
     return f"https://www.google.com/maps?q={str(lat).strip()},{str(lng).strip()}"
+
+
+def load_area_map():
+    if not os.path.exists(AREA_MAP_PATH):
+        print(f"[WARNING] area map file not found: {AREA_MAP_PATH} -> shopArea_name will be empty")
+        return None
+    am = (pd.read_csv(AREA_MAP_PATH, dtype=str) if AREA_MAP_PATH.lower().endswith(".csv")
+          else pd.read_excel(AREA_MAP_PATH, dtype=str))
+    am = am.dropna(subset=[AREA_MAP_ID_COL, AREA_MAP_LABEL_COL])
+    return dict(zip(am[AREA_MAP_ID_COL].str.strip(), am[AREA_MAP_LABEL_COL].str.strip()))
+
+
+def as_values(v):
+    """Scalar or list -> list of clean strings (whole numbers without the .0)."""
+    items = v if isinstance(v, (list, tuple, set)) else [v]
+    out = []
+    for x in items:
+        if x is None or str(x).strip() in ("", "None", "nan"):
+            continue
+        t = str(x).strip()
+        out.append(str(int(float(t))) if t.replace(".", "", 1).isdigit() and float(t) == int(float(t)) else t)
+    return out
 
 
 def write_excel(path, sheet, df):
@@ -164,24 +210,26 @@ def sample_branches():
     picked = random.Random(seed).sample(pool, k)
     print(f"Sampled {k} branches (seed {seed}; set SEED={seed} to get the same sample again)")
 
+    area_map = load_area_map()
     rows = []
     for i, b in enumerate(picked, 1):
         rec, folder, fname = seen[b]
-        rows.append({"sample_no": i, "source_folder": folder, "source_file": fname,
-                     **rec, "location_url": location_url(rec)})
-    first = ["sample_no", "source_folder", "source_file", "branchId", "branchName", "id", "name",
-             "shopArea", "shopCity", "latitude", "longitude", "location_url"]
-    df = pd.DataFrame(rows, columns=ordered_columns(rows, first))
+        areas, cities = as_values(rec.get("shopArea")), as_values(rec.get("shopCity"))
+        row = {"sample_no": i, "source_folder": folder, "source_file": fname, **rec,
+               "location_url": location_url(rec),
+               "shopArea_name": (", ".join(area_map.get(a, "Unmapped") for a in areas) or None)
+               if area_map is not None else None,
+               "shopCity_name": ", ".join(CITY_LABELS.get(c, "Unmapped") for c in cities) or None}
+        rows.append({c: row.get(c) for c in SAMPLE_COLUMNS})
+    df = pd.DataFrame(rows, columns=SAMPLE_COLUMNS)
 
     os.makedirs(OUT_DIR, exist_ok=True)
-    with open(os.path.join(OUT_DIR, "branches_sample.json"), "w", encoding="utf-8") as f:
-        json.dump(rows, f, ensure_ascii=False, indent=2, default=str)
     path = os.path.join(OUT_DIR, "branches_sample.xlsx")
     write_excel(path, "branches_sample", df)
 
     print("\nSample by folder:")
     print(df["source_folder"].value_counts().rename_axis("folder").reset_index(name="branches").to_string(index=False))
-    print(f"\nSaved -> {path}\n         {os.path.join(OUT_DIR, 'branches_sample.json')}")
+    print(f"\nSaved -> {path}")
 
 
 # ----------------------------------------------------------------------------
