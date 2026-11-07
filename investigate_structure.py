@@ -7,13 +7,15 @@ For every folder directly under the prefix (the days) it prints
   - how many folders it contains
   - the name of each of those folders and how many files it holds (everything inside it, sub-folders included)
   - any file sitting directly in the day folder (outside every sub-folder)
-and ends with a one-line-per-day summary.
+then a one-line-per-day summary, and the folder names that appear in more than one day
+(with the number of days and which days).
 
 Nothing is downloaded or modified. The printed output is also saved to structure_report.txt.
 """
 
 import os
 import sys
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 
 import boto3
@@ -74,6 +76,7 @@ def main():
             out(f"  file: {name_of(o['Key'])}  ({o['Size'] / 1024:,.1f} KB)")
 
     summary = []
+    folder_days = defaultdict(list)  # folder name -> days it appears in
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
         for d in days:
             subs, files = list_level(d)
@@ -83,6 +86,7 @@ def main():
             out("=" * 72)
             for sub, n in zip(subs, counts):
                 out(f"  {name_of(sub)}   ({n} file{'s' if n != 1 else ''})")
+                folder_days[name_of(sub)].append(name_of(d))
             for o in files[:20]:
                 out(f"  [file directly in the day folder] {name_of(o['Key'])}  ({o['Size'] / 1024:,.1f} KB)")
             summary.append((name_of(d), len(subs), sum(counts), len(files)))
@@ -96,6 +100,24 @@ def main():
     counts = {n for _, n, _, _ in summary}
     out(f"\nDays: {len(summary)} | folders per day: "
         + (f"{min(counts)}" if len(counts) == 1 else f"{min(counts)} to {max(counts)} (it changes between days)"))
+
+    # folder names that appear in more than one day
+    total_days = len(days)
+    repeated = {k: v for k, v in folder_days.items() if len(v) > 1}
+    single = len(folder_days) - len(repeated)
+    out("\n" + "=" * 72)
+    out("FOLDERS REPEATED IN MORE THAN ONE DAY")
+    out("=" * 72)
+    out(f"Distinct folder names: {len(folder_days):,} | in more than one day: {len(repeated):,} "
+        f"| in a single day only: {single:,} | in every day ({total_days}): "
+        f"{sum(1 for v in folder_days.values() if len(v) == total_days):,}")
+    if repeated:
+        out("")
+        for name, ds in sorted(repeated.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+            where = f"all {total_days} days" if len(ds) == total_days else f"{len(ds)} days: " + ", ".join(ds)
+            out(f"  {name}   ({where})")
+    else:
+        out("No folder name appears in more than one day.")
 
     os.makedirs(OUT_DIR, exist_ok=True)
     with open(os.path.join(OUT_DIR, "structure_report.txt"), "w", encoding="utf-8") as f:
