@@ -10,12 +10,15 @@ For every folder directly under the prefix (the days) it prints
 then a one-line-per-day summary, and the folder names that appear in more than one day
 (with the number of days and which days).
 
+Finally, for every folder listed in LIST_FILES_PREFIXES (default: the validation folder of day=04) it prints
+the name, size and last-modified time of each file inside it, plus a count by file extension.
+
 Nothing is downloaded or modified. The printed output is also saved to structure_report.txt.
 """
 
 import os
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 
 import boto3
@@ -28,6 +31,13 @@ R2_PREFIX = os.environ.get("R2_PREFIX", "restaurant-info/year=2025/month=09/")
 if not R2_PREFIX.endswith("/"):
     R2_PREFIX += "/"
 WORKERS = int(os.environ.get("WORKERS", "16"))  # parallel listing of the sub-folders
+# folders whose file names should be printed (one prefix per line; empty = skip this part)
+LIST_FILES_PREFIXES = [
+    p.strip() if p.strip().endswith("/") else p.strip() + "/"
+    for p in os.environ.get(
+        "LIST_FILES_PREFIXES", "restaurant-info/year=2025/month=09/day=04/validation/"
+    ).splitlines() if p.strip()
+]
 OUT_DIR = os.environ.get("OUT_DIR", "structure_output")
 
 s3 = boto3.client(
@@ -57,6 +67,28 @@ def count_files(prefix):
     for page in s3.get_paginator("list_objects_v2").paginate(Bucket=R2_BUCKET, Prefix=prefix):
         n += sum(1 for o in page.get("Contents", []) if not o["Key"].endswith("/"))
     return n
+
+
+def list_folder_files(prefix):
+    """Print every file inside `prefix` (sub-folders included) with size and last-modified time."""
+    objs = []
+    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=R2_BUCKET, Prefix=prefix):
+        objs += [o for o in page.get("Contents", []) if not o["Key"].endswith("/")]
+    objs.sort(key=lambda o: o["Key"])
+    out("\n" + "=" * 72)
+    out(f"FILES IN {prefix}")
+    out("=" * 72)
+    out(f"{len(objs):,} file(s), {sum(o['Size'] for o in objs) / 1024 / 1024:,.2f} MB")
+    if not objs:
+        out("No files found under this folder - check LIST_FILES_PREFIXES.")
+        return
+    out("")
+    for i, o in enumerate(objs, 1):
+        name = o["Key"][len(prefix):]  # relative to the folder (shows sub-folders if any)
+        out(f"{i:>4}. {name}   ({o['Size'] / 1024:,.1f} KB, {o['LastModified']:%Y-%m-%d %H:%M})")
+    out("\nBy extension:")
+    for e, n in Counter(os.path.splitext(o["Key"])[1].lower() or "(no extension)" for o in objs).most_common():
+        out(f"  {e:<16}{n:>6,}")
 
 
 def name_of(prefix):
@@ -118,6 +150,9 @@ def main():
             out(f"  {name}   ({where})")
     else:
         out("No folder name appears in more than one day.")
+
+    for prefix in LIST_FILES_PREFIXES:
+        list_folder_files(prefix)
 
     os.makedirs(OUT_DIR, exist_ok=True)
     with open(os.path.join(OUT_DIR, "structure_report.txt"), "w", encoding="utf-8") as f:
