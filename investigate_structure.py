@@ -10,6 +10,9 @@ For every folder directly under the prefix (the days) it prints
 then a one-line-per-day summary, and the folder names that appear in more than one day
 (with the number of days and which days).
 
+It also checks the sub-folders of COMPARE_PREFIX (default: the validation folder of day=04) against the
+folder names of all the OTHER days: which of its sub-folders (areas) do not exist in any other day.
+
 Finally, for every folder listed in LIST_FILES_PREFIXES (default: the validation folder of day=04) it prints
 the name, size and last-modified time of each file inside it, plus a count by file extension.
 
@@ -31,6 +34,10 @@ R2_PREFIX = os.environ.get("R2_PREFIX", "restaurant-info/year=2025/month=09/")
 if not R2_PREFIX.endswith("/"):
     R2_PREFIX += "/"
 WORKERS = int(os.environ.get("WORKERS", "16"))  # parallel listing of the sub-folders
+# folder whose sub-folders are compared with the folder names of the other days (empty = skip)
+COMPARE_PREFIX = os.environ.get("COMPARE_PREFIX", "restaurant-info/year=2025/month=09/day=04/validation/").strip()
+if COMPARE_PREFIX and not COMPARE_PREFIX.endswith("/"):
+    COMPARE_PREFIX += "/"
 # folders whose file names should be printed (one prefix per line; empty = skip this part)
 LIST_FILES_PREFIXES = [
     p.strip() if p.strip().endswith("/") else p.strip() + "/"
@@ -89,6 +96,49 @@ def list_folder_files(prefix):
     out("\nBy extension:")
     for e, n in Counter(os.path.splitext(o["Key"])[1].lower() or "(no extension)" for o in objs).most_common():
         out(f"  {e:<16}{n:>6,}")
+
+
+def norm_name(n):
+    """Comparison key that ignores case and the difference between '-', '_' and spaces."""
+    return n.strip().casefold().replace("_", "-").replace(" ", "-")
+
+
+def compare_with_other_days(prefix, days, folder_days):
+    """Which sub-folders of `prefix` are not folder names of any other day?"""
+    own_days = [d for d in days if prefix.startswith(d)]
+    own = name_of(own_days[0]) if own_days else None
+    out("\n" + "=" * 72)
+    out(f"SUB-FOLDERS OF {prefix}  vs  THE OTHER DAYS")
+    out("=" * 72)
+    if own is None:
+        out("This folder is not inside one of the days listed above - check COMPARE_PREFIX.")
+        return
+    subs, _ = list_level(prefix)
+    sub_names = sorted(name_of(x) for x in subs)
+    other_days = [name_of(d) for d in days if name_of(d) != own]
+    # folder names that appear in at least one day other than `own`
+    in_others = {n: [d for d in ds if d != own] for n, ds in folder_days.items()}
+    in_others = {n: ds for n, ds in in_others.items() if ds}
+    by_norm = defaultdict(list)
+    for n in in_others:
+        by_norm[norm_name(n)].append(n)
+
+    missing = [n for n in sub_names if n not in in_others]
+    out(f"Reference: folder names of the {len(other_days)} other day(s) (everything except {own})")
+    out(f"Sub-folders in validation: {len(sub_names):,} | found in other days: {len(sub_names) - len(missing):,} "
+        f"| NOT found in any other day: {len(missing):,}")
+    reverse = sorted(set(in_others) - set(sub_names))
+    out(f"Folder names of the other days that are not in validation: {len(reverse):,}")
+    if missing:
+        with ThreadPoolExecutor(max_workers=WORKERS) as pool:
+            counts = dict(zip(missing, pool.map(count_files, [prefix + n + "/" for n in missing])))
+        out("\nSub-folders that do not exist in any other day:")
+        for n in missing:
+            similar = [x for x in by_norm.get(norm_name(n), []) if x != n]
+            hint = f"   <- same name ignoring case/separators: {', '.join(similar)}" if similar else ""
+            out(f"  {n}   ({counts[n]} file{'s' if counts[n] != 1 else ''}){hint}")
+    else:
+        out("\nEvery sub-folder of validation also exists in at least one other day.")
 
 
 def name_of(prefix):
@@ -150,6 +200,9 @@ def main():
             out(f"  {name}   ({where})")
     else:
         out("No folder name appears in more than one day.")
+
+    if COMPARE_PREFIX:
+        compare_with_other_days(COMPARE_PREFIX, days, folder_days)
 
     for prefix in LIST_FILES_PREFIXES:
         list_folder_files(prefix)

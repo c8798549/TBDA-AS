@@ -27,6 +27,8 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.CF_R2_BUCKET_NAME }}
           R2_PREFIX: "restaurant-info/year=2025/month=09/"
+          # Folder whose sub-folders are compared with the folder names of the other days (empty = skip)
+          COMPARE_PREFIX: "restaurant-info/year=2025/month=09/day=04/validation/"
           # Folders whose file names are printed at the end (one per line, empty = skip)
           LIST_FILES_PREFIXES: |
             restaurant-info/year=2025/month=09/day=04/validation/
